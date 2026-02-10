@@ -78,7 +78,7 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 		model:          cfg.Agents.Defaults.Model,
 		maxIterations:  cfg.Agents.Defaults.MaxToolIterations,
 		sessions:       sessionsManager,
-		contextBuilder: NewContextBuilder(workspace),
+		contextBuilder: NewContextBuilder(workspace, func() []string { return toolsRegistry.GetSummaries() }),
 		tools:          toolsRegistry,
 		running:        false,
 	}
@@ -159,12 +159,8 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		}
 	}
 
-	history := al.sessions.GetHistory(msg.SessionKey)
-	summary := al.sessions.GetSummary(msg.SessionKey)
-
 	messages := al.contextBuilder.BuildMessages(
-		history,
-		summary,
+		al.sessions.GetHistory(msg.SessionKey),
 		msg.Content,
 		nil,
 		msg.Channel,
@@ -195,6 +191,26 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 				},
 			})
 		}
+
+		// Log LLM request details
+		logger.DebugCF("agent", "LLM request",
+			map[string]interface{}{
+				"iteration":        iteration,
+				"model":            al.model,
+				"messages_count":   len(messages),
+				"tools_count":      len(providerToolDefs),
+				"max_tokens":       8192,
+				"temperature":      0.7,
+				"system_prompt_len": len(messages[0].Content),
+			})
+
+		// Log full messages (detailed)
+		logger.DebugCF("agent", "Full LLM request",
+			map[string]interface{}{
+				"iteration":     iteration,
+				"messages_json": formatMessagesForLog(messages),
+				"tools_json":    formatToolsForLog(providerToolDefs),
+			})
 
 		response, err := al.provider.Chat(ctx, messages, providerToolDefs, al.model, map[string]interface{}{
 			"max_tokens":  8192,
@@ -331,11 +347,8 @@ func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMe
 	}
 
 	// Build messages with the announce content
-	history := al.sessions.GetHistory(sessionKey)
-	summary := al.sessions.GetSummary(sessionKey)
 	messages := al.contextBuilder.BuildMessages(
-		history,
-		summary,
+		al.sessions.GetHistory(sessionKey),
 		msg.Content,
 		nil,
 		originChannel,
@@ -360,6 +373,26 @@ func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMe
 				},
 			})
 		}
+
+		// Log LLM request details
+		logger.DebugCF("agent", "LLM request",
+			map[string]interface{}{
+				"iteration":        iteration,
+				"model":            al.model,
+				"messages_count":   len(messages),
+				"tools_count":      len(providerToolDefs),
+				"max_tokens":       8192,
+				"temperature":      0.7,
+				"system_prompt_len": len(messages[0].Content),
+			})
+
+		// Log full messages (detailed)
+		logger.DebugCF("agent", "Full LLM request",
+			map[string]interface{}{
+				"iteration":     iteration,
+				"messages_json": formatMessagesForLog(messages),
+				"tools_json":    formatToolsForLog(providerToolDefs),
+			})
 
 		response, err := al.provider.Chat(ctx, messages, providerToolDefs, al.model, map[string]interface{}{
 			"max_tokens":  8192,
@@ -462,104 +495,64 @@ func (al *AgentLoop) GetStartupInfo() map[string]interface{} {
 	return info
 }
 
-func (al *AgentLoop) summarizeSession(sessionKey string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-
-	history := al.sessions.GetHistory(sessionKey)
-	summary := al.sessions.GetSummary(sessionKey)
-
-	// Keep last 4 messages for continuity
-	if len(history) <= 4 {
-		return
+// formatMessagesForLog formats messages for logging
+func formatMessagesForLog(messages []providers.Message) string {
+	if len(messages) == 0 {
+		return "[]"
 	}
 
-	toSummarize := history[:len(history)-4]
-
-	// Oversized Message Guard (Dynamic)
-	// Skip messages larger than 50% of context window to prevent summarizer overflow.
-	maxMessageTokens := al.contextWindow / 2
-	validMessages := make([]providers.Message, 0)
-	omitted := false
-
-	for _, m := range toSummarize {
-		if m.Role != "user" && m.Role != "assistant" {
-			continue
+	var result string
+	result += "[\n"
+	for i, msg := range messages {
+		result += fmt.Sprintf("  [%d] Role: %s\n", i, msg.Role)
+		if msg.ToolCalls != nil && len(msg.ToolCalls) > 0 {
+			result += "  ToolCalls:\n"
+			for _, tc := range msg.ToolCalls {
+				result += fmt.Sprintf("    - ID: %s, Type: %s, Name: %s\n", tc.ID, tc.Type, tc.Name)
+				if tc.Function != nil {
+					result += fmt.Sprintf("      Arguments: %s\n", truncateString(tc.Function.Arguments, 200))
+				}
+			}
 		}
-		// Estimate tokens for this message
-		msgTokens := len(m.Content) / 4
-		if msgTokens > maxMessageTokens {
-			omitted = true
-			continue
+		if msg.Content != "" {
+			content := truncateString(msg.Content, 200)
+			result += fmt.Sprintf("  Content: %s\n", content)
 		}
-		validMessages = append(validMessages, m)
-	}
-
-	if len(validMessages) == 0 {
-		return
-	}
-
-	// Multi-Part Summarization
-	// Split into two parts if history is significant
-	var finalSummary string
-	if len(validMessages) > 10 {
-		mid := len(validMessages) / 2
-		part1 := validMessages[:mid]
-		part2 := validMessages[mid:]
-
-		s1, _ := al.summarizeBatch(ctx, part1, "")
-		s2, _ := al.summarizeBatch(ctx, part2, "")
-		
-		// Merge them
-		mergePrompt := fmt.Sprintf("Merge these two conversation summaries into one cohesive summary:\n\n1: %s\n\n2: %s", s1, s2)
-		resp, err := al.provider.Chat(ctx, []providers.Message{{Role: "user", Content: mergePrompt}}, nil, al.model, map[string]interface{}{
-			"max_tokens":  1024,
-			"temperature": 0.3,
-		})
-		if err == nil {
-			finalSummary = resp.Content
-		} else {
-			finalSummary = s1 + " " + s2
+		if msg.ToolCallID != "" {
+			result += fmt.Sprintf("  ToolCallID: %s\n", msg.ToolCallID)
 		}
-	} else {
-		finalSummary, _ = al.summarizeBatch(ctx, validMessages, summary)
+		result += "\n"
 	}
-
-	if omitted && finalSummary != "" {
-		finalSummary += "\n[Note: Some oversized messages were omitted from this summary for efficiency.]"
-	}
-
-	if finalSummary != "" {
-		al.sessions.SetSummary(sessionKey, finalSummary)
-		al.sessions.TruncateHistory(sessionKey, 4)
-		al.sessions.Save(al.sessions.GetOrCreate(sessionKey))
-	}
+	result += "]"
+	return result
 }
 
-func (al *AgentLoop) summarizeBatch(ctx context.Context, batch []providers.Message, existingSummary string) (string, error) {
-	prompt := "Provide a concise summary of this conversation segment, preserving core context and key points.\n"
-	if existingSummary != "" {
-		prompt += "Existing context: " + existingSummary + "\n"
-	}
-	prompt += "\nCONVERSATION:\n"
-	for _, m := range batch {
-		prompt += fmt.Sprintf("%s: %s\n", m.Role, m.Content)
+// formatToolsForLog formats tool definitions for logging
+func formatToolsForLog(tools []providers.ToolDefinition) string {
+	if len(tools) == 0 {
+		return "[]"
 	}
 
-	response, err := al.provider.Chat(ctx, []providers.Message{{Role: "user", Content: prompt}}, nil, al.model, map[string]interface{}{
-		"max_tokens":  1024,
-		"temperature": 0.3,
-	})
-	if err != nil {
-		return "", err
+	var result string
+	result += "[\n"
+	for i, tool := range tools {
+		result += fmt.Sprintf("  [%d] Type: %s, Name: %s\n", i, tool.Type, tool.Function.Name)
+		result += fmt.Sprintf("      Description: %s\n", tool.Function.Description)
+		if len(tool.Function.Parameters) > 0 {
+			result += fmt.Sprintf("      Parameters: %s\n", truncateString(fmt.Sprintf("%v", tool.Function.Parameters), 200))
+		}
 	}
-	return response.Content, nil
+	result += "]"
+	return result
 }
 
-func (al *AgentLoop) estimateTokens(messages []providers.Message) int {
-	total := 0
-	for _, m := range messages {
-		total += len(m.Content) / 4 // Simple heuristic: 4 chars per token
+// truncateString truncates a string to max length
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
-	return total
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
 }

@@ -101,3 +101,16 @@ func (r *ToolRegistry) Count() int {
 	defer r.mu.RUnlock()
 	return len(r.tools)
 }
+
+// GetSummaries returns human-readable summaries of all registered tools.
+// Returns a slice of "name - description" strings.
+func (r *ToolRegistry) GetSummaries() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	summaries := make([]string, 0, len(r.tools))
+	for _, tool := range r.tools {
+		summaries = append(summaries, fmt.Sprintf("- `%s` - %s", tool.Name(), tool.Description()))
+	}
+	return summaries
+}

@@ -102,7 +102,11 @@ func main() {
 
 		workspace := cfg.WorkspacePath()
 		installer := skills.NewSkillInstaller(workspace)
-		skillsLoader := skills.NewSkillsLoader(workspace, "")
+		// 获取全局配置目录和内置 skills 目录
+		globalDir := filepath.Dir(getConfigPath())
+		globalSkillsDir := filepath.Join(globalDir, "skills")
+		builtinSkillsDir := filepath.Join(globalDir, "picoclaw", "skills")
+		skillsLoader := skills.NewSkillsLoader(workspace, globalSkillsDir, builtinSkillsDir)
 
 		switch subcommand {
 		case "list":
@@ -242,70 +246,6 @@ Information about user goes here.
 - What the user wants to learn from AI
 - Preferred interaction style
 - Areas of interest
-`,
-		"TOOLS.md": `# Available Tools
-
-This document describes the tools available to picoclaw.
-
-## File Operations
-
-### Read Files
-- Read file contents
-- Supports text, markdown, code files
-
-### Write Files
-- Create new files
-- Overwrite existing files
-- Supports various formats
-
-### List Directories
-- List directory contents
-- Recursive listing support
-
-### Edit Files
-- Make specific edits to files
-- Line-by-line editing
-- String replacement
-
-## Web Tools
-
-### Web Search
-- Search the internet using search API
-- Returns titles, URLs, snippets
-- Optional: Requires API key for best results
-
-### Web Fetch
-- Fetch specific URLs
-- Extract readable content
-- Supports HTML, JSON, plain text
-- Automatic content extraction
-
-## Command Execution
-
-### Shell Commands
-- Execute any shell command
-- Run in workspace directory
-- Full shell access with timeout protection
-
-## Messaging
-
-### Send Messages
-- Send messages to chat channels
-- Supports Telegram, WhatsApp, Feishu
-- Used for notifications and responses
-
-## AI Capabilities
-
-### Context Building
-- Load system instructions from files
-- Load skills dynamically
-- Build conversation history
-- Include timezone and other context
-
-### Memory Management
-- Long-term memory via MEMORY.md
-- Daily notes via dated files
-- Persistent across sessions
 `,
 		"IDENTITY.md": `# Identity
 
@@ -977,7 +917,11 @@ func skillsCmd() {
 
 	workspace := cfg.WorkspacePath()
 	installer := skills.NewSkillInstaller(workspace)
-	skillsLoader := skills.NewSkillsLoader(workspace, "")
+	// 获取全局配置目录和内置 skills 目录
+	globalDir := filepath.Dir(getConfigPath())
+	globalSkillsDir := filepath.Join(globalDir, "skills")
+	builtinSkillsDir := filepath.Join(globalDir, "picoclaw", "skills")
+	skillsLoader := skills.NewSkillsLoader(workspace, globalSkillsDir, builtinSkillsDir)
 
 	switch subcommand {
 	case "list":
@@ -1023,7 +967,7 @@ func skillsHelp() {
 }
 
 func skillsListCmd(loader *skills.SkillsLoader) {
-	allSkills := loader.ListSkills(false)
+	allSkills := loader.ListSkills()
 
 	if len(allSkills) == 0 {
 		fmt.Println("No skills installed.")
@@ -1033,16 +977,9 @@ func skillsListCmd(loader *skills.SkillsLoader) {
 	fmt.Println("\nInstalled Skills:")
 	fmt.Println("------------------")
 	for _, skill := range allSkills {
-		status := "✓"
-		if !skill.Available {
-			status = "✗"
-		}
-		fmt.Printf("  %s %s (%s)\n", status, skill.Name, skill.Source)
+		fmt.Printf("  ✓ %s (%s)\n", skill.Name, skill.Source)
 		if skill.Description != "" {
 			fmt.Printf("    %s\n", skill.Description)
-		}
-		if !skill.Available {
-			fmt.Printf("    Missing: %s\n", skill.Missing)
 		}
 	}
 }
