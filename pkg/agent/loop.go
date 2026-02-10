@@ -17,6 +17,7 @@ import (
 
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/session"
 	"github.com/sipeed/picoclaw/pkg/tools"
@@ -115,6 +116,14 @@ func (al *AgentLoop) ProcessDirect(ctx context.Context, content, sessionKey stri
 }
 
 func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage) (string, error) {
+	logger.InfoCF("agent", "Processing message",
+		map[string]interface{}{
+			"channel":     msg.Channel,
+			"chat_id":     msg.ChatID,
+			"sender_id":   msg.SenderID,
+			"session_key": msg.SessionKey,
+		})
+
 	history := al.sessions.GetHistory(msg.SessionKey)
 	summary := al.sessions.GetSummary(msg.SessionKey)
 
@@ -130,6 +139,12 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 
 	for iteration < al.maxIterations {
 		iteration++
+
+		logger.DebugCF("agent", "LLM iteration",
+			map[string]interface{}{
+				"iteration": iteration,
+				"max":       al.maxIterations,
+			})
 
 		toolDefs := al.tools.GetDefinitions()
 		providerToolDefs := make([]providers.ToolDefinition, 0, len(toolDefs))
@@ -150,13 +165,34 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		})
 
 		if err != nil {
+			logger.ErrorCF("agent", "LLM call failed",
+				map[string]interface{}{
+					"iteration": iteration,
+					"error":     err.Error(),
+				})
 			return "", fmt.Errorf("LLM call failed: %w", err)
 		}
 
 		if len(response.ToolCalls) == 0 {
 			finalContent = response.Content
+			logger.InfoCF("agent", "LLM response without tool calls (direct answer)",
+				map[string]interface{}{
+					"iteration":     iteration,
+					"content_chars": len(finalContent),
+				})
 			break
 		}
+
+		toolNames := make([]string, 0, len(response.ToolCalls))
+		for _, tc := range response.ToolCalls {
+			toolNames = append(toolNames, tc.Name)
+		}
+		logger.InfoCF("agent", "LLM requested tool calls",
+			map[string]interface{}{
+				"tools":     toolNames,
+				"count":     len(toolNames),
+				"iteration": iteration,
+			})
 
 		assistantMsg := providers.Message{
 			Role:    "assistant",
@@ -216,6 +252,12 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 	}
 
 	al.sessions.Save(al.sessions.GetOrCreate(msg.SessionKey))
+
+	logger.InfoCF("agent", "Message processing completed",
+		map[string]interface{}{
+			"iterations":   iteration,
+			"final_length": len(finalContent),
+		})
 
 	return finalContent, nil
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
+
+	"github.com/sipeed/picoclaw/pkg/logger"
 )
 
 type ToolRegistry struct {
@@ -31,11 +34,42 @@ func (r *ToolRegistry) Get(name string) (Tool, bool) {
 }
 
 func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string]interface{}) (string, error) {
+	logger.InfoCF("tool", "Tool execution started",
+		map[string]interface{}{
+			"tool": name,
+			"args": args,
+		})
+
 	tool, ok := r.Get(name)
 	if !ok {
+		logger.ErrorCF("tool", "Tool not found",
+			map[string]interface{}{
+				"tool": name,
+			})
 		return "", fmt.Errorf("tool '%s' not found", name)
 	}
-	return tool.Execute(ctx, args)
+
+	start := time.Now()
+	result, err := tool.Execute(ctx, args)
+	duration := time.Since(start)
+
+	if err != nil {
+		logger.ErrorCF("tool", "Tool execution failed",
+			map[string]interface{}{
+				"tool":     name,
+				"duration": duration.Milliseconds(),
+				"error":    err.Error(),
+			})
+	} else {
+		logger.InfoCF("tool", "Tool execution completed",
+			map[string]interface{}{
+				"tool":          name,
+				"duration_ms":   duration.Milliseconds(),
+				"result_length": len(result),
+			})
+	}
+
+	return result, err
 }
 
 func (r *ToolRegistry) GetDefinitions() []map[string]interface{} {
