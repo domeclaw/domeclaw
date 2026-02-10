@@ -177,12 +177,13 @@ That's it! You have a working AI assistant in 2 minutes.
 
 ## 💬 Chat Apps
 
-Talk to your picoclaw through Telegram
+Talk to your picoclaw through Telegram, Discord, or DingTalk
 
 | Channel | Setup |
 |---------|-------|
 | **Telegram** | Easy (just a token) |
 | **Discord** | Easy (bot token + intents) |
+| **DingTalk** | Medium (app credentials) |
 
 <details>
 <summary><b>Telegram</b> (Recommended)</summary>
@@ -257,6 +258,39 @@ picoclaw gateway
 
 ```bash
 nanobot gateway
+```
+
+</details>
+
+
+<details>
+<summary><b>DingTalk</b></summary>
+
+**1. Create a bot**
+
+- Go to [Open Platform](https://open.dingtalk.com/)
+- Create an internal app
+- Copy Client ID and Client Secret
+
+**2. Configure**
+
+```json
+{
+  "channels": {
+    "dingtalk": {
+      "enabled": true,
+      "client_id": "YOUR_CLIENT_ID",
+      "client_secret": "YOUR_CLIENT_SECRET",
+      "allow_from": []
+    }
+  }
+}
+```
+
+**3. Run**
+
+```bash
+picoclaw gateway
 ```
 
 </details>

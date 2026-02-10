@@ -36,6 +36,7 @@ type ChannelsConfig struct {
 	Feishu   FeishuConfig   `json:"feishu"`
 	Discord  DiscordConfig  `json:"discord"`
 	MaixCam  MaixCamConfig  `json:"maixcam"`
+	DingTalk DingTalkConfig `json:"dingtalk"`
 }
 
 type WhatsAppConfig struct {
@@ -70,6 +71,13 @@ type MaixCamConfig struct {
 	Host      string   `json:"host" env:"PICOCLAW_CHANNELS_MAIXCAM_HOST"`
 	Port      int      `json:"port" env:"PICOCLAW_CHANNELS_MAIXCAM_PORT"`
 	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_MAIXCAM_ALLOW_FROM"`
+}
+
+type DingTalkConfig struct {
+	Enabled          bool     `json:"enabled" env:"PICOCLAW_CHANNELS_DINGTALK_ENABLED"`
+	ClientID         string   `json:"client_id" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_ID"`
+	ClientSecret     string   `json:"client_secret" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_SECRET"`
+	AllowFrom        []string `json:"allow_from" env:"PICOCLAW_CHANNELS_DINGTALK_ALLOW_FROM"`
 }
 
 type ProvidersConfig struct {
@@ -145,6 +153,12 @@ func DefaultConfig() *Config {
 				Host:      "0.0.0.0",
 				Port:      18790,
 				AllowFrom: []string{},
+			},
+			DingTalk: DingTalkConfig{
+				Enabled:      false,
+				ClientID:     "",
+				ClientSecret: "",
+				AllowFrom:    []string{},
 			},
 		},
 		Providers: ProvidersConfig{
