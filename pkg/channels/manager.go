@@ -123,6 +123,19 @@ func (m *Manager) initChannels() error {
 		}
 	}
 
+	if m.config.Channels.DingTalk.Enabled && m.config.Channels.DingTalk.ClientID != "" {
+		logger.DebugC("channels", "Attempting to initialize DingTalk channel")
+		dingtalk, err := NewDingTalkChannel(m.config.Channels.DingTalk, m.bus)
+		if err != nil {
+			logger.ErrorCF("channels", "Failed to initialize DingTalk channel", map[string]interface{}{
+				"error": err.Error(),
+			})
+		} else {
+			m.channels["dingtalk"] = dingtalk
+			logger.InfoC("channels", "DingTalk channel enabled successfully")
+		}
+	}
+
 	logger.InfoCF("channels", "Channel initialization completed", map[string]interface{}{
 		"enabled_channels": len(m.channels),
 	})

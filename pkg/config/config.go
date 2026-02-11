@@ -37,6 +37,7 @@ type ChannelsConfig struct {
 	Discord  DiscordConfig  `json:"discord"`
 	MaixCam  MaixCamConfig  `json:"maixcam"`
 	QQ       QQConfig       `json:"qq"`
+	DingTalk DingTalkConfig `json:"dingtalk"`
 }
 
 type WhatsAppConfig struct {
@@ -78,6 +79,13 @@ type QQConfig struct {
 	AppID     string   `json:"app_id" env:"PICOCLAW_CHANNELS_QQ_APP_ID"`
 	AppSecret string   `json:"app_secret" env:"PICOCLAW_CHANNELS_QQ_APP_SECRET"`
 	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_QQ_ALLOW_FROM"`
+}
+
+type DingTalkConfig struct {
+	Enabled          bool     `json:"enabled" env:"PICOCLAW_CHANNELS_DINGTALK_ENABLED"`
+	ClientID         string   `json:"client_id" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_ID"`
+	ClientSecret     string   `json:"client_secret" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_SECRET"`
+	AllowFrom        []string `json:"allow_from" env:"PICOCLAW_CHANNELS_DINGTALK_ALLOW_FROM"`
 }
 
 type ProvidersConfig struct {
@@ -159,6 +167,12 @@ func DefaultConfig() *Config {
 				AppID:     "",
 				AppSecret: "",
 				AllowFrom: []string{},
+			},
+			DingTalk: DingTalkConfig{
+				Enabled:      false,
+				ClientID:     "",
+				ClientSecret: "",
+				AllowFrom:    []string{},
 			},
 		},
 		Providers: ProvidersConfig{
