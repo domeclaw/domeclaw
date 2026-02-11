@@ -27,6 +27,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
+	"github.com/sipeed/picoclaw/pkg/tools"
 	"github.com/sipeed/picoclaw/pkg/voice"
 )
 
@@ -550,8 +551,8 @@ func gatewayCmd() {
 			"skills_available": skillsInfo["available"],
 		})
 
-	cronStorePath := filepath.Join(filepath.Dir(getConfigPath()), "cron", "jobs.json")
-	cronService := cron.NewCronService(cronStorePath, nil)
+	// Setup cron tool and service
+	cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -689,6 +690,25 @@ func getConfigPath() string {
 	return filepath.Join(home, ".picoclaw", "config.json")
 }
 
+func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
+	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
+
+	// Create cron service
+	cronService := cron.NewCronService(cronStorePath, nil)
+
+	// Create and register CronTool
+	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus)
+	agentLoop.RegisterTool(cronTool)
+
+	// Set the onJob handler
+	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
+		result := cronTool.ExecuteJob(context.Background(), job)
+		return result, nil
+	})
+
+	return cronService
+}
+
 func loadConfig() (*config.Config, error) {
 	return config.LoadConfig(getConfigPath())
 }
@@ -701,8 +721,14 @@ func cronCmd() {
 
 	subcommand := os.Args[2]
 
-	dataDir := filepath.Join(filepath.Dir(getConfigPath()), "cron")
-	cronStorePath := filepath.Join(dataDir, "jobs.json")
+	// Load config to get workspace path
+	cfg, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		return
+	}
+
+	cronStorePath := filepath.Join(cfg.WorkspacePath(), "cron", "jobs.json")
 
 	switch subcommand {
 	case "list":
@@ -745,7 +771,7 @@ func cronHelp() {
 
 func cronListCmd(storePath string) {
 	cs := cron.NewCronService(storePath, nil)
-	jobs := cs.ListJobs(false)
+	jobs := cs.ListJobs(true)  // Show all jobs, including disabled
 
 	if len(jobs) == 0 {
 		fmt.Println("No scheduled jobs.")

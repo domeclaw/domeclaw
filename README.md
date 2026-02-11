@@ -333,6 +333,23 @@ picoclaw gateway
 
 Config file: `~/.picoclaw/config.json`
 
+### Workspace Layout
+
+PicoClaw stores data in your configured workspace (default: `~/.picoclaw/workspace`):
+
+```
+~/.picoclaw/workspace/
+├── sessions/          # Conversation sessions and history
+├── memory/           # Long-term memory (MEMORY.md)
+├── cron/             # Scheduled jobs database
+├── skills/           # Custom skills
+├── AGENTS.md         # Agent behavior guide
+├── IDENTITY.md       # Agent identity
+├── SOUL.md           # Agent soul
+├── TOOLS.md          # Tool descriptions
+└── USER.md           # User preferences
+```
+
 ### Providers
 
 > [!NOTE]
@@ -452,6 +469,18 @@ picoclaw agent -m "Hello"
 | `picoclaw agent` | Interactive chat mode |
 | `picoclaw gateway` | Start the gateway |
 | `picoclaw status` | Show status |
+| `picoclaw cron list` | List all scheduled jobs |
+| `picoclaw cron add ...` | Add a scheduled job |
+
+### Scheduled Tasks / Reminders
+
+PicoClaw supports scheduled reminders and recurring tasks through the `cron` tool:
+
+- **One-time reminders**: "Remind me in 10 minutes" → triggers once after 10min
+- **Recurring tasks**: "Remind me every 2 hours" → triggers every 2 hours
+- **Cron expressions**: "Remind me at 9am daily" → uses cron expression
+
+Jobs are stored in `~/.picoclaw/workspace/cron/` and processed automatically.
 
 ## 🤝 Contribute & Roadmap
 

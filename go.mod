@@ -3,6 +3,7 @@ module github.com/sipeed/picoclaw
 go 1.24.0
 
 require (
+	github.com/adhocore/gronx v1.19.6
 	github.com/bwmarrin/discordgo v0.29.0
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/chzyer/readline v1.5.1
