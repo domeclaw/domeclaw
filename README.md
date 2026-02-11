@@ -256,7 +256,7 @@ picoclaw gateway
 **6. Run**
 
 ```bash
-nanobot gateway
+picoclaw gateway
 ```
 
 </details>
