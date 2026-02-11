@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/responses"
 	"github.com/sipeed/picoclaw/pkg/auth"
 )
 
@@ -79,7 +79,7 @@ func buildCodexParams(messages []Message, tools []ToolDefinition, model string, 
 				inputItems = append(inputItems, responses.ResponseInputItemUnionParam{
 					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 						CallID: msg.ToolCallID,
-						Output: msg.Content,
+						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{OfString: openai.Opt(msg.Content)},
 					},
 				})
 			} else {
@@ -122,7 +122,7 @@ func buildCodexParams(messages []Message, tools []ToolDefinition, model string, 
 			inputItems = append(inputItems, responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 					CallID: msg.ToolCallID,
-					Output: msg.Content,
+					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{OfString: openai.Opt(msg.Content)},
 				},
 			})
 		}
