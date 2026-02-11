@@ -34,6 +34,10 @@ func (r *ToolRegistry) Get(name string) (Tool, bool) {
 }
 
 func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string]interface{}) (string, error) {
+	return r.ExecuteWithContext(ctx, name, args, "", "")
+}
+
+func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args map[string]interface{}, channel, chatID string) (string, error) {
 	logger.InfoCF("tool", "Tool execution started",
 		map[string]interface{}{
 			"tool": name,
@@ -47,6 +51,11 @@ func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string
 				"tool": name,
 			})
 		return "", fmt.Errorf("tool '%s' not found", name)
+	}
+
+	// If tool implements ContextualTool, set context
+	if contextualTool, ok := tool.(ContextualTool); ok && channel != "" && chatID != "" {
+		contextualTool.SetContext(channel, chatID)
 	}
 
 	start := time.Now()

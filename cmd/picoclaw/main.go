@@ -27,6 +27,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
+	"github.com/sipeed/picoclaw/pkg/tools"
 	"github.com/sipeed/picoclaw/pkg/voice"
 )
 
@@ -551,7 +552,19 @@ func gatewayCmd() {
 		})
 
 	cronStorePath := filepath.Join(filepath.Dir(getConfigPath()), "cron", "jobs.json")
+
+	// Create cron service first (onJob handler set after CronTool creation)
 	cronService := cron.NewCronService(cronStorePath, nil)
+
+	// Create and register CronTool
+	cronTool := tools.NewCronTool(cronService, agentLoop)
+	agentLoop.RegisterTool(cronTool)
+
+	// Now set the onJob handler for cron service
+	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
+		result := cronTool.ExecuteJob(context.Background(), job)
+		return result, nil
+	})
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -745,7 +758,7 @@ func cronHelp() {
 
 func cronListCmd(storePath string) {
 	cs := cron.NewCronService(storePath, nil)
-	jobs := cs.ListJobs(false)
+	jobs := cs.ListJobs(true)  // Show all jobs, including disabled
 
 	if len(jobs) == 0 {
 		fmt.Println("No scheduled jobs.")

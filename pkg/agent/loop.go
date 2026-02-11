@@ -119,11 +119,19 @@ func (al *AgentLoop) Stop() {
 	al.running = false
 }
 
+func (al *AgentLoop) RegisterTool(tool tools.Tool) {
+	al.tools.Register(tool)
+}
+
 func (al *AgentLoop) ProcessDirect(ctx context.Context, content, sessionKey string) (string, error) {
+	return al.ProcessDirectWithChannel(ctx, content, sessionKey, "cli", "direct")
+}
+
+func (al *AgentLoop) ProcessDirectWithChannel(ctx context.Context, content, sessionKey, channel, chatID string) (string, error) {
 	msg := bus.InboundMessage{
-		Channel:    "cli",
-		SenderID:   "user",
-		ChatID:     "direct",
+		Channel:    channel,
+		SenderID:   "cron",
+		ChatID:     chatID,
 		Content:    content,
 		SessionKey: sessionKey,
 	}
@@ -439,7 +447,7 @@ func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMe
 		messages = append(messages, assistantMsg)
 
 		for _, tc := range response.ToolCalls {
-			result, err := al.tools.Execute(ctx, tc.Name, tc.Arguments)
+			result, err := al.tools.ExecuteWithContext(ctx, tc.Name, tc.Arguments, msg.Channel, msg.ChatID)
 			if err != nil {
 				result = fmt.Sprintf("Error: %v", err)
 			}
