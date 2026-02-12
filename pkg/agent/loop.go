@@ -158,13 +158,13 @@ func (al *AgentLoop) RegisterTool(tool tools.Tool) {
 // RecordLastChannel records the last active channel for this workspace.
 // This uses the atomic state save mechanism to prevent data loss on crash.
 func (al *AgentLoop) RecordLastChannel(channel string) error {
-	return al.state.SetLastChannel(al.workspace, channel)
+	return al.state.SetLastChannel(channel)
 }
 
 // RecordLastChatID records the last active chat ID for this workspace.
 // This uses the atomic state save mechanism to prevent data loss on crash.
 func (al *AgentLoop) RecordLastChatID(chatID string) error {
-	return al.state.SetLastChatID(al.workspace, chatID)
+	return al.state.SetLastChatID(chatID)
 }
 
 func (al *AgentLoop) ProcessDirect(ctx context.Context, content, sessionKey string) (string, error) {
@@ -271,14 +271,13 @@ func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (str
 	al.sessions.AddMessage(opts.SessionKey, "user", opts.UserMessage)
 
 	// 4. Run LLM iteration loop
-	finalContent, iteration, lastToolResult, err := al.runLLMIteration(ctx, messages, opts)
+	finalContent, iteration, err := al.runLLMIteration(ctx, messages, opts)
 	if err != nil {
 		return "", err
 	}
 
 	// If last tool had ForUser content and we already sent it, we might not need to send final response
 	// This is controlled by the tool's Silent flag and ForUser content
-	_ = lastToolResult // Use lastToolResult for future decisions (e.g., US-008 callback injection)
 
 	// 5. Handle empty response
 	if finalContent == "" {
@@ -316,11 +315,10 @@ func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (str
 }
 
 // runLLMIteration executes the LLM call loop with tool handling.
-// Returns the final content, iteration count, last tool result, and any error.
-func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.Message, opts processOptions) (string, int, *tools.ToolResult, error) {
+// Returns the final content, iteration count, and any error.
+func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.Message, opts processOptions) (string, int, error) {
 	iteration := 0
 	var finalContent string
-	var lastToolResult *tools.ToolResult
 
 	for iteration < al.maxIterations {
 		iteration++
@@ -377,7 +375,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 					"iteration": iteration,
 					"error":     err.Error(),
 				})
-			return "", iteration, nil, fmt.Errorf("LLM call failed: %w", err)
+			return "", iteration, fmt.Errorf("LLM call failed: %w", err)
 		}
 
 		// Check if no tool calls - we're done
@@ -454,7 +452,6 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 			}
 
 			toolResult := al.tools.ExecuteWithContext(ctx, tc.Name, tc.Arguments, opts.Channel, opts.ChatID, asyncCallback)
-			lastToolResult = toolResult
 
 			// Send ForUser content to user immediately if not Silent
 			if !toolResult.Silent && toolResult.ForUser != "" && opts.SendResponse {
@@ -488,7 +485,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 		}
 	}
 
-	return finalContent, iteration, lastToolResult, nil
+	return finalContent, iteration, nil
 }
 
 // updateToolContexts updates the context for tools that need channel/chatID info.

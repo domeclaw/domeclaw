@@ -53,9 +53,7 @@ func NewManager(workspace string) *Manager {
 // SetLastChannel atomically updates the last channel and saves the state.
 // This method uses a temp file + rename pattern for atomic writes,
 // ensuring that the state file is never corrupted even if the process crashes.
-//
-// The workspace parameter is used to construct the state file path.
-func (sm *Manager) SetLastChannel(workspace, channel string) error {
+func (sm *Manager) SetLastChannel(channel string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -72,7 +70,7 @@ func (sm *Manager) SetLastChannel(workspace, channel string) error {
 }
 
 // SetLastChatID atomically updates the last chat ID and saves the state.
-func (sm *Manager) SetLastChatID(workspace, chatID string) error {
+func (sm *Manager) SetLastChatID(chatID string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 

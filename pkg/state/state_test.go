@@ -19,7 +19,7 @@ func TestAtomicSave(t *testing.T) {
 	sm := NewManager(tmpDir)
 
 	// Test SetLastChannel
-	err = sm.SetLastChannel(tmpDir, "test-channel")
+	err = sm.SetLastChannel("test-channel")
 	if err != nil {
 		t.Fatalf("SetLastChannel failed: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestSetLastChatID(t *testing.T) {
 	sm := NewManager(tmpDir)
 
 	// Test SetLastChatID
-	err = sm.SetLastChatID(tmpDir, "test-chat-id")
+	err = sm.SetLastChatID("test-chat-id")
 	if err != nil {
 		t.Fatalf("SetLastChatID failed: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestAtomicity_NoCorruptionOnInterrupt(t *testing.T) {
 	sm := NewManager(tmpDir)
 
 	// Write initial state
-	err = sm.SetLastChannel(tmpDir, "initial-channel")
+	err = sm.SetLastChannel("initial-channel")
 	if err != nil {
 		t.Fatalf("SetLastChannel failed: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestAtomicity_NoCorruptionOnInterrupt(t *testing.T) {
 	os.Remove(tempFile)
 
 	// Now do a proper save
-	err = sm.SetLastChannel(tmpDir, "new-channel")
+	err = sm.SetLastChannel("new-channel")
 	if err != nil {
 		t.Fatalf("SetLastChannel failed: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestConcurrentAccess(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(idx int) {
 			channel := fmt.Sprintf("channel-%d", idx)
-			sm.SetLastChannel(tmpDir, channel)
+			sm.SetLastChannel(channel)
 			done <- true
 		}(i)
 	}
@@ -176,8 +176,8 @@ func TestNewManager_ExistingState(t *testing.T) {
 
 	// Create initial state
 	sm1 := NewManager(tmpDir)
-	sm1.SetLastChannel(tmpDir, "existing-channel")
-	sm1.SetLastChatID(tmpDir, "existing-chat-id")
+	sm1.SetLastChannel("existing-channel")
+	sm1.SetLastChatID("existing-chat-id")
 
 	// Create new manager with same workspace
 	sm2 := NewManager(tmpDir)

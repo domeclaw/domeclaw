@@ -53,7 +53,7 @@ func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args
 			map[string]interface{}{
 				"tool": name,
 			})
-		return ErrorResult(fmt.Sprintf("tool '%s' not found", name)).WithError(fmt.Errorf("tool not found"))
+		return ErrorResult(fmt.Sprintf("tool %q not found", name)).WithError(fmt.Errorf("tool not found"))
 	}
 
 	// If tool implements ContextualTool, set context
