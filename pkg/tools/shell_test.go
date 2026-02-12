@@ -11,7 +11,7 @@ import (
 
 // TestShellTool_Success verifies successful command execution
 func TestShellTool_Success(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{
@@ -38,7 +38,7 @@ func TestShellTool_Success(t *testing.T) {
 
 // TestShellTool_Failure verifies failed command execution
 func TestShellTool_Failure(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{
@@ -65,7 +65,7 @@ func TestShellTool_Failure(t *testing.T) {
 
 // TestShellTool_Timeout verifies command timeout handling
 func TestShellTool_Timeout(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 	tool.SetTimeout(100 * time.Millisecond)
 
 	ctx := context.Background()
@@ -93,7 +93,7 @@ func TestShellTool_WorkingDir(t *testing.T) {
 	testFile := filepath.Join(tmpDir, "test.txt")
 	os.WriteFile(testFile, []byte("test content"), 0644)
 
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{
@@ -114,7 +114,7 @@ func TestShellTool_WorkingDir(t *testing.T) {
 
 // TestShellTool_DangerousCommand verifies safety guard blocks dangerous commands
 func TestShellTool_DangerousCommand(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{
@@ -135,7 +135,7 @@ func TestShellTool_DangerousCommand(t *testing.T) {
 
 // TestShellTool_MissingCommand verifies error handling for missing command
 func TestShellTool_MissingCommand(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{}
@@ -150,7 +150,7 @@ func TestShellTool_MissingCommand(t *testing.T) {
 
 // TestShellTool_StderrCapture verifies stderr is captured and included
 func TestShellTool_StderrCapture(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	args := map[string]interface{}{
@@ -170,7 +170,7 @@ func TestShellTool_StderrCapture(t *testing.T) {
 
 // TestShellTool_OutputTruncation verifies long output is truncated
 func TestShellTool_OutputTruncation(t *testing.T) {
-	tool := NewExecTool("")
+	tool := NewExecTool("", false)
 
 	ctx := context.Background()
 	// Generate long output (>10000 chars)
@@ -189,7 +189,7 @@ func TestShellTool_OutputTruncation(t *testing.T) {
 // TestShellTool_RestrictToWorkspace verifies workspace restriction
 func TestShellTool_RestrictToWorkspace(t *testing.T) {
 	tmpDir := t.TempDir()
-	tool := NewExecTool(tmpDir)
+	tool := NewExecTool(tmpDir, false)
 	tool.SetRestrictToWorkspace(true)
 
 	ctx := context.Background()

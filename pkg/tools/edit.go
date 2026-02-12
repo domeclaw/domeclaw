@@ -4,20 +4,21 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
 // EditFileTool edits a file by replacing old_text with new_text.
 // The old_text must exist exactly in the file.
 type EditFileTool struct {
-	allowedDir string // Optional directory restriction for security
+	allowedDir string
+	restrict   bool
 }
 
 // NewEditFileTool creates a new EditFileTool with optional directory restriction.
-func NewEditFileTool(allowedDir string) *EditFileTool {
+func NewEditFileTool(allowedDir string, restrict bool) *EditFileTool {
 	return &EditFileTool{
 		allowedDir: allowedDir,
+		restrict:   restrict,
 	}
 }
 
@@ -66,27 +67,9 @@ func (t *EditFileTool) Execute(ctx context.Context, args map[string]interface{})
 		return ErrorResult("new_text is required")
 	}
 
-	// Resolve path and enforce directory restriction if configured
-	resolvedPath := path
-	if filepath.IsAbs(path) {
-		resolvedPath = filepath.Clean(path)
-	} else {
-		abs, err := filepath.Abs(path)
-		if err != nil {
-			return ErrorResult(fmt.Sprintf("failed to resolve path: %v", err))
-		}
-		resolvedPath = abs
-	}
-
-	// Check directory restriction
-	if t.allowedDir != "" {
-		allowedAbs, err := filepath.Abs(t.allowedDir)
-		if err != nil {
-			return ErrorResult(fmt.Sprintf("failed to resolve allowed directory: %v", err))
-		}
-		if !strings.HasPrefix(resolvedPath, allowedAbs) {
-			return ErrorResult(fmt.Sprintf("path %s is outside allowed directory %s", path, t.allowedDir))
-		}
+	resolvedPath, err := validatePath(path, t.allowedDir, t.restrict)
+	if err != nil {
+		return ErrorResult(err.Error())
 	}
 
 	if _, err := os.Stat(resolvedPath); os.IsNotExist(err) {
@@ -118,10 +101,13 @@ func (t *EditFileTool) Execute(ctx context.Context, args map[string]interface{})
 	return SilentResult(fmt.Sprintf("File edited: %s", path))
 }
 
-type AppendFileTool struct{}
+type AppendFileTool struct {
+	workspace string
+	restrict  bool
+}
 
-func NewAppendFileTool() *AppendFileTool {
-	return &AppendFileTool{}
+func NewAppendFileTool(workspace string, restrict bool) *AppendFileTool {
+	return &AppendFileTool{workspace: workspace, restrict: restrict}
 }
 
 func (t *AppendFileTool) Name() string {
@@ -160,9 +146,12 @@ func (t *AppendFileTool) Execute(ctx context.Context, args map[string]interface{
 		return ErrorResult("content is required")
 	}
 
-	filePath := filepath.Clean(path)
+	resolvedPath, err := validatePath(path, t.workspace, t.restrict)
+	if err != nil {
+		return ErrorResult(err.Error())
+	}
 
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(resolvedPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("failed to open file: %v", err))
 	}

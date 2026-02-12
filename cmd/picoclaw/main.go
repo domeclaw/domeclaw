@@ -1033,25 +1033,24 @@ func getConfigPath() string {
 	return filepath.Join(home, ".picoclaw", "config.json")
 }
 
-// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-// func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
-// 	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
-//
-// 	// Create cron service
-// 	cronService := cron.NewCronService(cronStorePath, nil)
-//
-// 	// Create and register CronTool
-// 	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus)
-// 	agentLoop.RegisterTool(cronTool)
-//
-// 	// Set the onJob handler
-// 	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
-// 		result := cronTool.ExecuteJob(context.Background(), job)
-// 		return result, nil
-// 	})
-//
-// 	return cronService
-// }
+func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
+	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
+
+	// Create cron service
+	cronService := cron.NewCronService(cronStorePath, nil)
+
+	// Create and register CronTool
+	cronTool := toolsPkg.NewCronTool(cronService, agentLoop, msgBus, workspace)
+	agentLoop.RegisterTool(cronTool)
+
+	// Set the onJob handler
+	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
+		result := cronTool.ExecuteJob(context.Background(), job)
+		return result, nil
+	})
+
+	return cronService
+}
 
 func loadConfig() (*config.Config, error) {
 	return config.LoadConfig(getConfigPath())
