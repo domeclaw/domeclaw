@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/bus"
@@ -35,7 +36,7 @@ type AgentLoop struct {
 	sessions       *session.SessionManager
 	contextBuilder *ContextBuilder
 	tools          *tools.ToolRegistry
-	running        bool
+	running        atomic.Bool
 	summarizing    sync.Map      // Tracks which sessions are currently being summarized
 }
 
@@ -101,15 +102,14 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 		sessions:       sessionsManager,
 		contextBuilder: contextBuilder,
 		tools:          toolsRegistry,
-		running:        false,
 		summarizing:    sync.Map{},
 	}
 }
 
 func (al *AgentLoop) Run(ctx context.Context) error {
-	al.running = true
+	al.running.Store(true)
 
-	for al.running {
+	for al.running.Load() {
 		select {
 		case <-ctx.Done():
 			return nil
@@ -138,7 +138,7 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 }
 
 func (al *AgentLoop) Stop() {
-	al.running = false
+	al.running.Store(false)
 }
 
 func (al *AgentLoop) RegisterTool(tool tools.Tool) {

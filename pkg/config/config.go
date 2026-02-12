@@ -38,6 +38,7 @@ type ChannelsConfig struct {
 	MaixCam  MaixCamConfig  `json:"maixcam"`
 	QQ       QQConfig       `json:"qq"`
 	DingTalk DingTalkConfig `json:"dingtalk"`
+	Slack    SlackConfig    `json:"slack"`
 }
 
 type WhatsAppConfig struct {
@@ -88,6 +89,13 @@ type DingTalkConfig struct {
 	AllowFrom        []string `json:"allow_from" env:"PICOCLAW_CHANNELS_DINGTALK_ALLOW_FROM"`
 }
 
+type SlackConfig struct {
+	Enabled  bool     `json:"enabled" env:"PICOCLAW_CHANNELS_SLACK_ENABLED"`
+	BotToken string   `json:"bot_token" env:"PICOCLAW_CHANNELS_SLACK_BOT_TOKEN"`
+	AppToken string   `json:"app_token" env:"PICOCLAW_CHANNELS_SLACK_APP_TOKEN"`
+	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_SLACK_ALLOW_FROM"`
+}
+
 type ProvidersConfig struct {
 	Anthropic  ProviderConfig `json:"anthropic"`
 	OpenAI     ProviderConfig `json:"openai"`
@@ -99,8 +107,9 @@ type ProvidersConfig struct {
 }
 
 type ProviderConfig struct {
-	APIKey  string `json:"api_key" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_KEY"`
-	APIBase string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
+	APIKey     string `json:"api_key" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_KEY"`
+	APIBase    string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
+	AuthMethod string `json:"auth_method,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_AUTH_METHOD"`
 }
 
 type GatewayConfig struct {
@@ -173,6 +182,12 @@ func DefaultConfig() *Config {
 				ClientID:     "",
 				ClientSecret: "",
 				AllowFrom:    []string{},
+			},
+			Slack: SlackConfig{
+				Enabled:   false,
+				BotToken:  "",
+				AppToken:  "",
+				AllowFrom: []string{},
 			},
 		},
 		Providers: ProvidersConfig{
