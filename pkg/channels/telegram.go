@@ -13,7 +13,8 @@ import (
 	"sync"
 	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/config"
@@ -23,17 +24,16 @@ import (
 
 type TelegramChannel struct {
 	*BaseChannel
-	bot          *tgbotapi.BotAPI
+	bot          *telego.Bot
 	config       config.TelegramConfig
 	chatIDs      map[string]int64
-	updates      tgbotapi.UpdatesChannel
 	transcriber  *voice.GroqTranscriber
 	placeholders sync.Map // chatID -> messageID
 	stopThinking sync.Map // chatID -> chan struct{}
 }
 
 func NewTelegramChannel(cfg config.TelegramConfig, bus *bus.MessageBus) (*TelegramChannel, error) {
-	bot, err := tgbotapi.NewBotAPI(cfg.Token)
+	bot, err := telego.NewBot(cfg.Token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create telegram bot: %w", err)
 	}
@@ -58,19 +58,15 @@ func (c *TelegramChannel) SetTranscriber(transcriber *voice.GroqTranscriber) {
 func (c *TelegramChannel) Start(ctx context.Context) error {
 	log.Printf("Starting Telegram bot (polling mode)...")
 
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 30
-
-	updates := c.bot.GetUpdatesChan(u)
-	c.updates = updates
+	updates, err := c.bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
+		Timeout: 30,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start long polling: %w", err)
+	}
 
 	c.setRunning(true)
-
-	botInfo, err := c.bot.GetMe()
-	if err != nil {
-		return fmt.Errorf("failed to get bot info: %w", err)
-	}
-	log.Printf("Telegram bot @%s connected", botInfo.UserName)
+	log.Printf("Telegram bot @%s connected", c.bot.Username())
 
 	go func() {
 		for {
@@ -83,7 +79,7 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 					return
 				}
 				if update.Message != nil {
-					c.handleMessage(update)
+					c.handleMessage(ctx, update)
 				}
 			}
 		}
@@ -95,12 +91,6 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 func (c *TelegramChannel) Stop(ctx context.Context) error {
 	log.Println("Stopping Telegram bot...")
 	c.setRunning(false)
-
-	if c.updates != nil {
-		c.bot.StopReceivingUpdates()
-		c.updates = nil
-	}
-
 	return nil
 }
 
@@ -125,30 +115,29 @@ func (c *TelegramChannel) Send(ctx context.Context, msg bus.OutboundMessage) err
 	// Try to edit placeholder
 	if pID, ok := c.placeholders.Load(msg.ChatID); ok {
 		c.placeholders.Delete(msg.ChatID)
-		editMsg := tgbotapi.NewEditMessageText(chatID, pID.(int), htmlContent)
-		editMsg.ParseMode = tgbotapi.ModeHTML
+		editMsg := tu.EditMessageText(tu.ID(chatID), pID.(int), htmlContent)
+		editMsg.ParseMode = telego.ModeHTML
 
-		if _, err := c.bot.Send(editMsg); err == nil {
+		if _, err = c.bot.EditMessageText(ctx, editMsg); err == nil {
 			return nil
 		}
 		// Fallback to new message if edit fails
 	}
 
-	tgMsg := tgbotapi.NewMessage(chatID, htmlContent)
-	tgMsg.ParseMode = tgbotapi.ModeHTML
+	tgMsg := tu.Message(tu.ID(chatID), htmlContent)
+	tgMsg.ParseMode = telego.ModeHTML
 
-	if _, err := c.bot.Send(tgMsg); err != nil {
+	if _, err = c.bot.SendMessage(ctx, tgMsg); err != nil {
 		log.Printf("HTML parse failed, falling back to plain text: %v", err)
-		tgMsg = tgbotapi.NewMessage(chatID, msg.Content)
 		tgMsg.ParseMode = ""
-		_, err = c.bot.Send(tgMsg)
+		_, err = c.bot.SendMessage(ctx, tgMsg)
 		return err
 	}
 
 	return nil
 }
 
-func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
+func (c *TelegramChannel) handleMessage(ctx context.Context, update telego.Update) {
 	message := update.Message
 	if message == nil {
 		return
@@ -160,8 +149,8 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	}
 
 	senderID := fmt.Sprintf("%d", user.ID)
-	if user.UserName != "" {
-		senderID = fmt.Sprintf("%d|%s", user.ID, user.UserName)
+	if user.Username != "" {
+		senderID = fmt.Sprintf("%d|%s", user.ID, user.Username)
 	}
 
 	chatID := message.Chat.ID
@@ -183,7 +172,7 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 
 	if message.Photo != nil && len(message.Photo) > 0 {
 		photo := message.Photo[len(message.Photo)-1]
-		photoPath := c.downloadPhoto(photo.FileID)
+		photoPath := c.downloadPhoto(ctx, photo.FileID)
 		if photoPath != "" {
 			mediaPaths = append(mediaPaths, photoPath)
 			if content != "" {
@@ -194,7 +183,7 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	}
 
 	if message.Voice != nil {
-		voicePath := c.downloadFile(message.Voice.FileID, ".ogg")
+		voicePath := c.downloadFile(ctx, message.Voice.FileID, ".ogg")
 		if voicePath != "" {
 			mediaPaths = append(mediaPaths, voicePath)
 
@@ -223,7 +212,7 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	}
 
 	if message.Audio != nil {
-		audioPath := c.downloadFile(message.Audio.FileID, ".mp3")
+		audioPath := c.downloadFile(ctx, message.Audio.FileID, ".mp3")
 		if audioPath != "" {
 			mediaPaths = append(mediaPaths, audioPath)
 			if content != "" {
@@ -234,7 +223,7 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	}
 
 	if message.Document != nil {
-		docPath := c.downloadFile(message.Document.FileID, "")
+		docPath := c.downloadFile(ctx, message.Document.FileID, "")
 		if docPath != "" {
 			mediaPaths = append(mediaPaths, docPath)
 			if content != "" {
@@ -251,12 +240,15 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	log.Printf("Telegram message from %s: %s...", senderID, utils.Truncate(content, 50))
 
 	// Thinking indicator
-	c.bot.Send(tgbotapi.NewChatAction(chatID, tgbotapi.ChatTyping))
+	err := c.bot.SendChatAction(ctx, tu.ChatAction(tu.ID(chatID), telego.ChatActionTyping))
+	if err != nil {
+		log.Printf("Failed to send chat action: %v", err)
+	}
 
 	stopChan := make(chan struct{})
 	c.stopThinking.Store(fmt.Sprintf("%d", chatID), stopChan)
 
-	pMsg, err := c.bot.Send(tgbotapi.NewMessage(chatID, "Thinking... 💭"))
+	pMsg, err := c.bot.SendMessage(ctx, tu.Message(tu.ID(chatID), "Thinking... 💭"))
 	if err == nil {
 		pID := pMsg.MessageID
 		c.placeholders.Store(fmt.Sprintf("%d", chatID), pID)
@@ -274,8 +266,10 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 				case <-ticker.C:
 					i++
 					text := fmt.Sprintf("Thinking%s %s", dots[i%len(dots)], emotes[i%len(emotes)])
-					edit := tgbotapi.NewEditMessageText(cid, mid, text)
-					c.bot.Send(edit)
+					_, editErr := c.bot.EditMessageText(ctx, tu.EditMessageText(tu.ID(chatID), mid, text))
+					if editErr != nil {
+						log.Printf("Failed to edit thinking message: %v", editErr)
+					}
 				}
 			}
 		}(chatID, pID, stopChan)
@@ -284,7 +278,7 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	metadata := map[string]string{
 		"message_id": fmt.Sprintf("%d", message.MessageID),
 		"user_id":    fmt.Sprintf("%d", user.ID),
-		"username":   user.UserName,
+		"username":   user.Username,
 		"first_name": user.FirstName,
 		"is_group":   fmt.Sprintf("%t", message.Chat.Type != "private"),
 	}
@@ -292,22 +286,22 @@ func (c *TelegramChannel) handleMessage(update tgbotapi.Update) {
 	c.HandleMessage(senderID, fmt.Sprintf("%d", chatID), content, mediaPaths, metadata)
 }
 
-func (c *TelegramChannel) downloadPhoto(fileID string) string {
-	file, err := c.bot.GetFile(tgbotapi.FileConfig{FileID: fileID})
+func (c *TelegramChannel) downloadPhoto(ctx context.Context, fileID string) string {
+	file, err := c.bot.GetFile(ctx, &telego.GetFileParams{FileID: fileID})
 	if err != nil {
 		log.Printf("Failed to get photo file: %v", err)
 		return ""
 	}
 
-	return c.downloadFileWithInfo(&file, ".jpg")
+	return c.downloadFileWithInfo(file, ".jpg")
 }
 
-func (c *TelegramChannel) downloadFileWithInfo(file *tgbotapi.File, ext string) string {
+func (c *TelegramChannel) downloadFileWithInfo(file *telego.File, ext string) string {
 	if file.FilePath == "" {
 		return ""
 	}
 
-	url := file.Link(c.bot.Token)
+	url := c.bot.FileDownloadURL(file.FilePath)
 	log.Printf("File URL: %s", url)
 
 	mediaDir := filepath.Join(os.TempDir(), "picoclaw_media")
@@ -324,13 +318,6 @@ func (c *TelegramChannel) downloadFileWithInfo(file *tgbotapi.File, ext string) 
 	}
 
 	return localPath
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 func (c *TelegramChannel) downloadFromURL(url, localPath string) error {
@@ -359,8 +346,8 @@ func (c *TelegramChannel) downloadFromURL(url, localPath string) error {
 	return nil
 }
 
-func (c *TelegramChannel) downloadFile(fileID, ext string) string {
-	file, err := c.bot.GetFile(tgbotapi.FileConfig{FileID: fileID})
+func (c *TelegramChannel) downloadFile(ctx context.Context, fileID, ext string) string {
+	file, err := c.bot.GetFile(ctx, &telego.GetFileParams{FileID: fileID})
 	if err != nil {
 		log.Printf("Failed to get file: %v", err)
 		return ""
@@ -370,18 +357,18 @@ func (c *TelegramChannel) downloadFile(fileID, ext string) string {
 		return ""
 	}
 
-	url := file.Link(c.bot.Token)
+	url := c.bot.FileDownloadURL(file.FilePath)
 	log.Printf("File URL: %s", url)
 
 	mediaDir := filepath.Join(os.TempDir(), "picoclaw_media")
-	if err := os.MkdirAll(mediaDir, 0755); err != nil {
+	if err = os.MkdirAll(mediaDir, 0755); err != nil {
 		log.Printf("Failed to create media directory: %v", err)
 		return ""
 	}
 
 	localPath := filepath.Join(mediaDir, fileID[:16]+ext)
 
-	if err := c.downloadFromURL(url, localPath); err != nil {
+	if err = c.downloadFromURL(url, localPath); err != nil {
 		log.Printf("Failed to download file: %v", err)
 		return ""
 	}
