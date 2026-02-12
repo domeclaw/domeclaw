@@ -1,7 +1,7 @@
 {
   "project": "picoclaw",
   "branchName": "ralph/tool-result-refactor",
-  "description": "Tool \u8fd4\u56de\u503c\u7ed3\u6784\u5316\u91cd\u6784 - \u5c06 Tool \u63a5\u53e3\u8fd4\u56de\u503c\u4ece (string, error) \u6539\u4e3a\u7ed3\u6784\u5316 ToolResult\uff0c\u652f\u6301\u5f02\u6b65\u4efb\u52a1\uff0c\u5220\u9664\u5b57\u7b26\u4e32\u5339\u914d\u9ed1\u9b54\u6cd5",
+  "description": "Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改为结构化 ToolResult，支持异步任务，删除字符串匹配黑魔法",
   "userStories": [
     {
       "id": "US-001",
@@ -255,7 +255,7 @@
         "go test ./pkg/tools -run TestSpawnTool passes"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
