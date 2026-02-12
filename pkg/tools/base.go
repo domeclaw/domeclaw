@@ -9,6 +9,13 @@ type Tool interface {
 	Execute(ctx context.Context, args map[string]interface{}) (string, error)
 }
 
+// ContextualTool is an optional interface that tools can implement
+// to receive the current message context (channel, chatID)
+type ContextualTool interface {
+	Tool
+	SetContext(channel, chatID string)
+}
+
 func ToolToSchema(tool Tool) map[string]interface{} {
 	return map[string]interface{}{
 		"type": "function",

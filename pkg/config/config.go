@@ -25,6 +25,7 @@ type AgentsConfig struct {
 type AgentDefaults struct {
 	Workspace         string  `json:"workspace" env:"PICOCLAW_AGENTS_DEFAULTS_WORKSPACE"`
 	RestrictToWorkspace bool  `json:"restrict_to_workspace" env:"PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE"`
+	Provider          string  `json:"provider" env:"PICOCLAW_AGENTS_DEFAULTS_PROVIDER"`
 	Model             string  `json:"model" env:"PICOCLAW_AGENTS_DEFAULTS_MODEL"`
 	MaxTokens         int     `json:"max_tokens" env:"PICOCLAW_AGENTS_DEFAULTS_MAX_TOKENS"`
 	Temperature       float64 `json:"temperature" env:"PICOCLAW_AGENTS_DEFAULTS_TEMPERATURE"`
@@ -39,6 +40,7 @@ type ChannelsConfig struct {
 	MaixCam  MaixCamConfig  `json:"maixcam"`
 	QQ       QQConfig       `json:"qq"`
 	DingTalk DingTalkConfig `json:"dingtalk"`
+	Slack    SlackConfig    `json:"slack"`
 }
 
 type WhatsAppConfig struct {
@@ -83,10 +85,17 @@ type QQConfig struct {
 }
 
 type DingTalkConfig struct {
-	Enabled          bool     `json:"enabled" env:"PICOCLAW_CHANNELS_DINGTALK_ENABLED"`
-	ClientID         string   `json:"client_id" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_ID"`
-	ClientSecret     string   `json:"client_secret" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_SECRET"`
-	AllowFrom        []string `json:"allow_from" env:"PICOCLAW_CHANNELS_DINGTALK_ALLOW_FROM"`
+	Enabled      bool     `json:"enabled" env:"PICOCLAW_CHANNELS_DINGTALK_ENABLED"`
+	ClientID     string   `json:"client_id" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_ID"`
+	ClientSecret string   `json:"client_secret" env:"PICOCLAW_CHANNELS_DINGTALK_CLIENT_SECRET"`
+	AllowFrom    []string `json:"allow_from" env:"PICOCLAW_CHANNELS_DINGTALK_ALLOW_FROM"`
+}
+
+type SlackConfig struct {
+	Enabled  bool     `json:"enabled" env:"PICOCLAW_CHANNELS_SLACK_ENABLED"`
+	BotToken string   `json:"bot_token" env:"PICOCLAW_CHANNELS_SLACK_BOT_TOKEN"`
+	AppToken string   `json:"app_token" env:"PICOCLAW_CHANNELS_SLACK_APP_TOKEN"`
+	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_SLACK_ALLOW_FROM"`
 }
 
 type ProvidersConfig struct {
@@ -100,8 +109,9 @@ type ProvidersConfig struct {
 }
 
 type ProviderConfig struct {
-	APIKey  string `json:"api_key" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_KEY"`
-	APIBase string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
+	APIKey     string `json:"api_key" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_KEY"`
+	APIBase    string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
+	AuthMethod string `json:"auth_method,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_AUTH_METHOD"`
 }
 
 type GatewayConfig struct {
@@ -128,6 +138,7 @@ func DefaultConfig() *Config {
 			Defaults: AgentDefaults{
 				Workspace:         "~/.picoclaw/workspace",
 				RestrictToWorkspace: true,
+				Provider:          "",
 				Model:             "glm-4.7",
 				MaxTokens:         8192,
 				Temperature:       0.7,
@@ -175,6 +186,12 @@ func DefaultConfig() *Config {
 				ClientID:     "",
 				ClientSecret: "",
 				AllowFrom:    []string{},
+			},
+			Slack: SlackConfig{
+				Enabled:   false,
+				BotToken:  "",
+				AppToken:  "",
+				AllowFrom: []string{},
 			},
 		},
 		Providers: ProvidersConfig{

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sipeed/picoclaw/pkg/auth"
 	"github.com/sipeed/picoclaw/pkg/config"
 )
 
@@ -50,7 +51,12 @@ func (p *HTTPProvider) Chat(ctx context.Context, messages []Message, tools []Too
 	}
 
 	if maxTokens, ok := options["max_tokens"].(int); ok {
-		requestBody["max_tokens"] = maxTokens
+		lowerModel := strings.ToLower(model)
+		if strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "o1") {
+			requestBody["max_completion_tokens"] = maxTokens
+		} else {
+			requestBody["max_tokens"] = maxTokens
+		}
 	}
 
 	if temperature, ok := options["temperature"].(float64); ok {
@@ -69,8 +75,7 @@ func (p *HTTPProvider) Chat(ctx context.Context, messages []Message, tools []Too
 
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
-		authHeader := "Bearer " + p.apiKey
-		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("Authorization", "Bearer "+p.apiKey)
 	}
 
 	resp, err := p.httpClient.Do(req)
@@ -165,15 +170,105 @@ func (p *HTTPProvider) GetDefaultModel() string {
 	return ""
 }
 
+func createClaudeAuthProvider() (LLMProvider, error) {
+	cred, err := auth.GetCredential("anthropic")
+	if err != nil {
+		return nil, fmt.Errorf("loading auth credentials: %w", err)
+	}
+	if cred == nil {
+		return nil, fmt.Errorf("no credentials for anthropic. Run: picoclaw auth login --provider anthropic")
+	}
+	return NewClaudeProviderWithTokenSource(cred.AccessToken, createClaudeTokenSource()), nil
+}
+
+func createCodexAuthProvider() (LLMProvider, error) {
+	cred, err := auth.GetCredential("openai")
+	if err != nil {
+		return nil, fmt.Errorf("loading auth credentials: %w", err)
+	}
+	if cred == nil {
+		return nil, fmt.Errorf("no credentials for openai. Run: picoclaw auth login --provider openai")
+	}
+	return NewCodexProviderWithTokenSource(cred.AccessToken, cred.AccountID, createCodexTokenSource()), nil
+}
+
 func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 	model := cfg.Agents.Defaults.Model
+	providerName := strings.ToLower(cfg.Agents.Defaults.Provider)
 
 	var apiKey, apiBase string
 
 	lowerModel := strings.ToLower(model)
 
-	switch {
-	case strings.HasPrefix(model, "openrouter/") || strings.HasPrefix(model, "anthropic/") || strings.HasPrefix(model, "openai/") || strings.HasPrefix(model, "meta-llama/") || strings.HasPrefix(model, "deepseek/") || strings.HasPrefix(model, "google/"):
+	// First, try to use explicitly configured provider
+	if providerName != "" {
+		switch providerName {
+		case "groq":
+			if cfg.Providers.Groq.APIKey != "" {
+				apiKey = cfg.Providers.Groq.APIKey
+				apiBase = cfg.Providers.Groq.APIBase
+				if apiBase == "" {
+					apiBase = "https://api.groq.com/openai/v1"
+				}
+			}
+		case "openai", "gpt":
+			if cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != "" {
+				if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
+					return createCodexAuthProvider()
+				}
+				apiKey = cfg.Providers.OpenAI.APIKey
+				apiBase = cfg.Providers.OpenAI.APIBase
+				if apiBase == "" {
+					apiBase = "https://api.openai.com/v1"
+				}
+			}
+		case "anthropic", "claude":
+			if cfg.Providers.Anthropic.APIKey != "" || cfg.Providers.Anthropic.AuthMethod != "" {
+				if cfg.Providers.Anthropic.AuthMethod == "oauth" || cfg.Providers.Anthropic.AuthMethod == "token" {
+					return createClaudeAuthProvider()
+				}
+				apiKey = cfg.Providers.Anthropic.APIKey
+				apiBase = cfg.Providers.Anthropic.APIBase
+				if apiBase == "" {
+					apiBase = "https://api.anthropic.com/v1"
+				}
+			}
+		case "openrouter":
+			if cfg.Providers.OpenRouter.APIKey != "" {
+				apiKey = cfg.Providers.OpenRouter.APIKey
+				if cfg.Providers.OpenRouter.APIBase != "" {
+					apiBase = cfg.Providers.OpenRouter.APIBase
+				} else {
+					apiBase = "https://openrouter.ai/api/v1"
+				}
+			}
+		case "zhipu", "glm":
+			if cfg.Providers.Zhipu.APIKey != "" {
+				apiKey = cfg.Providers.Zhipu.APIKey
+				apiBase = cfg.Providers.Zhipu.APIBase
+				if apiBase == "" {
+					apiBase = "https://open.bigmodel.cn/api/paas/v4"
+				}
+			}
+		case "gemini", "google":
+			if cfg.Providers.Gemini.APIKey != "" {
+				apiKey = cfg.Providers.Gemini.APIKey
+				apiBase = cfg.Providers.Gemini.APIBase
+				if apiBase == "" {
+					apiBase = "https://generativelanguage.googleapis.com/v1beta"
+				}
+			}
+		case "vllm":
+			if cfg.Providers.VLLM.APIBase != "" {
+				apiKey = cfg.Providers.VLLM.APIKey
+				apiBase = cfg.Providers.VLLM.APIBase
+			}
+		}
+	}
+
+	// Fallback: detect provider from model name
+	if apiKey == "" && apiBase == "" {
+		switch {	case strings.HasPrefix(model, "openrouter/") || strings.HasPrefix(model, "anthropic/") || strings.HasPrefix(model, "openai/") || strings.HasPrefix(model, "meta-llama/") || strings.HasPrefix(model, "deepseek/") || strings.HasPrefix(model, "google/"):
 		apiKey = cfg.Providers.OpenRouter.APIKey
 		if cfg.Providers.OpenRouter.APIBase != "" {
 			apiBase = cfg.Providers.OpenRouter.APIBase
@@ -181,35 +276,41 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			apiBase = "https://openrouter.ai/api/v1"
 		}
 
-	case strings.Contains(lowerModel, "claude") || strings.HasPrefix(model, "anthropic/"):
+	case (strings.Contains(lowerModel, "claude") || strings.HasPrefix(model, "anthropic/")) && (cfg.Providers.Anthropic.APIKey != "" || cfg.Providers.Anthropic.AuthMethod != ""):
+		if cfg.Providers.Anthropic.AuthMethod == "oauth" || cfg.Providers.Anthropic.AuthMethod == "token" {
+			return createClaudeAuthProvider()
+		}
 		apiKey = cfg.Providers.Anthropic.APIKey
 		apiBase = cfg.Providers.Anthropic.APIBase
 		if apiBase == "" {
 			apiBase = "https://api.anthropic.com/v1"
 		}
 
-	case strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/"):
+	case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) && (cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != ""):
+		if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
+			return createCodexAuthProvider()
+		}
 		apiKey = cfg.Providers.OpenAI.APIKey
 		apiBase = cfg.Providers.OpenAI.APIBase
 		if apiBase == "" {
 			apiBase = "https://api.openai.com/v1"
 		}
 
-	case strings.Contains(lowerModel, "gemini") || strings.HasPrefix(model, "google/"):
+	case (strings.Contains(lowerModel, "gemini") || strings.HasPrefix(model, "google/")) && cfg.Providers.Gemini.APIKey != "":
 		apiKey = cfg.Providers.Gemini.APIKey
 		apiBase = cfg.Providers.Gemini.APIBase
 		if apiBase == "" {
 			apiBase = "https://generativelanguage.googleapis.com/v1beta"
 		}
 
-	case strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "zhipu") || strings.Contains(lowerModel, "zai"):
+	case (strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "zhipu") || strings.Contains(lowerModel, "zai")) && cfg.Providers.Zhipu.APIKey != "":
 		apiKey = cfg.Providers.Zhipu.APIKey
 		apiBase = cfg.Providers.Zhipu.APIBase
 		if apiBase == "" {
 			apiBase = "https://open.bigmodel.cn/api/paas/v4"
 		}
 
-	case strings.Contains(lowerModel, "groq") || strings.HasPrefix(model, "groq/"):
+	case (strings.Contains(lowerModel, "groq") || strings.HasPrefix(model, "groq/")) && cfg.Providers.Groq.APIKey != "":
 		apiKey = cfg.Providers.Groq.APIKey
 		apiBase = cfg.Providers.Groq.APIBase
 		if apiBase == "" {
@@ -231,6 +332,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 		} else {
 			return nil, fmt.Errorf("no API key configured for model: %s", model)
 		}
+	}
 	}
 
 	if apiKey == "" && !strings.HasPrefix(model, "bedrock/") {

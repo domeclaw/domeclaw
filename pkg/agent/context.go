@@ -11,13 +11,14 @@ import (
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
+	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
 type ContextBuilder struct {
 	workspace    string
 	skillsLoader *skills.SkillsLoader
 	memory       *MemoryStore
-	toolsSummary func() []string // Function to get tool summaries dynamically
+	tools        *tools.ToolRegistry // Direct reference to tool registry
 }
 
 func getGlobalConfigDir() string {
@@ -28,9 +29,9 @@ func getGlobalConfigDir() string {
 	return filepath.Join(home, ".picoclaw")
 }
 
-func NewContextBuilder(workspace string, toolsSummaryFunc func() []string) *ContextBuilder {
-	// builtin skills: 当前项目的 skills 目录
-	// 使用当前工作目录下的 skills/ 目录
+func NewContextBuilder(workspace string) *ContextBuilder {
+	// builtin skills: skills directory in current project
+	// Use the skills/ directory under the current working directory
 	wd, _ := os.Getwd()
 	builtinSkillsDir := filepath.Join(wd, "skills")
 	globalSkillsDir := filepath.Join(getGlobalConfigDir(), "skills")
@@ -39,8 +40,12 @@ func NewContextBuilder(workspace string, toolsSummaryFunc func() []string) *Cont
 		workspace:    workspace,
 		skillsLoader: skills.NewSkillsLoader(workspace, globalSkillsDir, builtinSkillsDir),
 		memory:       NewMemoryStore(workspace),
-		toolsSummary: toolsSummaryFunc,
 	}
+}
+
+// SetToolsRegistry sets the tools registry for dynamic tool summary generation.
+func (cb *ContextBuilder) SetToolsRegistry(registry *tools.ToolRegistry) {
+	cb.tools = registry
 }
 
 func (cb *ContextBuilder) getIdentity() string {
@@ -69,23 +74,29 @@ Your workspace is at: %s
 
 %s
 
-Always be helpful, accurate, and concise. When using tools, explain what you're doing.
-When remembering something, write to %s/memory/MEMORY.md`,
+## Important Rules
+
+1. **ALWAYS use tools** - When you need to perform an action (schedule reminders, send messages, execute commands, etc.), you MUST call the appropriate tool. Do NOT just say you'll do it or pretend to do it.
+
+2. **Be helpful and accurate** - When using tools, briefly explain what you're doing.
+
+3. **Memory** - When remembering something, write to %s/memory/MEMORY.md`,
 		now, runtime, workspacePath, workspacePath, workspacePath, workspacePath, toolsSection, workspacePath)
 }
 
 func (cb *ContextBuilder) buildToolsSection() string {
-	if cb.toolsSummary == nil {
+	if cb.tools == nil {
 		return ""
 	}
 
-	summaries := cb.toolsSummary()
+	summaries := cb.tools.GetSummaries()
 	if len(summaries) == 0 {
 		return ""
 	}
 
 	var sb strings.Builder
 	sb.WriteString("## Available Tools\n\n")
+	sb.WriteString("**CRITICAL**: You MUST use tools to perform actions. Do NOT pretend to execute commands or schedule tasks.\n\n")
 	sb.WriteString("You have access to the following tools:\n\n")
 	for _, s := range summaries {
 		sb.WriteString(s)
