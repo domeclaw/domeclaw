@@ -6,7 +6,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (7/21)
+### Completed (8/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
@@ -15,6 +15,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 - US-006: Add AsyncCallback type and AsyncTool interface
 - US-007: Heartbeat async task execution support
 - US-008: Inject callback into async tools in AgentLoop
+- US-009: State save atomicity - SetLastChannel
 
 ### In Progress
 
@@ -30,7 +31,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-006 | Add AsyncCallback type and AsyncTool interface | Completed | |
 | US-007 | Heartbeat async task execution support | Completed | |
 | US-008 | Inject callback into async tools in AgentLoop | Completed | |
-| US-009 | State save atomicity - SetLastChannel | Pending | |
+| US-009 | State save atomicity - SetLastChannel | Completed | |
 | US-010 | Update RecordLastChannel to use atomic save | Pending | |
 | US-011 | Refactor MessageTool to use ToolResult | Completed | |
 | US-012 | Refactor ShellTool to use ToolResult | Completed | |
@@ -148,5 +149,30 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** 回调函数应该在工具执行循环中定义，这样可以捕获 `opts.Channel` 和 `opts.ChatID` 等上下文信息。
   - **Gotchas encountered:** 更新方法签名时需要同时更新所有调用点。我修改了 `ExecuteWithContext` 的签名，所以也更新了 `Execute` 方法的调用。
   - **Useful context:** 异步工具完成时会调用回调，回调将 `ForUser` 内容发送给用户。这允许长时间运行的操作（如子代理）在后台完成并通知用户，而不阻塞主循环。
+
+---
+
+## [2026-02-12] - US-009
+- What was implemented:
+  - 创建新的 `pkg/state` 包，包含状态管理和原子保存功能
+  - 定义 `State` 结构体，包含 `LastChannel`、`LastChatID` 和 `Timestamp` 字段
+  - 定义 `Manager` 结构体，使用 `sync.RWMutex` 保护并发访问
+  - 实现 `NewManager(workspace string)` 构造函数，创建状态目录并加载现有状态
+  - 实现 `SetLastChannel(workspace, channel string)` 方法，使用临时文件 + 重命名模式实现原子保存
+  - 实现 `SetLastChatID(workspace, chatID string)` 方法
+  - 实现 `GetLastChannel()` 和 `GetLastChatID()` getter 方法
+  - 实现 `saveAtomic()` 内部方法，使用 `os.WriteFile` 写入临时文件，然后用 `os.Rename` 原子性地重命名
+  - 如果重命名失败，清理临时文件
+  - 实现 `load()` 方法，从磁盘加载状态
+  - 添加完整的测试：`TestAtomicSave`、`TestSetLastChatID`、`TestAtomicity_NoCorruptionOnInterrupt`、`TestConcurrentAccess`、`TestNewManager_ExistingState`、`TestNewManager_EmptyWorkspace`
+
+- Files changed:
+  - `pkg/state/state.go` (新增)
+  - `pkg/state/state_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** 临时文件 + 重命名模式是实现原子写入的标准方法。在 POSIX 系统上，`os.Rename` 是原子操作。
+  - **Gotchas encountered:** 临时文件必须与目标文件在同一文件系统中，否则 `os.Rename` 会失败。
+  - **Useful context:** 这个模式将在 US-010 中用于 `RecordLastChannel`，确保状态更新的原子性。
 
 ---
