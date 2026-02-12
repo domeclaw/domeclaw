@@ -18,6 +18,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 - US-009: State save atomicity - SetLastChannel
 - US-010: Update RecordLastChannel to use atomic save
 - US-011: Refactor MessageTool to use ToolResult
+- US-012: Refactor ShellTool to use ToolResult
 
 ### In Progress
 
@@ -218,5 +219,30 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** MessageTool 实现已经符合 ToolResult 规范，只需要添加测试覆盖即可。
   - **Gotchas encountered:** 测试文件使用 `map[string]interface{}` 作为 args 参数类型，与 Tool.Execute 签名一致。
   - **Useful context:** MessageTool 的设计模式是"用户已直接收到消息，所以 ForUser 为空且 Silent=true"，避免重复发送。
+
+---
+
+## [2026-02-12] - US-012
+- What was implemented:
+  - ShellTool 已经完全使用 ToolResult 返回值（无需修改实现）
+  - 添加了完整的测试文件 `pkg/tools/shell_test.go`，包含 9 个测试用例
+  - 测试覆盖了所有验收标准：
+    - 成功返回 ForUser = 命令输出
+    - 失败返回 IsError = true
+    - ForLLM 包含完整输出和退出码
+    - 自定义工作目录测试
+    - 危险命令阻止测试
+    - 缺少命令错误处理
+    - Stderr 捕获测试
+    - 输出截断测试
+    - 工作空间限制测试
+
+- Files changed:
+  - `pkg/tools/shell_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** ShellTool 实现已经符合 ToolResult 规范，只需要添加测试覆盖即可。测试覆盖了成功、失败、超时、自定义目录、安全防护等多种场景。
+  - **Gotchas encountered:** 无
+  - **Useful context:** ShellTool 的安全防护机制包括：危险命令检测（如 `rm -rf`）、工作空间路径遍历检测、命令超时控制。
 
 ---
