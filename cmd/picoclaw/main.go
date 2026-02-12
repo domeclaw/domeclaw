@@ -14,24 +14,47 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/chzyer/readline"
 	"github.com/sipeed/picoclaw/pkg/agent"
+	"github.com/sipeed/picoclaw/pkg/auth"
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/channels"
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/cron"
 	"github.com/sipeed/picoclaw/pkg/heartbeat"
 	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/sipeed/picoclaw/pkg/migrate"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
+	"github.com/sipeed/picoclaw/pkg/tools"
 	"github.com/sipeed/picoclaw/pkg/voice"
 )
 
-const version = "0.1.0"
+var (
+	version   = "0.1.0"
+	buildTime string
+	goVersion string
+)
+
 const logo = "🦞"
+
+func printVersion() {
+	fmt.Printf("%s picoclaw v%s\n", logo, version)
+	if buildTime != "" {
+		fmt.Printf("  Build: %s\n", buildTime)
+	}
+	goVer := goVersion
+	if goVer == "" {
+		goVer = runtime.Version()
+	}
+	if goVer != "" {
+		fmt.Printf("  Go: %s\n", goVer)
+	}
+}
 
 func copyDirectory(src, dst string) error {
 	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
@@ -84,6 +107,10 @@ func main() {
 		gatewayCmd()
 	case "status":
 		statusCmd()
+	case "migrate":
+		migrateCmd()
+	case "auth":
+		authCmd()
 	case "cron":
 		cronCmd()
 	case "skills":
@@ -136,7 +163,7 @@ func main() {
 			skillsHelp()
 		}
 	case "version", "--version", "-v":
-		fmt.Printf("%s picoclaw v%s\n", logo, version)
+		printVersion()
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		printHelp()
@@ -151,9 +178,11 @@ func printHelp() {
 	fmt.Println("Commands:")
 	fmt.Println("  onboard     Initialize picoclaw configuration and workspace")
 	fmt.Println("  agent       Interact with the agent directly")
+	fmt.Println("  auth        Manage authentication (login, logout, status)")
 	fmt.Println("  gateway     Start picoclaw gateway")
 	fmt.Println("  status      Show picoclaw status")
 	fmt.Println("  cron        Manage scheduled tasks")
+	fmt.Println("  migrate     Migrate from OpenClaw to PicoClaw")
 	fmt.Println("  skills      Manage skills (install, list, remove)")
 	fmt.Println("  version     Show version information")
 }
@@ -359,6 +388,76 @@ This file stores important information that should persist across sessions.
 	}
 }
 
+func migrateCmd() {
+	if len(os.Args) > 2 && (os.Args[2] == "--help" || os.Args[2] == "-h") {
+		migrateHelp()
+		return
+	}
+
+	opts := migrate.Options{}
+
+	args := os.Args[2:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--dry-run":
+			opts.DryRun = true
+		case "--config-only":
+			opts.ConfigOnly = true
+		case "--workspace-only":
+			opts.WorkspaceOnly = true
+		case "--force":
+			opts.Force = true
+		case "--refresh":
+			opts.Refresh = true
+		case "--openclaw-home":
+			if i+1 < len(args) {
+				opts.OpenClawHome = args[i+1]
+				i++
+			}
+		case "--picoclaw-home":
+			if i+1 < len(args) {
+				opts.PicoClawHome = args[i+1]
+				i++
+			}
+		default:
+			fmt.Printf("Unknown flag: %s\n", args[i])
+			migrateHelp()
+			os.Exit(1)
+		}
+	}
+
+	result, err := migrate.Run(opts)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if !opts.DryRun {
+		migrate.PrintSummary(result)
+	}
+}
+
+func migrateHelp() {
+	fmt.Println("\nMigrate from OpenClaw to PicoClaw")
+	fmt.Println()
+	fmt.Println("Usage: picoclaw migrate [options]")
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println("  --dry-run          Show what would be migrated without making changes")
+	fmt.Println("  --refresh          Re-sync workspace files from OpenClaw (repeatable)")
+	fmt.Println("  --config-only      Only migrate config, skip workspace files")
+	fmt.Println("  --workspace-only   Only migrate workspace files, skip config")
+	fmt.Println("  --force            Skip confirmation prompts")
+	fmt.Println("  --openclaw-home    Override OpenClaw home directory (default: ~/.openclaw)")
+	fmt.Println("  --picoclaw-home    Override PicoClaw home directory (default: ~/.picoclaw)")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  picoclaw migrate              Detect and migrate from OpenClaw")
+	fmt.Println("  picoclaw migrate --dry-run    Show what would be migrated")
+	fmt.Println("  picoclaw migrate --refresh    Re-sync workspace files")
+	fmt.Println("  picoclaw migrate --force      Migrate without confirmation")
+}
+
 func agentCmd() {
 	message := ""
 	sessionKey := "cli:default"
@@ -550,8 +649,8 @@ func gatewayCmd() {
 			"skills_available": skillsInfo["available"],
 		})
 
-	cronStorePath := filepath.Join(filepath.Dir(getConfigPath()), "cron", "jobs.json")
-	cronService := cron.NewCronService(cronStorePath, nil)
+	// Setup cron tool and service
+	cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -583,6 +682,12 @@ func gatewayCmd() {
 			if dc, ok := discordChannel.(*channels.DiscordChannel); ok {
 				dc.SetTranscriber(transcriber)
 				logger.InfoC("voice", "Groq transcription attached to Discord channel")
+			}
+		}
+		if slackChannel, ok := channelManager.GetChannel("slack"); ok {
+			if sc, ok := slackChannel.(*channels.SlackChannel); ok {
+				sc.SetTranscriber(transcriber)
+				logger.InfoC("voice", "Groq transcription attached to Slack channel")
 			}
 		}
 	}
@@ -681,12 +786,264 @@ func statusCmd() {
 		} else {
 			fmt.Println("vLLM/Local: not set")
 		}
+
+		store, _ := auth.LoadStore()
+		if store != nil && len(store.Credentials) > 0 {
+			fmt.Println("\nOAuth/Token Auth:")
+			for provider, cred := range store.Credentials {
+				status := "authenticated"
+				if cred.IsExpired() {
+					status = "expired"
+				} else if cred.NeedsRefresh() {
+					status = "needs refresh"
+				}
+				fmt.Printf("  %s (%s): %s\n", provider, cred.AuthMethod, status)
+			}
+		}
+	}
+}
+
+func authCmd() {
+	if len(os.Args) < 3 {
+		authHelp()
+		return
+	}
+
+	switch os.Args[2] {
+	case "login":
+		authLoginCmd()
+	case "logout":
+		authLogoutCmd()
+	case "status":
+		authStatusCmd()
+	default:
+		fmt.Printf("Unknown auth command: %s\n", os.Args[2])
+		authHelp()
+	}
+}
+
+func authHelp() {
+	fmt.Println("\nAuth commands:")
+	fmt.Println("  login       Login via OAuth or paste token")
+	fmt.Println("  logout      Remove stored credentials")
+	fmt.Println("  status      Show current auth status")
+	fmt.Println()
+	fmt.Println("Login options:")
+	fmt.Println("  --provider <name>    Provider to login with (openai, anthropic)")
+	fmt.Println("  --device-code        Use device code flow (for headless environments)")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  picoclaw auth login --provider openai")
+	fmt.Println("  picoclaw auth login --provider openai --device-code")
+	fmt.Println("  picoclaw auth login --provider anthropic")
+	fmt.Println("  picoclaw auth logout --provider openai")
+	fmt.Println("  picoclaw auth status")
+}
+
+func authLoginCmd() {
+	provider := ""
+	useDeviceCode := false
+
+	args := os.Args[3:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--provider", "-p":
+			if i+1 < len(args) {
+				provider = args[i+1]
+				i++
+			}
+		case "--device-code":
+			useDeviceCode = true
+		}
+	}
+
+	if provider == "" {
+		fmt.Println("Error: --provider is required")
+		fmt.Println("Supported providers: openai, anthropic")
+		return
+	}
+
+	switch provider {
+	case "openai":
+		authLoginOpenAI(useDeviceCode)
+	case "anthropic":
+		authLoginPasteToken(provider)
+	default:
+		fmt.Printf("Unsupported provider: %s\n", provider)
+		fmt.Println("Supported providers: openai, anthropic")
+	}
+}
+
+func authLoginOpenAI(useDeviceCode bool) {
+	cfg := auth.OpenAIOAuthConfig()
+
+	var cred *auth.AuthCredential
+	var err error
+
+	if useDeviceCode {
+		cred, err = auth.LoginDeviceCode(cfg)
+	} else {
+		cred, err = auth.LoginBrowser(cfg)
+	}
+
+	if err != nil {
+		fmt.Printf("Login failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := auth.SetCredential("openai", cred); err != nil {
+		fmt.Printf("Failed to save credentials: %v\n", err)
+		os.Exit(1)
+	}
+
+	appCfg, err := loadConfig()
+	if err == nil {
+		appCfg.Providers.OpenAI.AuthMethod = "oauth"
+		if err := config.SaveConfig(getConfigPath(), appCfg); err != nil {
+			fmt.Printf("Warning: could not update config: %v\n", err)
+		}
+	}
+
+	fmt.Println("Login successful!")
+	if cred.AccountID != "" {
+		fmt.Printf("Account: %s\n", cred.AccountID)
+	}
+}
+
+func authLoginPasteToken(provider string) {
+	cred, err := auth.LoginPasteToken(provider, os.Stdin)
+	if err != nil {
+		fmt.Printf("Login failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := auth.SetCredential(provider, cred); err != nil {
+		fmt.Printf("Failed to save credentials: %v\n", err)
+		os.Exit(1)
+	}
+
+	appCfg, err := loadConfig()
+	if err == nil {
+		switch provider {
+		case "anthropic":
+			appCfg.Providers.Anthropic.AuthMethod = "token"
+		case "openai":
+			appCfg.Providers.OpenAI.AuthMethod = "token"
+		}
+		if err := config.SaveConfig(getConfigPath(), appCfg); err != nil {
+			fmt.Printf("Warning: could not update config: %v\n", err)
+		}
+	}
+
+	fmt.Printf("Token saved for %s!\n", provider)
+}
+
+func authLogoutCmd() {
+	provider := ""
+
+	args := os.Args[3:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--provider", "-p":
+			if i+1 < len(args) {
+				provider = args[i+1]
+				i++
+			}
+		}
+	}
+
+	if provider != "" {
+		if err := auth.DeleteCredential(provider); err != nil {
+			fmt.Printf("Failed to remove credentials: %v\n", err)
+			os.Exit(1)
+		}
+
+		appCfg, err := loadConfig()
+		if err == nil {
+			switch provider {
+			case "openai":
+				appCfg.Providers.OpenAI.AuthMethod = ""
+			case "anthropic":
+				appCfg.Providers.Anthropic.AuthMethod = ""
+			}
+			config.SaveConfig(getConfigPath(), appCfg)
+		}
+
+		fmt.Printf("Logged out from %s\n", provider)
+	} else {
+		if err := auth.DeleteAllCredentials(); err != nil {
+			fmt.Printf("Failed to remove credentials: %v\n", err)
+			os.Exit(1)
+		}
+
+		appCfg, err := loadConfig()
+		if err == nil {
+			appCfg.Providers.OpenAI.AuthMethod = ""
+			appCfg.Providers.Anthropic.AuthMethod = ""
+			config.SaveConfig(getConfigPath(), appCfg)
+		}
+
+		fmt.Println("Logged out from all providers")
+	}
+}
+
+func authStatusCmd() {
+	store, err := auth.LoadStore()
+	if err != nil {
+		fmt.Printf("Error loading auth store: %v\n", err)
+		return
+	}
+
+	if len(store.Credentials) == 0 {
+		fmt.Println("No authenticated providers.")
+		fmt.Println("Run: picoclaw auth login --provider <name>")
+		return
+	}
+
+	fmt.Println("\nAuthenticated Providers:")
+	fmt.Println("------------------------")
+	for provider, cred := range store.Credentials {
+		status := "active"
+		if cred.IsExpired() {
+			status = "expired"
+		} else if cred.NeedsRefresh() {
+			status = "needs refresh"
+		}
+
+		fmt.Printf("  %s:\n", provider)
+		fmt.Printf("    Method: %s\n", cred.AuthMethod)
+		fmt.Printf("    Status: %s\n", status)
+		if cred.AccountID != "" {
+			fmt.Printf("    Account: %s\n", cred.AccountID)
+		}
+		if !cred.ExpiresAt.IsZero() {
+			fmt.Printf("    Expires: %s\n", cred.ExpiresAt.Format("2006-01-02 15:04"))
+		}
 	}
 }
 
 func getConfigPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".picoclaw", "config.json")
+}
+
+func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
+	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
+
+	// Create cron service
+	cronService := cron.NewCronService(cronStorePath, nil)
+
+	// Create and register CronTool
+	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus)
+	agentLoop.RegisterTool(cronTool)
+
+	// Set the onJob handler
+	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
+		result := cronTool.ExecuteJob(context.Background(), job)
+		return result, nil
+	})
+
+	return cronService
 }
 
 func loadConfig() (*config.Config, error) {
@@ -701,8 +1058,14 @@ func cronCmd() {
 
 	subcommand := os.Args[2]
 
-	dataDir := filepath.Join(filepath.Dir(getConfigPath()), "cron")
-	cronStorePath := filepath.Join(dataDir, "jobs.json")
+	// Load config to get workspace path
+	cfg, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		return
+	}
+
+	cronStorePath := filepath.Join(cfg.WorkspacePath(), "cron", "jobs.json")
 
 	switch subcommand {
 	case "list":
@@ -745,7 +1108,7 @@ func cronHelp() {
 
 func cronListCmd(storePath string) {
 	cs := cron.NewCronService(storePath, nil)
-	jobs := cs.ListJobs(false)
+	jobs := cs.ListJobs(true) // Show all jobs, including disabled
 
 	if len(jobs) == 0 {
 		fmt.Println("No scheduled jobs.")

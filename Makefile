@@ -9,7 +9,8 @@ MAIN_GO=$(CMD_DIR)/main.go
 # Version
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_TIME=$(shell date +%FT%T%z)
-LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME)"
+GO_VERSION=$(shell $(GO) version | awk '{print $$3}')
+LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.goVersion=$(GO_VERSION)"
 
 # Go variables
 GO?=go
@@ -162,13 +163,12 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build              # Build for current platform"
-	@echo "  make install            # Install to /usr/local/bin"
-	@echo "  make install-user       # Install to ~/.local/bin"
+	@echo "  make install            # Install to ~/.local/bin"
 	@echo "  make uninstall          # Remove from /usr/local/bin"
 	@echo "  make install-skills     # Install skills to workspace"
 	@echo ""
 	@echo "Environment Variables:"
-	@echo "  INSTALL_PREFIX          # Installation prefix (default: /usr/local)"
+	@echo "  INSTALL_PREFIX          # Installation prefix (default: ~/.local)"
 	@echo "  WORKSPACE_DIR           # Workspace directory (default: ~/.picoclaw/workspace)"
 	@echo "  VERSION                 # Version string (default: git describe)"
 	@echo ""

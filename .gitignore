@@ -1,3 +1,4 @@
+# Binaries
 bin/
 *.exe
 *.dll
@@ -5,12 +6,21 @@ bin/
 *.dylib
 *.test
 *.out
+/picoclaw
+/picoclaw-test
+
+# Picoclaw specific
 .picoclaw/
 config.json
 sessions/
+build/
+
+# Coverage
 coverage.txt
 coverage.html
-.DS_Store
-build
 
-picoclaw
+# OS
+.DS_Store
+
+# Ralph workspace
+ralph/

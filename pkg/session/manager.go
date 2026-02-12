@@ -59,6 +59,15 @@ func (sm *SessionManager) GetOrCreate(key string) *Session {
 }
 
 func (sm *SessionManager) AddMessage(sessionKey, role, content string) {
+	sm.AddFullMessage(sessionKey, providers.Message{
+		Role:    role,
+		Content: content,
+	})
+}
+
+// AddFullMessage adds a complete message with tool calls and tool call ID to the session.
+// This is used to save the full conversation flow including tool calls and tool results.
+func (sm *SessionManager) AddFullMessage(sessionKey string, msg providers.Message) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -72,10 +81,7 @@ func (sm *SessionManager) AddMessage(sessionKey, role, content string) {
 		sm.sessions[sessionKey] = session
 	}
 
-	session.Messages = append(session.Messages, providers.Message{
-		Role:    role,
-		Content: content,
-	})
+	session.Messages = append(session.Messages, msg)
 	session.Updated = time.Now()
 }
 
