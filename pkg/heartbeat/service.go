@@ -6,15 +6,34 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/sipeed/picoclaw/pkg/logger"
 )
+
+// ToolResult represents a structured result from tool execution.
+// This is a minimal local definition to avoid circular dependencies.
+type ToolResult struct {
+	ForLLM  string `json:"for_llm"`
+	ForUser string `json:"for_user,omitempty"`
+	Silent  bool   `json:"silent"`
+	IsError bool   `json:"is_error"`
+	Async   bool   `json:"async"`
+	Err     error  `json:"-"`
+}
+
+// HeartbeatHandler is the function type for handling heartbeat with tool support.
+// It returns a ToolResult that can indicate async operations.
+type HeartbeatHandler func(prompt string) *ToolResult
 
 type HeartbeatService struct {
 	workspace   string
 	onHeartbeat func(string) (string, error)
-	interval    time.Duration
-	enabled     bool
-	mu          sync.RWMutex
-	stopChan    chan struct{}
+	// onHeartbeatWithTools is the new handler that supports ToolResult returns
+	onHeartbeatWithTools HeartbeatHandler
+	interval             time.Duration
+	enabled              bool
+	mu                   sync.RWMutex
+	stopChan             chan struct{}
 }
 
 func NewHeartbeatService(workspace string, onHeartbeat func(string) (string, error), intervalS int, enabled bool) *HeartbeatService {
@@ -25,6 +44,15 @@ func NewHeartbeatService(workspace string, onHeartbeat func(string) (string, err
 		enabled:     enabled,
 		stopChan:    make(chan struct{}),
 	}
+}
+
+// SetOnHeartbeatWithTools sets the tool-supporting heartbeat handler.
+// This handler returns a ToolResult that can indicate async operations.
+// When set, this handler takes precedence over the legacy onHeartbeat callback.
+func (hs *HeartbeatService) SetOnHeartbeatWithTools(handler HeartbeatHandler) {
+	hs.mu.Lock()
+	defer hs.mu.Unlock()
+	hs.onHeartbeatWithTools = handler
 }
 
 func (hs *HeartbeatService) Start() error {
@@ -88,12 +116,53 @@ func (hs *HeartbeatService) checkHeartbeat() {
 
 	prompt := hs.buildPrompt()
 
-	if hs.onHeartbeat != nil {
+	// Prefer the new tool-supporting handler
+	if hs.onHeartbeatWithTools != nil {
+		hs.executeHeartbeatWithTools(prompt)
+	} else if hs.onHeartbeat != nil {
 		_, err := hs.onHeartbeat(prompt)
 		if err != nil {
 			hs.log(fmt.Sprintf("Heartbeat error: %v", err))
 		}
 	}
+}
+
+// ExecuteHeartbeatWithTools executes a heartbeat using the tool-supporting handler.
+// This method processes ToolResult returns and handles async tasks appropriately.
+// If the result is async, it logs that the task started in background.
+// If the result is an error, it logs the error message.
+// This method is designed to be called from checkHeartbeat or directly by external code.
+func (hs *HeartbeatService) ExecuteHeartbeatWithTools(prompt string) {
+	hs.executeHeartbeatWithTools(prompt)
+}
+
+// executeHeartbeatWithTools is the internal implementation of tool-supporting heartbeat.
+func (hs *HeartbeatService) executeHeartbeatWithTools(prompt string) {
+	result := hs.onHeartbeatWithTools(prompt)
+
+	if result == nil {
+		hs.log("Heartbeat handler returned nil result")
+		return
+	}
+
+	// Handle different result types
+	if result.IsError {
+		hs.log(fmt.Sprintf("Heartbeat error: %s", result.ForLLM))
+		return
+	}
+
+	if result.Async {
+		// Async task started - log and return immediately
+		hs.log(fmt.Sprintf("Async task started: %s", result.ForLLM))
+		logger.InfoCF("heartbeat", "Async heartbeat task started",
+			map[string]interface{}{
+				"message": result.ForLLM,
+			})
+		return
+	}
+
+	// Normal completion - log result
+	hs.log(fmt.Sprintf("Heartbeat completed: %s", result.ForLLM))
 }
 
 func (hs *HeartbeatService) buildPrompt() string {
@@ -130,5 +199,5 @@ func (hs *HeartbeatService) log(message string) {
 	defer f.Close()
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	f.WriteString(fmt.Sprintf("[%s] %s\n", timestamp, message))
+	fmt.Fprintf(f, "[%s] %s\n", timestamp, message)
 }

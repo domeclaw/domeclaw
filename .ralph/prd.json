@@ -107,7 +107,7 @@
         "go test ./pkg/heartbeat -run TestAsync passes"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

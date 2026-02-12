@@ -6,13 +6,14 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (5/21)
+### Completed (6/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
 - US-004: Delete isToolConfirmationMessage function (already removed in commit 488e7a9)
 - US-005: Update AgentLoop tool result processing logic
 - US-006: Add AsyncCallback type and AsyncTool interface
+- US-007: Heartbeat async task execution support
 
 ### In Progress
 
@@ -26,7 +27,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-004 | Delete isToolConfirmationMessage function | Completed | Already removed in commit 488e7a9 |
 | US-005 | Update AgentLoop tool result processing logic | Completed | No test files in pkg/agent yet |
 | US-006 | Add AsyncCallback type and AsyncTool interface | Completed | |
-| US-007 | Heartbeat async task execution support | Pending | |
+| US-007 | Heartbeat async task execution support | Completed | |
 | US-008 | Inject callback into async tools in AgentLoop | Pending | |
 | US-009 | State save atomicity - SetLastChannel | Pending | |
 | US-010 | Update RecordLastChannel to use atomic save | Pending | |
@@ -100,5 +101,29 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** Go 接口的设计应该是可选的组合模式。`AsyncTool` 是一个可选接口，工具可以选择实现以支持异步操作。
   - **Gotchas encountered:** 无
   - **Useful context:** 这个模式将在 US-008 中用于 `SpawnTool`，让子代理完成时能够通知主循环。
+
+---
+
+## [2026-02-12] - US-007
+- What was implemented:
+  - 在 `pkg/heartbeat/service.go` 中添加了本地 `ToolResult` 结构体定义（避免循环依赖）
+  - 定义了 `HeartbeatHandler` 函数类型：`func(prompt string) *ToolResult`
+  - 在 `HeartbeatService` 中添加了 `onHeartbeatWithTools` 字段
+  - 添加了 `SetOnHeartbeatWithTools(handler HeartbeatHandler)` 方法来设置新的处理器
+  - 添加了 `ExecuteHeartbeatWithTools(prompt string)` 公开方法
+  - 添加了内部方法 `executeHeartbeatWithTools(prompt string)` 来处理工具结果
+  - 更新了 `checkHeartbeat()` 方法，优先使用新的工具支持处理器
+  - 异步任务检测：当 `result.Async == true` 时，记录日志并立即返回
+  - 错误处理：当 `result.IsError == true` 时，记录错误日志
+  - 普通完成：记录完成日志
+
+- Files changed:
+  - `pkg/heartbeat/service.go`
+  - `pkg/heartbeat/service_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** 为了避免循环依赖，heartbeat 包定义了自己的本地 `ToolResult` 结构体，而不是导入 `pkg/tools` 包。
+  - **Gotchas encountered:** 原始代码中的 `running()` 函数逻辑有问题（新创建的服务会被认为是"正在运行"的），但这不在本次修改范围内。
+  - **Useful context:** 心跳服务现在支持两种处理器：旧的 `onHeartbeat (返回 string, error)` 和新的 `onHeartbeatWithTools (返回 *ToolResult)`。新的处理器优先级更高。
 
 ---
