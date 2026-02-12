@@ -61,8 +61,8 @@
         "go build ./... succeeds"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "isToolConfirmationMessage was already removed in commit 488e7a9. US-005 will complete the migration to ToolResult.Silent."
     },
     {
       "id": "US-005",

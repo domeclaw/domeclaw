@@ -6,10 +6,11 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (2/21)
+### Completed (3/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
+- US-004: Delete isToolConfirmationMessage function (already removed in commit 488e7a9)
 
 ### In Progress
 
@@ -20,7 +21,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | ID | Title | Status | Notes |
 |----|-------|--------|-------|
 | US-003 | Modify ToolRegistry to process ToolResult | Pending | registry.go already updated |
-| US-004 | Delete isToolConfirmationMessage function | Pending | |
+| US-004 | Delete isToolConfirmationMessage function | Completed | Already removed in commit 488e7a9 |
 | US-005 | Update AgentLoop tool result processing logic | Pending | |
 | US-006 | Add AsyncCallback type and AsyncTool interface | Pending | |
 | US-007 | Heartbeat async task execution support | Pending | |
