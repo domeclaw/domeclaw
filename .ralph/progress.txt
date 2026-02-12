@@ -6,7 +6,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (8/21)
+### Completed (9/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
@@ -16,6 +16,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 - US-007: Heartbeat async task execution support
 - US-008: Inject callback into async tools in AgentLoop
 - US-009: State save atomicity - SetLastChannel
+- US-010: Update RecordLastChannel to use atomic save
 
 ### In Progress
 
@@ -32,7 +33,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-007 | Heartbeat async task execution support | Completed | |
 | US-008 | Inject callback into async tools in AgentLoop | Completed | |
 | US-009 | State save atomicity - SetLastChannel | Completed | |
-| US-010 | Update RecordLastChannel to use atomic save | Pending | |
+| US-010 | Update RecordLastChannel to use atomic save | Completed | |
 | US-011 | Refactor MessageTool to use ToolResult | Completed | |
 | US-012 | Refactor ShellTool to use ToolResult | Completed | |
 | US-013 | Refactor FilesystemTool to use ToolResult | Completed | |
@@ -174,5 +175,25 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** 临时文件 + 重命名模式是实现原子写入的标准方法。在 POSIX 系统上，`os.Rename` 是原子操作。
   - **Gotchas encountered:** 临时文件必须与目标文件在同一文件系统中，否则 `os.Rename` 会失败。
   - **Useful context:** 这个模式将在 US-010 中用于 `RecordLastChannel`，确保状态更新的原子性。
+
+---
+
+## [2026-02-12] - US-010
+- What was implemented:
+  - 在 AgentLoop 中添加 `state *state.Manager` 字段
+  - 在 `NewAgentLoop` 中初始化 `stateManager := state.NewManager(workspace)`
+  - 实现 `RecordLastChannel(channel string)` 方法，调用 `al.state.SetLastChannel(al.workspace, channel)`
+  - 实现 `RecordLastChatID(chatID string)` 方法，调用 `al.state.SetLastChatID(al.workspace, chatID)`
+  - 添加完整的测试：`TestRecordLastChannel`、`TestRecordLastChatID`、`TestNewAgentLoop_StateInitialized`
+  - 验证状态持久化：创建新的 AgentLoop 实例后状态仍然保留
+
+- Files changed:
+  - `pkg/agent/loop.go`
+  - `pkg/agent/loop_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** 状态管理应该集中在一个专门的包中（如 `pkg/state`），而不是分散在各个模块中。
+  - **Gotchas encountered:** 测试中的 mock Provider 需要实现完整的 `LLMProvider` 接口，包括 `GetDefaultModel()` 方法。
+  - **Useful context:** `RecordLastChannel` 方法现在可以用于跟踪用户最后一次活跃的频道，这对于跨会话的上下文恢复很有用。
 
 ---

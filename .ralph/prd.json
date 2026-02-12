@@ -151,7 +151,7 @@
         "go test ./pkg/agent -run TestRecordLastChannel passes"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

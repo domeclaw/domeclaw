@@ -22,6 +22,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/session"
+	"github.com/sipeed/picoclaw/pkg/state"
 	"github.com/sipeed/picoclaw/pkg/tools"
 	"github.com/sipeed/picoclaw/pkg/utils"
 )
@@ -34,6 +35,7 @@ type AgentLoop struct {
 	contextWindow  int           // Maximum context window size in tokens
 	maxIterations  int
 	sessions       *session.SessionManager
+	state          *state.Manager
 	contextBuilder *ContextBuilder
 	tools          *tools.ToolRegistry
 	running        atomic.Bool
@@ -88,6 +90,9 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 
 	sessionsManager := session.NewSessionManager(filepath.Join(workspace, "sessions"))
 
+	// Create state manager for atomic state persistence
+	stateManager := state.NewManager(workspace)
+
 	// Create context builder and set tools registry
 	contextBuilder := NewContextBuilder(workspace)
 	contextBuilder.SetToolsRegistry(toolsRegistry)
@@ -100,6 +105,7 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 		contextWindow:  cfg.Agents.Defaults.MaxTokens, // Restore context window for summarization
 		maxIterations:  cfg.Agents.Defaults.MaxToolIterations,
 		sessions:       sessionsManager,
+		state:          stateManager,
 		contextBuilder: contextBuilder,
 		tools:          toolsRegistry,
 		summarizing:    sync.Map{},
@@ -143,6 +149,18 @@ func (al *AgentLoop) Stop() {
 
 func (al *AgentLoop) RegisterTool(tool tools.Tool) {
 	al.tools.Register(tool)
+}
+
+// RecordLastChannel records the last active channel for this workspace.
+// This uses the atomic state save mechanism to prevent data loss on crash.
+func (al *AgentLoop) RecordLastChannel(channel string) error {
+	return al.state.SetLastChannel(al.workspace, channel)
+}
+
+// RecordLastChatID records the last active chat ID for this workspace.
+// This uses the atomic state save mechanism to prevent data loss on crash.
+func (al *AgentLoop) RecordLastChatID(chatID string) error {
+	return al.state.SetLastChatID(al.workspace, chatID)
 }
 
 func (al *AgentLoop) ProcessDirect(ctx context.Context, content, sessionKey string) (string, error) {
