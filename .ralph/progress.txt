@@ -19,6 +19,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 - US-010: Update RecordLastChannel to use atomic save
 - US-011: Refactor MessageTool to use ToolResult
 - US-012: Refactor ShellTool to use ToolResult
+- US-013: Refactor FilesystemTool to use ToolResult
 
 ### In Progress
 
@@ -38,7 +39,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-010 | Update RecordLastChannel to use atomic save | Completed | |
 | US-011 | Refactor MessageTool to use ToolResult | Completed | Added test file message_test.go |
 | US-012 | Refactor ShellTool to use ToolResult | Completed | |
-| US-013 | Refactor FilesystemTool to use ToolResult | Completed | |
+| US-013 | Refactor FilesystemTool to use ToolResult | Completed | Added test file filesystem_test.go |
 | US-014 | Refactor WebTool to use ToolResult | Completed | |
 | US-015 | Refactor EditTool to use ToolResult | Completed | |
 | US-016 | Refactor CronTool to use ToolResult | Pending | |
@@ -244,5 +245,28 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** ShellTool 实现已经符合 ToolResult 规范，只需要添加测试覆盖即可。测试覆盖了成功、失败、超时、自定义目录、安全防护等多种场景。
   - **Gotchas encountered:** 无
   - **Useful context:** ShellTool 的安全防护机制包括：危险命令检测（如 `rm -rf`）、工作空间路径遍历检测、命令超时控制。
+
+---
+
+## [2026-02-12] - US-013
+- What was implemented:
+  - FilesystemTool 已经完全使用 ToolResult 返回值（无需修改实现）
+  - 添加了完整的测试文件 `pkg/tools/filesystem_test.go`，包含 10 个测试用例
+  - 测试覆盖了所有验收标准：
+    - ReadFileTool 成功返回 NewToolResult（ForLLM=内容，ForUser=空）
+    - WriteFileTool 成功返回 SilentResult（Silent=true，ForUser=空）
+    - ListDirTool 成功返回 NewToolResult（列出文件和目录）
+    - 错误场景返回 ErrorResult（IsError=true）
+    - 缺少参数的错误处理
+    - 目录自动创建功能测试
+    - 默认路径处理测试
+
+- Files changed:
+  - `pkg/tools/filesystem_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** FilesystemTool 中不同操作使用不同的返回值模式：ReadFile/ListDir 使用 NewToolResult（仅设置 ForLLM），WriteFile 使用 SilentResult（设置 Silent=true）。
+  - **Gotchas encountered:** 最初误解了 NewToolResult 的行为，以为它会设置 ForUser，但实际上它只设置 ForLLM。
+  - **Useful context:** WriteFileTool 会自动创建不存在的目录（使用 os.MkdirAll），这是文件写入工具的重要功能。
 
 ---
