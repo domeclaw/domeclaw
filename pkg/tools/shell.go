@@ -8,9 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
+
 
 type ExecTool struct {
 	workingDir          string
@@ -91,7 +93,13 @@ func (t *ExecTool) Execute(ctx context.Context, args map[string]interface{}) (st
 	cmdCtx, cancel := context.WithTimeout(ctx, t.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(cmdCtx, "sh", "-c", command)
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.CommandContext(cmdCtx, "powershell", "-NoProfile", "-NonInteractive", "-Command", command)
+	} else {
+		cmd = exec.CommandContext(cmdCtx, "sh", "-c", command)
+	}
+
 	if cwd != "" {
 		cmd.Dir = cwd
 	}
