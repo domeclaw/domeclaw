@@ -30,7 +30,8 @@ import (
 	"github.com/sipeed/picoclaw/pkg/migrate"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
-	"github.com/sipeed/picoclaw/pkg/tools"
+	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+	toolsPkg "github.com/sipeed/picoclaw/pkg/tools" // nolint: unused
 	"github.com/sipeed/picoclaw/pkg/voice"
 )
 
@@ -38,6 +39,8 @@ var (
 	version   = "0.1.0"
 	buildTime string
 	goVersion string
+	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+	_ = toolsPkg.ErrorResult // nolint: unused
 )
 
 const logo = "🦞"
@@ -650,7 +653,8 @@ func gatewayCmd() {
 		})
 
 	// Setup cron tool and service
-	cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
+	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+	// cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -705,10 +709,11 @@ func gatewayCmd() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := cronService.Start(); err != nil {
-		fmt.Printf("Error starting cron service: %v\n", err)
-	}
-	fmt.Println("✓ Cron service started")
+	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+	// if err := cronService.Start(); err != nil {
+	// 	fmt.Printf("Error starting cron service: %v\n", err)
+	// }
+	// fmt.Println("✓ Cron service started")
 
 	if err := heartbeatService.Start(); err != nil {
 		fmt.Printf("Error starting heartbeat service: %v\n", err)
@@ -728,7 +733,8 @@ func gatewayCmd() {
 	fmt.Println("\nShutting down...")
 	cancel()
 	heartbeatService.Stop()
-	cronService.Stop()
+	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+	// cronService.Stop()
 	agentLoop.Stop()
 	channelManager.StopAll(ctx)
 	fmt.Println("✓ Gateway stopped")
@@ -1027,24 +1033,25 @@ func getConfigPath() string {
 	return filepath.Join(home, ".picoclaw", "config.json")
 }
 
-func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
-	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
-
-	// Create cron service
-	cronService := cron.NewCronService(cronStorePath, nil)
-
-	// Create and register CronTool
-	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus)
-	agentLoop.RegisterTool(cronTool)
-
-	// Set the onJob handler
-	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
-		result := cronTool.ExecuteJob(context.Background(), job)
-		return result, nil
-	})
-
-	return cronService
-}
+// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
+// func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string) *cron.CronService {
+// 	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
+//
+// 	// Create cron service
+// 	cronService := cron.NewCronService(cronStorePath, nil)
+//
+// 	// Create and register CronTool
+// 	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus)
+// 	agentLoop.RegisterTool(cronTool)
+//
+// 	// Set the onJob handler
+// 	cronService.SetOnJob(func(job *cron.CronJob) (string, error) {
+// 		result := cronTool.ExecuteJob(context.Background(), job)
+// 		return result, nil
+// 	})
+//
+// 	return cronService
+// }
 
 func loadConfig() (*config.Config, error) {
 	return config.LoadConfig(getConfigPath())

@@ -1,0 +1,67 @@
+# Ralph Progress: tool-result-refactor
+# Branch: ralph/tool-result-refactor
+
+## Overview
+Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改为结构化 ToolResult，支持异步任务，删除字符串匹配黑魔法
+
+## Progress
+
+### Completed (2/21)
+
+- US-001: Add ToolResult struct and helper functions
+- US-002: Modify Tool interface to return *ToolResult
+
+### In Progress
+
+### Blocked
+
+### Pending
+
+| ID | Title | Status | Notes |
+|----|-------|--------|-------|
+| US-003 | Modify ToolRegistry to process ToolResult | Pending | registry.go already updated |
+| US-004 | Delete isToolConfirmationMessage function | Pending | |
+| US-005 | Update AgentLoop tool result processing logic | Pending | |
+| US-006 | Add AsyncCallback type and AsyncTool interface | Pending | |
+| US-007 | Heartbeat async task execution support | Pending | |
+| US-008 | Inject callback into async tools in AgentLoop | Pending | |
+| US-009 | State save atomicity - SetLastChannel | Pending | |
+| US-010 | Update RecordLastChannel to use atomic save | Pending | |
+| US-011 | Refactor MessageTool to use ToolResult | Completed | |
+| US-012 | Refactor ShellTool to use ToolResult | Completed | |
+| US-013 | Refactor FilesystemTool to use ToolResult | Completed | |
+| US-014 | Refactor WebTool to use ToolResult | Completed | |
+| US-015 | Refactor EditTool to use ToolResult | Completed | |
+| US-016 | Refactor CronTool to use ToolResult | Pending | |
+| US-017 | Refactor SpawnTool to use AsyncTool and callbacks | Pending | |
+| US-018 | Refactor SubagentTool to use ToolResult | Pending | |
+| US-019 | Enable heartbeat by default in config | Pending | |
+| US-020 | Move heartbeat log to memory directory | Pending | |
+| US-021 | Heartbeat calls ExecuteHeartbeatWithTools | Pending | |
+
+---
+
+## [2026-02-12] - US-002
+- What was implemented:
+  - 修复了所有剩余 Tool 实现的 Execute 方法返回值类型：
+    - `shell.go`: ExecTool 成功时返回 UserResult（ForUser=命令输出），失败时返回 ErrorResult
+    - `spawn.go`: SpawnTool 成功返回 NewToolResult，失败返回 ErrorResult
+    - `web.go`: WebSearchTool 和 WebFetchTool 返回 ToolResult（ForUser=内容，ForLLM=摘要）
+    - `edit.go`: EditFileTool 和 AppendFileTool 成功返回 SilentResult，失败返回 ErrorResult
+    - `filesystem.go`: ReadFileTool、WriteFileTool、ListDirTool 成功返回 SilentResult 或 NewToolResult，失败返回 ErrorResult
+  - 临时禁用了 cronTool 相关代码（main.go），等待 US-016 完成
+
+- Files changed:
+  - `pkg/tools/shell.go`
+  - `pkg/tools/spawn.go`
+  - `pkg/tools/web.go`
+  - `pkg/tools/edit.go`
+  - `pkg/tools/filesystem.go`
+  - `cmd/picoclaw/main.go`
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** 代码重构需要分步骤进行。先修改接口签名，再修改实现，最后处理调用方。
+  - **Gotchas encountered:** 临时禁用的代码（如 cronTool）需要同时注释掉所有相关的启动/停止调用，否则会编译失败。
+  - **Useful context:** `cron.go` 已被临时禁用（包含注释说明），将在 US-016 中恢复。main.go 中的 cronTool 相关代码也已用注释标记为临时禁用。
+
+---

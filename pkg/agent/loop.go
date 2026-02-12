@@ -408,14 +408,17 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 					"iteration": iteration,
 				})
 
-			result, err := al.tools.ExecuteWithContext(ctx, tc.Name, tc.Arguments, opts.Channel, opts.ChatID)
-			if err != nil {
-				result = fmt.Sprintf("Error: %v", err)
+			toolResult := al.tools.ExecuteWithContext(ctx, tc.Name, tc.Arguments, opts.Channel, opts.ChatID)
+
+			// Determine content for LLM based on tool result
+			contentForLLM := toolResult.ForLLM
+			if contentForLLM == "" && toolResult.Err != nil {
+				contentForLLM = toolResult.Err.Error()
 			}
 
 			toolResultMsg := providers.Message{
 				Role:       "tool",
-				Content:    result,
+				Content:    contentForLLM,
 				ToolCallID: tc.ID,
 			}
 			messages = append(messages, toolResultMsg)
@@ -430,13 +433,14 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 
 // updateToolContexts updates the context for tools that need channel/chatID info.
 func (al *AgentLoop) updateToolContexts(channel, chatID string) {
+	// Use ContextualTool interface instead of type assertions
 	if tool, ok := al.tools.Get("message"); ok {
-		if mt, ok := tool.(*tools.MessageTool); ok {
+		if mt, ok := tool.(tools.ContextualTool); ok {
 			mt.SetContext(channel, chatID)
 		}
 	}
 	if tool, ok := al.tools.Get("spawn"); ok {
-		if st, ok := tool.(*tools.SpawnTool); ok {
+		if st, ok := tool.(tools.ContextualTool); ok {
 			st.SetContext(channel, chatID)
 		}
 	}

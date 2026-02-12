@@ -49,22 +49,22 @@ func (t *SpawnTool) SetContext(channel, chatID string) {
 	t.originChatID = chatID
 }
 
-func (t *SpawnTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
+func (t *SpawnTool) Execute(ctx context.Context, args map[string]interface{}) *ToolResult {
 	task, ok := args["task"].(string)
 	if !ok {
-		return "", fmt.Errorf("task is required")
+		return ErrorResult("task is required")
 	}
 
 	label, _ := args["label"].(string)
 
 	if t.manager == nil {
-		return "Error: Subagent manager not configured", nil
+		return ErrorResult("Subagent manager not configured")
 	}
 
 	result, err := t.manager.Spawn(ctx, task, label, t.originChannel, t.originChatID)
 	if err != nil {
-		return "", fmt.Errorf("failed to spawn subagent: %w", err)
+		return ErrorResult(fmt.Sprintf("failed to spawn subagent: %v", err))
 	}
 
-	return result, nil
+	return NewToolResult(result)
 }

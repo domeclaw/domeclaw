@@ -33,11 +33,11 @@ func (r *ToolRegistry) Get(name string) (Tool, bool) {
 	return tool, ok
 }
 
-func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string]interface{}) (string, error) {
+func (r *ToolRegistry) Execute(ctx context.Context, name string, args map[string]interface{}) *ToolResult {
 	return r.ExecuteWithContext(ctx, name, args, "", "")
 }
 
-func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args map[string]interface{}, channel, chatID string) (string, error) {
+func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args map[string]interface{}, channel, chatID string) *ToolResult {
 	logger.InfoCF("tool", "Tool execution started",
 		map[string]interface{}{
 			"tool": name,
@@ -50,7 +50,7 @@ func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args
 			map[string]interface{}{
 				"tool": name,
 			})
-		return "", fmt.Errorf("tool '%s' not found", name)
+		return ErrorResult(fmt.Sprintf("tool '%s' not found", name)).WithError(fmt.Errorf("tool not found"))
 	}
 
 	// If tool implements ContextualTool, set context
@@ -59,26 +59,33 @@ func (r *ToolRegistry) ExecuteWithContext(ctx context.Context, name string, args
 	}
 
 	start := time.Now()
-	result, err := tool.Execute(ctx, args)
+	result := tool.Execute(ctx, args)
 	duration := time.Since(start)
 
-	if err != nil {
+	// Log based on result type
+	if result.IsError {
 		logger.ErrorCF("tool", "Tool execution failed",
 			map[string]interface{}{
 				"tool":     name,
 				"duration": duration.Milliseconds(),
-				"error":    err.Error(),
+				"error":    result.ForLLM,
+			})
+	} else if result.Async {
+		logger.InfoCF("tool", "Tool started (async)",
+			map[string]interface{}{
+				"tool":     name,
+				"duration": duration.Milliseconds(),
 			})
 	} else {
 		logger.InfoCF("tool", "Tool execution completed",
 			map[string]interface{}{
 				"tool":          name,
 				"duration_ms":   duration.Milliseconds(),
-				"result_length": len(result),
+				"result_length": len(result.ForLLM),
 			})
 	}
 
-	return result, err
+	return result
 }
 
 func (r *ToolRegistry) GetDefinitions() []map[string]interface{} {
