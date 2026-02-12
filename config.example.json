@@ -81,6 +81,15 @@
     "vllm": {
       "api_key": "",
       "api_base": ""
+    },
+    "nvidia": {
+      "api_key": "nvapi-xxx",
+      "api_base": "",
+      "proxy": "http://127.0.0.1:7890"
+    },
+    "moonshot": {
+      "api_key": "sk-xxx",
+      "api_base": ""
     }
   },
   "tools": {

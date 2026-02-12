@@ -127,9 +127,9 @@ type DingTalkConfig struct {
 }
 
 type SlackConfig struct {
-	Enabled  bool     `json:"enabled" env:"PICOCLAW_CHANNELS_SLACK_ENABLED"`
-	BotToken string   `json:"bot_token" env:"PICOCLAW_CHANNELS_SLACK_BOT_TOKEN"`
-	AppToken string   `json:"app_token" env:"PICOCLAW_CHANNELS_SLACK_APP_TOKEN"`
+	Enabled   bool     `json:"enabled" env:"PICOCLAW_CHANNELS_SLACK_ENABLED"`
+	BotToken  string   `json:"bot_token" env:"PICOCLAW_CHANNELS_SLACK_BOT_TOKEN"`
+	AppToken  string   `json:"app_token" env:"PICOCLAW_CHANNELS_SLACK_APP_TOKEN"`
 	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_SLACK_ALLOW_FROM"`
 }
 
@@ -141,11 +141,14 @@ type ProvidersConfig struct {
 	Zhipu      ProviderConfig `json:"zhipu"`
 	VLLM       ProviderConfig `json:"vllm"`
 	Gemini     ProviderConfig `json:"gemini"`
+	Nvidia     ProviderConfig `json:"nvidia"`
+	Moonshot   ProviderConfig `json:"moonshot"`
 }
 
 type ProviderConfig struct {
 	APIKey     string `json:"api_key" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_KEY"`
 	APIBase    string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
+	Proxy      string `json:"proxy,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_PROXY"`
 	AuthMethod string `json:"auth_method,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_AUTH_METHOD"`
 }
 
@@ -237,6 +240,8 @@ func DefaultConfig() *Config {
 			Zhipu:      ProviderConfig{},
 			VLLM:       ProviderConfig{},
 			Gemini:     ProviderConfig{},
+			Nvidia:     ProviderConfig{},
+			Moonshot:   ProviderConfig{},
 		},
 		Gateway: GatewayConfig{
 			Host: "0.0.0.0",
