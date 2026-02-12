@@ -6,12 +6,13 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (4/21)
+### Completed (5/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
 - US-004: Delete isToolConfirmationMessage function (already removed in commit 488e7a9)
 - US-005: Update AgentLoop tool result processing logic
+- US-006: Add AsyncCallback type and AsyncTool interface
 
 ### In Progress
 
@@ -24,7 +25,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-003 | Modify ToolRegistry to process ToolResult | Pending | registry.go already updated |
 | US-004 | Delete isToolConfirmationMessage function | Completed | Already removed in commit 488e7a9 |
 | US-005 | Update AgentLoop tool result processing logic | Completed | No test files in pkg/agent yet |
-| US-006 | Add AsyncCallback type and AsyncTool interface | Pending | |
+| US-006 | Add AsyncCallback type and AsyncTool interface | Completed | |
 | US-007 | Heartbeat async task execution support | Pending | |
 | US-008 | Inject callback into async tools in AgentLoop | Pending | |
 | US-009 | State save atomicity - SetLastChannel | Pending | |
@@ -83,5 +84,21 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** 工具结果的处理需要区分两个目的地：LLM (ForLLM) 和用户 (ForUser)。用户消息应该在工具执行后立即发送，而不是等待 LLM 的最终响应。
   - **Gotchas encountered:** 编辑大文件时要小心不要引入重复代码。我之前编辑时没有完整替换代码块，导致有重复的代码段。
   - **Useful context:** `opts.SendResponse` 参数控制是否发送响应给用户。当工具设置了 `ForUser` 时，即使 Silent=false，也只有在 `SendResponse=true` 时才会发送。
+
+---
+
+## [2026-02-12] - US-006
+- What was implemented:
+  - 在 `pkg/tools/base.go` 中定义 `AsyncCallback` 函数类型
+  - 定义 `AsyncTool` 接口，包含 `SetCallback(cb AsyncCallback)` 方法
+  - 添加完整的 godoc 注释，包含使用示例
+
+- Files changed:
+  - `pkg/tools/base.go`
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** Go 接口的设计应该是可选的组合模式。`AsyncTool` 是一个可选接口，工具可以选择实现以支持异步操作。
+  - **Gotchas encountered:** 无
+  - **Useful context:** 这个模式将在 US-008 中用于 `SpawnTool`，让子代理完成时能够通知主循环。
 
 ---
