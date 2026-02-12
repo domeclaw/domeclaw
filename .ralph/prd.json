@@ -226,7 +226,7 @@
         "go test ./pkg/tools -run TestEditTool passes"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

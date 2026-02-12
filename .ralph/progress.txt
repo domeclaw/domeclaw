@@ -6,7 +6,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (14/21)
+### Completed (15/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
@@ -21,6 +21,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 - US-012: Refactor ShellTool to use ToolResult
 - US-013: Refactor FilesystemTool to use ToolResult
 - US-014: Refactor WebTool to use ToolResult
+- US-015: Refactor EditTool to use ToolResult
 - US-012: Refactor ShellTool to use ToolResult
 - US-013: Refactor FilesystemTool to use ToolResult
 
@@ -44,6 +45,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 | US-012 | Refactor ShellTool to use ToolResult | Completed | |
 | US-013 | Refactor FilesystemTool to use ToolResult | Completed | Added test file filesystem_test.go |
 | US-014 | Refactor WebTool to use ToolResult | Completed | Added test file web_test.go |
+| US-015 | Refactor EditTool to use ToolResult | Completed | Added test file edit_test.go |
 | US-015 | Refactor EditTool to use ToolResult | Completed | |
 | US-016 | Refactor CronTool to use ToolResult | Pending | |
 | US-017 | Refactor SpawnTool to use AsyncTool and callbacks | Pending | |
@@ -294,5 +296,28 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** WebTool 使用 httptest.NewServer 创建模拟服务器进行测试，避免依赖外部 API。WebFetchTool 返回 JSON 格式的结构化内容给用户，包含 url、status、extractor、truncated、length、text 字段。
   - **Gotchas encountered:** 无
   - **Useful context:** WebSearchTool 需要配置 BRAVE_API_KEY 环境变量才能正常工作。WebFetchTool 支持多种内容类型：JSON（格式化）、HTML（文本提取）、纯文本。
+
+---
+
+## [2026-02-12] - US-015
+- What was implemented:
+  - EditTool 已经完全使用 ToolResult 返回值（无需修改实现）
+  - 添加了完整的测试文件 `pkg/tools/edit_test.go`，包含 10 个测试用例
+  - 测试覆盖了所有验收标准：
+    - EditFileTool 成功返回 SilentResult（Silent=true，ForUser=空）
+    - AppendFileTool 成功返回 SilentResult
+    - 文件不存在错误处理
+    - old_text 不存在错误处理
+    - 多次匹配错误处理
+    - 目录限制测试
+    - 缺少参数错误处理
+
+- Files changed:
+  - `pkg/tools/edit_test.go` (新增)
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** EditTool 包含两个子工具：EditFileTool（替换文本）和 AppendFileTool（追加内容）。都返回 SilentResult 避免重复发送内容给用户。
+  - **Gotchas encountered:** 无
+  - **Useful context:** EditFileTool 支持可选的目录限制，用于安全控制，防止编辑允许目录外的文件。
 
 ---
