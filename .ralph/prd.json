@@ -299,7 +299,7 @@
         "go test ./pkg/heartbeat -run TestLogPath passes"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
