@@ -12,6 +12,8 @@
 <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
+[日本語](README.ja.md) | **English**
+
 </div>
 
 ---
@@ -116,6 +118,46 @@ make build-all
 
 # Build And Install
 make install
+```
+
+## 🐳 Docker Compose
+
+You can also run PicoClaw using Docker Compose without installing anything locally.
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/sipeed/picoclaw.git
+cd picoclaw
+
+# 2. Set your API keys
+cp config/config.example.json config/config.json
+vim config/config.json      # Set DISCORD_BOT_TOKEN, API keys, etc.
+
+# 3. Build & Start
+docker compose --profile gateway up -d
+
+# 4. Check logs
+docker compose logs -f picoclaw-gateway
+
+# 5. Stop
+docker compose --profile gateway down
+```
+
+### Agent Mode (One-shot)
+
+```bash
+# Ask a question
+docker compose run --rm picoclaw-agent -m "What is 2+2?"
+
+# Interactive mode
+docker compose run --rm picoclaw-agent
+```
+
+### Rebuild
+
+```bash
+docker compose --profile gateway build --no-cache
+docker compose --profile gateway up -d
 ```
 
 ### 🚀 Quick Start
