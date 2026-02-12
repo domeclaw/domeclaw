@@ -182,7 +182,7 @@
         "go test ./pkg/tools -run TestShellTool passes"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
