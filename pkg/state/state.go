@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -45,7 +46,10 @@ func NewManager(workspace string) *Manager {
 	}
 
 	// Load existing state if available
-	sm.load()
+	if err := sm.load(); err != nil {
+		// Log warning but continue with empty state
+		log.Printf("[WARN] state: failed to load state file, starting fresh: %v", err)
+	}
 
 	return sm
 }

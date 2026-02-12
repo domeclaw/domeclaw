@@ -30,8 +30,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/migrate"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/skills"
-	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-	toolsPkg "github.com/sipeed/picoclaw/pkg/tools" // nolint: unused
+	"github.com/sipeed/picoclaw/pkg/tools"
 	"github.com/sipeed/picoclaw/pkg/voice"
 )
 
@@ -39,8 +38,6 @@ var (
 	version   = "0.1.0"
 	buildTime string
 	goVersion string
-	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-	_ = toolsPkg.ErrorResult // nolint: unused
 )
 
 const logo = "🦞"
@@ -653,8 +650,7 @@ func gatewayCmd() {
 		})
 
 	// Setup cron tool and service
-	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-	// cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
+	cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath())
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -709,11 +705,10 @@ func gatewayCmd() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-	// if err := cronService.Start(); err != nil {
-	// 	fmt.Printf("Error starting cron service: %v\n", err)
-	// }
-	// fmt.Println("✓ Cron service started")
+	if err := cronService.Start(); err != nil {
+		fmt.Printf("Error starting cron service: %v\n", err)
+	}
+	fmt.Println("✓ Cron service started")
 
 	if err := heartbeatService.Start(); err != nil {
 		fmt.Printf("Error starting heartbeat service: %v\n", err)
@@ -733,8 +728,7 @@ func gatewayCmd() {
 	fmt.Println("\nShutting down...")
 	cancel()
 	heartbeatService.Stop()
-	// TEMPORARILY DISABLED - cronTool is being refactored to use ToolResult (US-016)
-	// cronService.Stop()
+	cronService.Stop()
 	agentLoop.Stop()
 	channelManager.StopAll(ctx)
 	fmt.Println("✓ Gateway stopped")
@@ -1040,7 +1034,7 @@ func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace
 	cronService := cron.NewCronService(cronStorePath, nil)
 
 	// Create and register CronTool
-	cronTool := toolsPkg.NewCronTool(cronService, agentLoop, msgBus, workspace)
+	cronTool := tools.NewCronTool(cronService, agentLoop, msgBus, workspace)
 	agentLoop.RegisterTool(cronTool)
 
 	// Set the onJob handler

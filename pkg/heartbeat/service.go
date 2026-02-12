@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -203,13 +204,17 @@ func (hs *HeartbeatService) ExecuteHeartbeatWithTools(prompt string) {
 
 // executeHeartbeatWithTools is the internal implementation of tool-supporting heartbeat.
 func (hs *HeartbeatService) executeHeartbeatWithTools(prompt string) {
-	// Check if handler is configured
-	if hs.onHeartbeatWithTools == nil {
+	// Check if handler is configured (thread-safe read)
+	hs.mu.RLock()
+	handler := hs.onHeartbeatWithTools
+	hs.mu.RUnlock()
+
+	if handler == nil {
 		hs.logError("onHeartbeatWithTools handler not configured")
 		return
 	}
 
-	result := hs.onHeartbeatWithTools(prompt)
+	result := handler(prompt)
 
 	if result == nil {
 		hs.logInfo("Heartbeat handler returned nil result")
@@ -343,12 +348,13 @@ func (hs *HeartbeatService) sendResponse(response string) {
 	}
 
 	// Parse channel format: "platform:user_id" (e.g., "telegram:123456")
-	var platform, userID string
-	n, err := fmt.Sscanf(lastChannel, "%[^:]:%s", &platform, &userID)
-	if err != nil || n != 2 {
+	// Use SplitN to handle user IDs that may contain special characters
+	parts := strings.SplitN(lastChannel, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		hs.logError("Invalid last channel format: %s", lastChannel)
 		return
 	}
+	platform, userID := parts[0], parts[1]
 
 	// Send to channel
 	ctx := context.Background()
