@@ -192,3 +192,38 @@ func TestExecuteHeartbeatWithTools_NilResult(t *testing.T) {
 	// Should not panic with nil result
 	hs.ExecuteHeartbeatWithTools("Test prompt")
 }
+
+// TestLogPath verifies heartbeat log is written to memory directory
+func TestLogPath(t *testing.T) {
+	// Create temp workspace
+	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create memory directory
+	memDir := filepath.Join(tmpDir, "memory")
+	err = os.MkdirAll(memDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create memory dir: %v", err)
+	}
+
+	// Create heartbeat service
+	hs := NewHeartbeatService(tmpDir, nil, 30, true)
+
+	// Write a log entry
+	hs.log("Test log entry")
+
+	// Verify log file exists at correct path
+	expectedLogPath := filepath.Join(memDir, "heartbeat.log")
+	if _, err := os.Stat(expectedLogPath); os.IsNotExist(err) {
+		t.Errorf("Expected log file at %s, but it doesn't exist", expectedLogPath)
+	}
+
+	// Verify log file does NOT exist at old path
+	oldLogPath := filepath.Join(tmpDir, "heartbeat.log")
+	if _, err := os.Stat(oldLogPath); err == nil {
+		t.Error("Log file should not exist at old path (workspace/heartbeat.log)")
+	}
+}
