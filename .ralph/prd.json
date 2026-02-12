@@ -167,7 +167,7 @@
         "go test ./pkg/tools -run TestMessageTool passes"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
