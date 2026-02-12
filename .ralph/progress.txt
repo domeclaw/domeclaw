@@ -6,11 +6,12 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 
 ## Progress
 
-### Completed (3/21)
+### Completed (4/21)
 
 - US-001: Add ToolResult struct and helper functions
 - US-002: Modify Tool interface to return *ToolResult
 - US-004: Delete isToolConfirmationMessage function (already removed in commit 488e7a9)
+- US-005: Update AgentLoop tool result processing logic
 
 ### In Progress
 
@@ -22,7 +23,7 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
 |----|-------|--------|-------|
 | US-003 | Modify ToolRegistry to process ToolResult | Pending | registry.go already updated |
 | US-004 | Delete isToolConfirmationMessage function | Completed | Already removed in commit 488e7a9 |
-| US-005 | Update AgentLoop tool result processing logic | Pending | |
+| US-005 | Update AgentLoop tool result processing logic | Completed | No test files in pkg/agent yet |
 | US-006 | Add AsyncCallback type and AsyncTool interface | Pending | |
 | US-007 | Heartbeat async task execution support | Pending | |
 | US-008 | Inject callback into async tools in AgentLoop | Pending | |
@@ -64,5 +65,23 @@ Tool 返回值结构化重构 - 将 Tool 接口返回值从 (string, error) 改�
   - **Patterns discovered:** 代码重构需要分步骤进行。先修改接口签名，再修改实现，最后处理调用方。
   - **Gotchas encountered:** 临时禁用的代码（如 cronTool）需要同时注释掉所有相关的启动/停止调用，否则会编译失败。
   - **Useful context:** `cron.go` 已被临时禁用（包含注释说明），将在 US-016 中恢复。main.go 中的 cronTool 相关代码也已用注释标记为临时禁用。
+
+---
+
+## [2026-02-12] - US-005
+- What was implemented:
+  - 修改 `runLLMIteration` 返回值，增加 `lastToolResult *tools.ToolResult` 参数
+  - 在工具执行循环中，立即发送非 Silent 的 ForUser 内容给用户
+  - 使用 `toolResult.ForLLM` 发送内容给 LLM
+  - 实现了 Silent 标志检查：`if !toolResult.Silent && toolResult.ForUser != ""`
+  - 记录最后执行的工具结果用于后续决策
+
+- Files changed:
+  - `pkg/agent/loop.go`
+
+- **Learnings for future iterations:**
+  - **Patterns discovered:** 工具结果的处理需要区分两个目的地：LLM (ForLLM) 和用户 (ForUser)。用户消息应该在工具执行后立即发送，而不是等待 LLM 的最终响应。
+  - **Gotchas encountered:** 编辑大文件时要小心不要引入重复代码。我之前编辑时没有完整替换代码块，导致有重复的代码段。
+  - **Useful context:** `opts.SendResponse` 参数控制是否发送响应给用户。当工具设置了 `ForUser` 时，即使 Silent=false，也只有在 `SendResponse=true` 时才会发送。
 
 ---

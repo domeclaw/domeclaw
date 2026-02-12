@@ -249,10 +249,14 @@ func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (str
 	al.sessions.AddMessage(opts.SessionKey, "user", opts.UserMessage)
 
 	// 4. Run LLM iteration loop
-	finalContent, iteration, err := al.runLLMIteration(ctx, messages, opts)
+	finalContent, iteration, lastToolResult, err := al.runLLMIteration(ctx, messages, opts)
 	if err != nil {
 		return "", err
 	}
+
+	// If last tool had ForUser content and we already sent it, we might not need to send final response
+	// This is controlled by the tool's Silent flag and ForUser content
+	_ = lastToolResult // Use lastToolResult for future decisions (e.g., US-008 callback injection)
 
 	// 5. Handle empty response
 	if finalContent == "" {
@@ -290,10 +294,11 @@ func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (str
 }
 
 // runLLMIteration executes the LLM call loop with tool handling.
-// Returns the final content, iteration count, and any error.
-func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.Message, opts processOptions) (string, int, error) {
+// Returns the final content, iteration count, last tool result, and any error.
+func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.Message, opts processOptions) (string, int, *tools.ToolResult, error) {
 	iteration := 0
 	var finalContent string
+	var lastToolResult *tools.ToolResult
 
 	for iteration < al.maxIterations {
 		iteration++
@@ -350,7 +355,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 					"iteration": iteration,
 					"error":     err.Error(),
 				})
-			return "", iteration, fmt.Errorf("LLM call failed: %w", err)
+			return "", iteration, nil, fmt.Errorf("LLM call failed: %w", err)
 		}
 
 		// Check if no tool calls - we're done
@@ -372,7 +377,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 		logger.InfoCF("agent", "LLM requested tool calls",
 			map[string]interface{}{
 				"tools":     toolNames,
-				"count":     len(toolNames),
+				"count":     len(response.ToolCalls),
 				"iteration": iteration,
 			})
 
@@ -409,6 +414,21 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 				})
 
 			toolResult := al.tools.ExecuteWithContext(ctx, tc.Name, tc.Arguments, opts.Channel, opts.ChatID)
+			lastToolResult = toolResult
+
+			// Send ForUser content to user immediately if not Silent
+			if !toolResult.Silent && toolResult.ForUser != "" && opts.SendResponse {
+				al.bus.PublishOutbound(bus.OutboundMessage{
+					Channel: opts.Channel,
+					ChatID:  opts.ChatID,
+					Content: toolResult.ForUser,
+				})
+				logger.DebugCF("agent", "Sent tool result to user",
+					map[string]interface{}{
+						"tool":        tc.Name,
+						"content_len": len(toolResult.ForUser),
+					})
+			}
 
 			// Determine content for LLM based on tool result
 			contentForLLM := toolResult.ForLLM
@@ -428,7 +448,7 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 		}
 	}
 
-	return finalContent, iteration, nil
+	return finalContent, iteration, lastToolResult, nil
 }
 
 // updateToolContexts updates the context for tools that need channel/chatID info.
