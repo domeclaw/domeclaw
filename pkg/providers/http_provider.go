@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sipeed/picoclaw/pkg/auth"
 	"github.com/sipeed/picoclaw/pkg/config"
 )
 
@@ -74,8 +75,7 @@ func (p *HTTPProvider) Chat(ctx context.Context, messages []Message, tools []Too
 
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
-		authHeader := "Bearer " + p.apiKey
-		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("Authorization", "Bearer "+p.apiKey)
 	}
 
 	resp, err := p.httpClient.Do(req)
@@ -170,6 +170,28 @@ func (p *HTTPProvider) GetDefaultModel() string {
 	return ""
 }
 
+func createClaudeAuthProvider() (LLMProvider, error) {
+	cred, err := auth.GetCredential("anthropic")
+	if err != nil {
+		return nil, fmt.Errorf("loading auth credentials: %w", err)
+	}
+	if cred == nil {
+		return nil, fmt.Errorf("no credentials for anthropic. Run: picoclaw auth login --provider anthropic")
+	}
+	return NewClaudeProviderWithTokenSource(cred.AccessToken, createClaudeTokenSource()), nil
+}
+
+func createCodexAuthProvider() (LLMProvider, error) {
+	cred, err := auth.GetCredential("openai")
+	if err != nil {
+		return nil, fmt.Errorf("loading auth credentials: %w", err)
+	}
+	if cred == nil {
+		return nil, fmt.Errorf("no credentials for openai. Run: picoclaw auth login --provider openai")
+	}
+	return NewCodexProviderWithTokenSource(cred.AccessToken, cred.AccountID, createCodexTokenSource()), nil
+}
+
 func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 	model := cfg.Agents.Defaults.Model
 
@@ -186,14 +208,20 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			apiBase = "https://openrouter.ai/api/v1"
 		}
 
-	case (strings.Contains(lowerModel, "claude") || strings.HasPrefix(model, "anthropic/")) && cfg.Providers.Anthropic.APIKey != "":
+	case (strings.Contains(lowerModel, "claude") || strings.HasPrefix(model, "anthropic/")) && (cfg.Providers.Anthropic.APIKey != "" || cfg.Providers.Anthropic.AuthMethod != ""):
+		if cfg.Providers.Anthropic.AuthMethod == "oauth" || cfg.Providers.Anthropic.AuthMethod == "token" {
+			return createClaudeAuthProvider()
+		}
 		apiKey = cfg.Providers.Anthropic.APIKey
 		apiBase = cfg.Providers.Anthropic.APIBase
 		if apiBase == "" {
 			apiBase = "https://api.anthropic.com/v1"
 		}
 
-	case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) && cfg.Providers.OpenAI.APIKey != "":
+	case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) && (cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != ""):
+		if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
+			return createCodexAuthProvider()
+		}
 		apiKey = cfg.Providers.OpenAI.APIKey
 		apiBase = cfg.Providers.OpenAI.APIBase
 		if apiBase == "" {
