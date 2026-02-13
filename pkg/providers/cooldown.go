@@ -196,8 +196,8 @@ func calculateStandardCooldown(errorCount int) time.Duration {
 //	3 errors → 20 hours
 //	4+ errors → 24 hours (cap)
 func calculateBillingCooldown(billingErrorCount int) time.Duration {
-	const baseMs = 5 * 60 * 60 * 1000  // 5 hours
-	const maxMs = 24 * 60 * 60 * 1000  // 24 hours
+	const baseMs = 5 * 60 * 60 * 1000 // 5 hours
+	const maxMs = 24 * 60 * 60 * 1000 // 24 hours
 
 	n := max(1, billingErrorCount)
 	exp := min(n-1, 10)

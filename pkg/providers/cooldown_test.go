@@ -184,7 +184,7 @@ func TestCooldown_BillingTakesPrecedence(t *testing.T) {
 
 	// Standard cooldown (1 min) + billing disable (5h)
 	ct.MarkFailure("openai", FailoverRateLimit) // 1 min cooldown
-	ct.MarkFailure("openai", FailoverBilling)    // 5h disable
+	ct.MarkFailure("openai", FailoverBilling)   // 5h disable
 
 	// After 2 min: standard cooldown expired but billing still active
 	*current = now.Add(2 * time.Minute)
