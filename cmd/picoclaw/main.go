@@ -35,10 +35,10 @@ import (
 )
 
 var (
-	version    = "dev"
-	gitCommit  string
-	buildTime  string
-	goVersion  string
+	version   = "dev"
+	gitCommit string
+	buildTime string
+	goVersion string
 )
 
 const logo = "🦞"
