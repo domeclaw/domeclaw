@@ -9,21 +9,16 @@ import (
 	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
-func TestExecuteHeartbeatWithTools_Async(t *testing.T) {
-	// Create temp workspace
+func TestExecuteHeartbeat_Async(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create memory directory
-	os.MkdirAll(filepath.Join(tmpDir, "memory"), 0755)
+	hs := NewHeartbeatService(tmpDir, 30, true)
+	hs.started = true // Enable for testing
 
-	// Create heartbeat service with tool-supporting handler
-	hs := NewHeartbeatService(tmpDir, nil, 30, true)
-
-	// Track if async handler was called
 	asyncCalled := false
 	asyncResult := &tools.ToolResult{
 		ForLLM:  "Background task started",
@@ -33,7 +28,7 @@ func TestExecuteHeartbeatWithTools_Async(t *testing.T) {
 		Async:   true,
 	}
 
-	hs.SetOnHeartbeatWithTools(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt string) *tools.ToolResult {
 		asyncCalled = true
 		if prompt == "" {
 			t.Error("Expected non-empty prompt")
@@ -41,44 +36,44 @@ func TestExecuteHeartbeatWithTools_Async(t *testing.T) {
 		return asyncResult
 	})
 
-	// Execute heartbeat
-	hs.ExecuteHeartbeatWithTools("Test heartbeat prompt")
+	// Create HEARTBEAT.md
+	os.WriteFile(filepath.Join(tmpDir, "HEARTBEAT.md"), []byte("Test task"), 0644)
 
-	// Verify handler was called
+	// Execute heartbeat directly (internal method for testing)
+	hs.executeHeartbeat()
+
 	if !asyncCalled {
-		t.Error("Expected async handler to be called")
+		t.Error("Expected handler to be called")
 	}
 }
 
-func TestExecuteHeartbeatWithTools_Error(t *testing.T) {
-	// Create temp workspace
+func TestExecuteHeartbeat_Error(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create memory directory
-	os.MkdirAll(filepath.Join(tmpDir, "memory"), 0755)
+	hs := NewHeartbeatService(tmpDir, 30, true)
+	hs.started = true // Enable for testing
 
-	hs := NewHeartbeatService(tmpDir, nil, 30, true)
-
-	errorResult := &tools.ToolResult{
-		ForLLM:  "Heartbeat failed: connection error",
-		ForUser: "",
-		Silent:  false,
-		IsError: true,
-		Async:   false,
-	}
-
-	hs.SetOnHeartbeatWithTools(func(prompt string) *tools.ToolResult {
-		return errorResult
+	hs.SetHandler(func(prompt string) *tools.ToolResult {
+		return &tools.ToolResult{
+			ForLLM:  "Heartbeat failed: connection error",
+			ForUser: "",
+			Silent:  false,
+			IsError: true,
+			Async:   false,
+		}
 	})
 
-	hs.ExecuteHeartbeatWithTools("Test prompt")
+	// Create HEARTBEAT.md
+	os.WriteFile(filepath.Join(tmpDir, "HEARTBEAT.md"), []byte("Test task"), 0644)
+
+	hs.executeHeartbeat()
 
 	// Check log file for error message
-	logFile := filepath.Join(tmpDir, "memory", "heartbeat.log")
+	logFile := filepath.Join(tmpDir, "heartbeat.log")
 	data, err := os.ReadFile(logFile)
 	if err != nil {
 		t.Fatalf("Failed to read log file: %v", err)
@@ -90,35 +85,33 @@ func TestExecuteHeartbeatWithTools_Error(t *testing.T) {
 	}
 }
 
-func TestExecuteHeartbeatWithTools_Sync(t *testing.T) {
-	// Create temp workspace
+func TestExecuteHeartbeat_Silent(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create memory directory
-	os.MkdirAll(filepath.Join(tmpDir, "memory"), 0755)
+	hs := NewHeartbeatService(tmpDir, 30, true)
+	hs.started = true // Enable for testing
 
-	hs := NewHeartbeatService(tmpDir, nil, 30, true)
-
-	syncResult := &tools.ToolResult{
-		ForLLM:  "Heartbeat completed successfully",
-		ForUser: "",
-		Silent:  true,
-		IsError: false,
-		Async:   false,
-	}
-
-	hs.SetOnHeartbeatWithTools(func(prompt string) *tools.ToolResult {
-		return syncResult
+	hs.SetHandler(func(prompt string) *tools.ToolResult {
+		return &tools.ToolResult{
+			ForLLM:  "Heartbeat completed successfully",
+			ForUser: "",
+			Silent:  true,
+			IsError: false,
+			Async:   false,
+		}
 	})
 
-	hs.ExecuteHeartbeatWithTools("Test prompt")
+	// Create HEARTBEAT.md
+	os.WriteFile(filepath.Join(tmpDir, "HEARTBEAT.md"), []byte("Test task"), 0644)
+
+	hs.executeHeartbeat()
 
 	// Check log file for completion message
-	logFile := filepath.Join(tmpDir, "memory", "heartbeat.log")
+	logFile := filepath.Join(tmpDir, "heartbeat.log")
 	data, err := os.ReadFile(logFile)
 	if err != nil {
 		t.Fatalf("Failed to read log file: %v", err)
@@ -131,25 +124,21 @@ func TestExecuteHeartbeatWithTools_Sync(t *testing.T) {
 }
 
 func TestHeartbeatService_StartStop(t *testing.T) {
-	// Create temp workspace
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	hs := NewHeartbeatService(tmpDir, nil, 1, true)
+	hs := NewHeartbeatService(tmpDir, 1, true)
 
-	// Start the service
 	err = hs.Start()
 	if err != nil {
 		t.Fatalf("Failed to start heartbeat service: %v", err)
 	}
 
-	// Stop the service
 	hs.Stop()
 
-	// Verify it stopped properly
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -160,72 +149,73 @@ func TestHeartbeatService_Disabled(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	hs := NewHeartbeatService(tmpDir, nil, 1, false)
+	hs := NewHeartbeatService(tmpDir, 1, false)
 
-	// Check that service reports as not enabled
 	if hs.enabled != false {
 		t.Error("Expected service to be disabled")
 	}
 
-	// Note: The current implementation of Start() checks running() first,
-	// which returns true for a newly created service (before stopChan is closed).
-	// This means Start() will return nil even for disabled services.
-	// This test documents the current behavior.
 	err = hs.Start()
-	// We don't assert error here due to the running() check behavior
-	_ = err
+	_ = err // Disabled service returns nil
 }
 
-func TestExecuteHeartbeatWithTools_NilResult(t *testing.T) {
+func TestExecuteHeartbeat_NilResult(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	os.MkdirAll(filepath.Join(tmpDir, "memory"), 0755)
+	hs := NewHeartbeatService(tmpDir, 30, true)
+	hs.started = true // Enable for testing
 
-	hs := NewHeartbeatService(tmpDir, nil, 30, true)
-
-	hs.SetOnHeartbeatWithTools(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt string) *tools.ToolResult {
 		return nil
 	})
 
+	// Create HEARTBEAT.md
+	os.WriteFile(filepath.Join(tmpDir, "HEARTBEAT.md"), []byte("Test task"), 0644)
+
 	// Should not panic with nil result
-	hs.ExecuteHeartbeatWithTools("Test prompt")
+	hs.executeHeartbeat()
 }
 
-// TestLogPath verifies heartbeat log is written to memory directory
+// TestLogPath verifies heartbeat log is written to workspace directory
 func TestLogPath(t *testing.T) {
-	// Create temp workspace
 	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create memory directory
-	memDir := filepath.Join(tmpDir, "memory")
-	err = os.MkdirAll(memDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create memory dir: %v", err)
-	}
-
-	// Create heartbeat service
-	hs := NewHeartbeatService(tmpDir, nil, 30, true)
+	hs := NewHeartbeatService(tmpDir, 30, true)
 
 	// Write a log entry
 	hs.log("INFO", "Test log entry")
 
-	// Verify log file exists at correct path
-	expectedLogPath := filepath.Join(memDir, "heartbeat.log")
+	// Verify log file exists at workspace root
+	expectedLogPath := filepath.Join(tmpDir, "heartbeat.log")
 	if _, err := os.Stat(expectedLogPath); os.IsNotExist(err) {
 		t.Errorf("Expected log file at %s, but it doesn't exist", expectedLogPath)
 	}
+}
 
-	// Verify log file does NOT exist at old path
-	oldLogPath := filepath.Join(tmpDir, "heartbeat.log")
-	if _, err := os.Stat(oldLogPath); err == nil {
-		t.Error("Log file should not exist at old path (workspace/heartbeat.log)")
+// TestHeartbeatFilePath verifies HEARTBEAT.md is at workspace root
+func TestHeartbeatFilePath(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "heartbeat-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	hs := NewHeartbeatService(tmpDir, 30, true)
+
+	// Trigger default template creation
+	hs.buildPrompt()
+
+	// Verify HEARTBEAT.md exists at workspace root
+	expectedPath := filepath.Join(tmpDir, "HEARTBEAT.md")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Errorf("Expected HEARTBEAT.md at %s, but it doesn't exist", expectedPath)
 	}
 }
