@@ -173,6 +173,9 @@ func (hs *HeartbeatService) executeHeartbeat() {
 	lastChannel := hs.state.GetLastChannel()
 	channel, chatID := hs.parseLastChannel(lastChannel)
 
+	// Debug log for channel resolution
+	hs.logInfo("Resolved channel: %s, chatID: %s (from lastChannel: %s)", channel, chatID, lastChannel)
+
 	result := handler(prompt, channel, chatID)
 
 	if result == nil {
@@ -259,8 +262,12 @@ This file contains tasks for the heartbeat service to check periodically.
 
 ## Instructions
 
-If there's nothing that needs attention, respond with: HEARTBEAT_OK
-This ensures the heartbeat runs silently when everything is fine.
+- Execute ALL tasks listed below. Do NOT skip any task.
+- For simple tasks (e.g., report current time), respond directly.
+- For complex tasks that may take time, use the spawn tool to create a subagent.
+- The spawn tool is async - subagent results will be sent to the user automatically.
+- After spawning a subagent, CONTINUE to process remaining tasks.
+- Only respond with HEARTBEAT_OK when ALL tasks are done AND nothing needs attention.
 
 ---
 

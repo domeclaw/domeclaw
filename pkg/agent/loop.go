@@ -51,25 +51,31 @@ type processOptions struct {
 	DefaultResponse string // Response when LLM returns empty
 	EnableSummary   bool   // Whether to trigger summarization
 	SendResponse    bool   // Whether to send response via bus
+	NoHistory       bool   // If true, don't load session history (for heartbeat)
 }
 
-func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers.LLMProvider) *AgentLoop {
-	workspace := cfg.WorkspacePath()
-	os.MkdirAll(workspace, 0755)
+// createToolRegistry creates a tool registry with common tools.
+// This is shared between main agent and subagents.
+func createToolRegistry(workspace string, restrict bool, cfg *config.Config, msgBus *bus.MessageBus) *tools.ToolRegistry {
+	registry := tools.NewToolRegistry()
 
-	restrict := cfg.Agents.Defaults.RestrictToWorkspace
+	// File system tools
+	registry.Register(tools.NewReadFileTool(workspace, restrict))
+	registry.Register(tools.NewWriteFileTool(workspace, restrict))
+	registry.Register(tools.NewListDirTool(workspace, restrict))
+	registry.Register(tools.NewEditFileTool(workspace, restrict))
+	registry.Register(tools.NewAppendFileTool(workspace, restrict))
 
-	toolsRegistry := tools.NewToolRegistry()
-	toolsRegistry.Register(tools.NewReadFileTool(workspace, restrict))
-	toolsRegistry.Register(tools.NewWriteFileTool(workspace, restrict))
-	toolsRegistry.Register(tools.NewListDirTool(workspace, restrict))
-	toolsRegistry.Register(tools.NewExecTool(workspace, restrict))
+	// Shell execution
+	registry.Register(tools.NewExecTool(workspace, restrict))
 
+	// Web tools
 	braveAPIKey := cfg.Tools.Web.Search.APIKey
-	toolsRegistry.Register(tools.NewWebSearchTool(braveAPIKey, cfg.Tools.Web.Search.MaxResults))
-	toolsRegistry.Register(tools.NewWebFetchTool(50000))
+	registry.Register(tools.NewWebSearchTool(braveAPIKey, cfg.Tools.Web.Search.MaxResults))
+	registry.Register(tools.NewWebFetchTool(50000))
 
-	// Register message tool
+	// Message tool - available to both agent and subagent
+	// Subagent uses it to communicate directly with user
 	messageTool := tools.NewMessageTool()
 	messageTool.SetSendCallback(func(channel, chatID, content string) error {
 		msgBus.PublishOutbound(bus.OutboundMessage{
@@ -79,21 +85,33 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 		})
 		return nil
 	})
-	toolsRegistry.Register(messageTool)
+	registry.Register(messageTool)
 
-	// Register spawn tool
+	return registry
+}
+
+func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers.LLMProvider) *AgentLoop {
+	workspace := cfg.WorkspacePath()
+	os.MkdirAll(workspace, 0755)
+
+	restrict := cfg.Agents.Defaults.RestrictToWorkspace
+
+	// Create tool registry for main agent
+	toolsRegistry := createToolRegistry(workspace, restrict, cfg, msgBus)
+
+	// Create subagent manager with its own tool registry
 	subagentManager := tools.NewSubagentManager(provider, cfg.Agents.Defaults.Model, workspace, msgBus)
+	subagentTools := createToolRegistry(workspace, restrict, cfg, msgBus)
+	// Subagent doesn't need spawn/subagent tools to avoid recursion
+	subagentManager.SetTools(subagentTools)
+
+	// Register spawn tool (for main agent)
 	spawnTool := tools.NewSpawnTool(subagentManager)
 	toolsRegistry.Register(spawnTool)
 
 	// Register subagent tool (synchronous execution)
 	subagentTool := tools.NewSubagentTool(subagentManager)
 	toolsRegistry.Register(subagentTool)
-
-	// Register edit file tool
-	editFileTool := tools.NewEditFileTool(workspace, restrict)
-	toolsRegistry.Register(editFileTool)
-	toolsRegistry.Register(tools.NewAppendFileTool(workspace, restrict))
 
 	sessionsManager := session.NewSessionManager(filepath.Join(workspace, "sessions"))
 
@@ -186,6 +204,21 @@ func (al *AgentLoop) ProcessDirectWithChannel(ctx context.Context, content, sess
 	return al.processMessage(ctx, msg)
 }
 
+// ProcessHeartbeat processes a heartbeat request without session history.
+// Each heartbeat is independent and doesn't accumulate context.
+func (al *AgentLoop) ProcessHeartbeat(ctx context.Context, content, channel, chatID string) (string, error) {
+	return al.runAgentLoop(ctx, processOptions{
+		SessionKey:      "heartbeat",
+		Channel:         channel,
+		ChatID:          chatID,
+		UserMessage:     content,
+		DefaultResponse: "I've completed processing but have no response to give.",
+		EnableSummary:   false,
+		SendResponse:    false,
+		NoHistory:       true, // Don't load session history for heartbeat
+	})
+}
+
 func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage) (string, error) {
 	// Add message preview to log (show full content for error messages)
 	var logContent string
@@ -231,30 +264,45 @@ func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMe
 			"chat_id":   msg.ChatID,
 		})
 
-	// Parse origin from chat_id (format: "channel:chat_id")
-	var originChannel, originChatID string
+	// Parse origin channel from chat_id (format: "channel:chat_id")
+	var originChannel string
 	if idx := strings.Index(msg.ChatID, ":"); idx > 0 {
 		originChannel = msg.ChatID[:idx]
-		originChatID = msg.ChatID[idx+1:]
 	} else {
 		// Fallback
 		originChannel = "cli"
-		originChatID = msg.ChatID
 	}
 
-	// Use the origin session for context
-	sessionKey := fmt.Sprintf("%s:%s", originChannel, originChatID)
+	// Extract subagent result from message content
+	// Format: "Task 'label' completed.\n\nResult:\n<actual content>"
+	content := msg.Content
+	if idx := strings.Index(content, "Result:\n"); idx >= 0 {
+		content = content[idx+8:] // Extract just the result part
+	}
 
-	// Process as system message with routing back to origin
-	return al.runAgentLoop(ctx, processOptions{
-		SessionKey:      sessionKey,
-		Channel:         originChannel,
-		ChatID:          originChatID,
-		UserMessage:     fmt.Sprintf("[System: %s] %s", msg.SenderID, msg.Content),
-		DefaultResponse: "Background task completed.",
-		EnableSummary:   false,
-		SendResponse:    true, // Send response back to original channel
-	})
+	// Skip internal channels - only log, don't send to user
+	internalChannels := map[string]bool{"cli": true, "system": true, "subagent": true}
+	if internalChannels[originChannel] {
+		logger.InfoCF("agent", "Subagent completed (internal channel)",
+			map[string]interface{}{
+				"sender_id":    msg.SenderID,
+				"content_len":  len(content),
+				"channel":      originChannel,
+			})
+		return "", nil
+	}
+
+	// Agent acts as dispatcher only - subagent handles user interaction via message tool
+	// Don't forward result here, subagent should use message tool to communicate with user
+	logger.InfoCF("agent", "Subagent completed",
+		map[string]interface{}{
+			"sender_id":    msg.SenderID,
+			"channel":      originChannel,
+			"content_len":  len(content),
+		})
+
+	// Agent only logs, does not respond to user
+	return "", nil
 }
 
 // runAgentLoop is the core message processing logic.
@@ -275,9 +323,13 @@ func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (str
 	// 1. Update tool contexts
 	al.updateToolContexts(opts.Channel, opts.ChatID)
 
-	// 2. Build messages
-	history := al.sessions.GetHistory(opts.SessionKey)
-	summary := al.sessions.GetSummary(opts.SessionKey)
+	// 2. Build messages (skip history for heartbeat)
+	var history []providers.Message
+	var summary string
+	if !opts.NoHistory {
+		history = al.sessions.GetHistory(opts.SessionKey)
+		summary = al.sessions.GetSummary(opts.SessionKey)
+	}
 	messages := al.contextBuilder.BuildMessages(
 		history,
 		summary,
@@ -454,16 +506,14 @@ func (al *AgentLoop) runLLMIteration(ctx context.Context, messages []providers.M
 				})
 
 			// Create async callback for tools that implement AsyncTool
-			// This callback sends async completion results to the user
+			// NOTE: Following openclaw's design, async tools do NOT send results directly to users.
+			// Instead, they notify the agent via PublishInbound, and the agent decides
+			// whether to forward the result to the user (in processSystemMessage).
 			asyncCallback := func(callbackCtx context.Context, result *tools.ToolResult) {
-				// Send ForUser content to user if not silent
+				// Log the async completion but don't send directly to user
+				// The agent will handle user notification via processSystemMessage
 				if !result.Silent && result.ForUser != "" {
-					al.bus.PublishOutbound(bus.OutboundMessage{
-						Channel: opts.Channel,
-						ChatID:  opts.ChatID,
-						Content: result.ForUser,
-					})
-					logger.InfoCF("agent", "Async tool result sent to user",
+					logger.InfoCF("agent", "Async tool completed, agent will handle notification",
 						map[string]interface{}{
 							"tool":        tc.Name,
 							"content_len": len(result.ForUser),
