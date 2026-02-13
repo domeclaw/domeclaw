@@ -35,15 +35,20 @@ import (
 )
 
 var (
-	version   = "dev"
-	buildTime string
-	goVersion string
+	version    = "dev"
+	gitCommit  string
+	buildTime  string
+	goVersion  string
 )
 
 const logo = "🦞"
 
 func printVersion() {
-	fmt.Printf("%s picoclaw %s\n", logo, version)
+	fmt.Printf("%s picoclaw %s", logo, version)
+	if gitCommit != "" {
+		fmt.Printf(" (git: %s)", gitCommit)
+	}
+	fmt.Println()
 	if buildTime != "" {
 		fmt.Printf("  Build: %s\n", buildTime)
 	}
@@ -760,7 +765,16 @@ func statusCmd() {
 
 	configPath := getConfigPath()
 
-	fmt.Printf("%s picoclaw Status\n\n", logo)
+	fmt.Printf("%s picoclaw Status\n", logo)
+	fmt.Printf("Version: %s", version)
+	if gitCommit != "" {
+		fmt.Printf(" (git: %s)", gitCommit)
+	}
+	fmt.Println()
+	if buildTime != "" {
+		fmt.Printf("Build: %s\n", buildTime)
+	}
+	fmt.Println()
 
 	if _, err := os.Stat(configPath); err == nil {
 		fmt.Println("Config:", configPath, "✓")
