@@ -65,12 +65,12 @@
 
 🤖 **AI-Bootstrapped**: Autonomous Go-native implementation — 95% Agent-generated core with human-in-the-loop refinement.
 
-|  | OpenClaw  | NanoBot | **PicoClaw** |
-| --- | --- | --- |--- |
-| **Language** | TypeScript | Python | **Go** |
-| **RAM** | >1GB |>100MB| **< 10MB** |
-| **Startup**</br>(0.8GHz core) | >500s | >30s |  **<1s** |
-| **Cost** | Mac Mini 599$ | Most Linux SBC </br>~50$ |**Any Linux Board**</br>**As low as 10$** |
+|                               | OpenClaw      | NanoBot                  | **PicoClaw**                              |
+| ----------------------------- | ------------- | ------------------------ | ----------------------------------------- |
+| **Language**                  | TypeScript    | Python                   | **Go**                                    |
+| **RAM**                       | >1GB          | >100MB                   | **< 10MB**                                |
+| **Startup**</br>(0.8GHz core) | >500s         | >30s                     | **<1s**                                   |
+| **Cost**                      | Mac Mini 599$ | Most Linux SBC </br>~50$ | **Any Linux Board**</br>**As low as 10$** |
 
 <img src="assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -100,9 +100,9 @@
 
 PicoClaw can be deployed on almost any Linux device!
 
-* $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html)  E(Ethernet) or W(WiFi6) version, for Minimal Home Assistant
-* $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), or $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) for Automated Server Maintenance
-* $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) or $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera) for Smart Monitoring
+- $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html) E(Ethernet) or W(WiFi6) version, for Minimal Home Assistant
+- $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), or $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) for Automated Server Maintenance
+- $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) or $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera) for Smart Monitoring
 
 <https://private-user-images.githubusercontent.com/83055338/547056448-e7b031ff-d6f5-4468-bcca-5726b6fecb5c.mp4>
 
@@ -177,7 +177,7 @@ docker compose --profile gateway up -d
 > [!TIP]
 > Set your API key in `~/.picoclaw/config.json`.
 > Get API keys: [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)
-> Web search is **optional** - get free [Brave Search API](https://brave.com/search/api) (2000 free queries/month)
+> Web search is **optional** - get free [Brave Search API](https://brave.com/search/api) (2000 free queries/month) or use built-in auto fallback.
 
 **1. Initialize**
 
@@ -206,8 +206,13 @@ picoclaw onboard
   },
   "tools": {
     "web": {
-      "search": {
+      "brave": {
+        "enabled": false,
         "api_key": "YOUR_BRAVE_API_KEY",
+        "max_results": 5
+      },
+      "duckduckgo": {
+        "enabled": true,
         "max_results": 5
       }
     }
@@ -236,12 +241,12 @@ That's it! You have a working AI assistant in 2 minutes.
 
 Talk to your picoclaw through Telegram, Discord, or DingTalk
 
-| Channel | Setup |
-|---------|-------|
-| **Telegram** | Easy (just a token) |
-| **Discord** | Easy (bot token + intents) |
-| **QQ** | Easy (AppID + AppSecret) |
-| **DingTalk** | Medium (app credentials) |
+| Channel      | Setup                      |
+| ------------ | -------------------------- |
+| **Telegram** | Easy (just a token)        |
+| **Discord**  | Easy (bot token + intents) |
+| **QQ**       | Easy (AppID + AppSecret)   |
+| **DingTalk** | Medium (app credentials)   |
 
 <details>
 <summary><b>Telegram</b> (Recommended)</summary>
@@ -596,15 +601,15 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 > [!NOTE]
 > Groq provides free voice transcription via Whisper. If configured, Telegram voice messages will be automatically transcribed.
 
-| Provider | Purpose | Get API Key |
-|----------|---------|-------------|
-| `gemini` | LLM (Gemini direct) | [aistudio.google.com](https://aistudio.google.com) |
-| `zhipu` | LLM (Zhipu direct) | [bigmodel.cn](bigmodel.cn) |
-| `openrouter(To be tested)` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai) |
-| `anthropic(To be tested)` | LLM (Claude direct) | [console.anthropic.com](https://console.anthropic.com) |
-| `openai(To be tested)` | LLM (GPT direct) | [platform.openai.com](https://platform.openai.com) |
-| `deepseek(To be tested)` | LLM (DeepSeek direct) | [platform.deepseek.com](https://platform.deepseek.com) |
-| `groq` | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com) |
+| Provider                   | Purpose                                 | Get API Key                                            |
+| -------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| `gemini`                   | LLM (Gemini direct)                     | [aistudio.google.com](https://aistudio.google.com)     |
+| `zhipu`                    | LLM (Zhipu direct)                      | [bigmodel.cn](bigmodel.cn)                             |
+| `openrouter(To be tested)` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai)                 |
+| `anthropic(To be tested)`  | LLM (Claude direct)                     | [console.anthropic.com](https://console.anthropic.com) |
+| `openai(To be tested)`     | LLM (GPT direct)                        | [platform.openai.com](https://platform.openai.com)     |
+| `deepseek(To be tested)`   | LLM (DeepSeek direct)                   | [platform.deepseek.com](https://platform.deepseek.com) |
+| `groq`                     | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com)           |
 
 <details>
 <summary><b>Zhipu</b></summary>
@@ -630,8 +635,8 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
     "zhipu": {
       "api_key": "Your API Key",
       "api_base": "https://open.bigmodel.cn/api/paas/v4"
-    },
-  },
+    }
+  }
 }
 ```
 
@@ -692,8 +697,14 @@ picoclaw agent -m "Hello"
   },
   "tools": {
     "web": {
-      "search": {
-        "api_key": "BSA..."
+      "brave": {
+        "enabled": false,
+        "api_key": "BSA...",
+        "max_results": 5
+      },
+      "duckduckgo": {
+        "enabled": true,
+        "max_results": 5
       }
     }
   },
@@ -708,15 +719,15 @@ picoclaw agent -m "Hello"
 
 ## CLI Reference
 
-| Command | Description |
-|---------|-------------|
-| `picoclaw onboard` | Initialize config & workspace |
-| `picoclaw agent -m "..."` | Chat with the agent |
-| `picoclaw agent` | Interactive chat mode |
-| `picoclaw gateway` | Start the gateway |
-| `picoclaw status` | Show status |
-| `picoclaw cron list` | List all scheduled jobs |
-| `picoclaw cron add ...` | Add a scheduled job |
+| Command                   | Description                   |
+| ------------------------- | ----------------------------- |
+| `picoclaw onboard`        | Initialize config & workspace |
+| `picoclaw agent -m "..."` | Chat with the agent           |
+| `picoclaw agent`          | Interactive chat mode         |
+| `picoclaw gateway`        | Start the gateway             |
+| `picoclaw status`         | Show status                   |
+| `picoclaw cron list`      | List all scheduled jobs       |
+| `picoclaw cron add ...`   | Add a scheduled job           |
 
 ### Scheduled Tasks / Reminders
 
@@ -750,21 +761,28 @@ This is normal if you haven't configured a search API key yet. PicoClaw will pro
 
 To enable web search:
 
-1. Get a free API key at [https://brave.com/search/api](https://brave.com/search/api) (2000 free queries/month)
-2. Add to `~/.picoclaw/config.json`:
+1. **Option 1 (Recommended)**: Get a free API key at [https://brave.com/search/api](https://brave.com/search/api) (2000 free queries/month) for the best results.
+2. **Option 2 (No Credit Card)**: If you don't have a key, we automatically fall back to **DuckDuckGo** (no key required).
 
-   ```json
-   {
-     "tools": {
-       "web": {
-         "search": {
-           "api_key": "YOUR_BRAVE_API_KEY",
-           "max_results": 5
-         }
-       }
-     }
-   }
-   ```
+Add the key to `~/.picoclaw/config.json` if using Brave:
+
+```json
+{
+  "tools": {
+    "web": {
+      "brave": {
+        "enabled": false,
+        "api_key": "YOUR_BRAVE_API_KEY",
+        "max_results": 5
+      },
+      "duckduckgo": {
+        "enabled": true,
+        "max_results": 5
+      }
+    }
+  }
+}
+```
 
 ### Getting content filtering errors
 
@@ -778,9 +796,9 @@ This happens when another instance of the bot is running. Make sure only one `pi
 
 ## 📝 API Key Comparison
 
-| Service | Free Tier | Use Case |
-|---------|-----------|-----------|
-| **OpenRouter** | 200K tokens/month | Multiple models (Claude, GPT-4, etc.) |
-| **Zhipu** | 200K tokens/month | Best for Chinese users |
-| **Brave Search** | 2000 queries/month | Web search functionality |
-| **Groq** | Free tier available | Fast inference (Llama, Mixtral) |
+| Service          | Free Tier           | Use Case                              |
+| ---------------- | ------------------- | ------------------------------------- |
+| **OpenRouter**   | 200K tokens/month   | Multiple models (Claude, GPT-4, etc.) |
+| **Zhipu**        | 200K tokens/month   | Best for Chinese users                |
+| **Brave Search** | 2000 queries/month  | Web search functionality              |
+| **Groq**         | Free tier available | Fast inference (Llama, Mixtral)       |
