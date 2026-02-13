@@ -654,10 +654,20 @@ func gatewayCmd() {
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
-		nil,
-		30*60,
+		30,
 		cfg.Heartbeat.Enabled,
 	)
+	heartbeatService.SetBus(msgBus)
+	heartbeatService.SetHandler(func(prompt string) *tools.ToolResult {
+		response, err := agentLoop.ProcessDirect(context.Background(), prompt, "heartbeat")
+		if err != nil {
+			return tools.ErrorResult(fmt.Sprintf("Heartbeat error: %v", err))
+		}
+		if response == "HEARTBEAT_OK" {
+			return tools.SilentResult("Heartbeat OK")
+		}
+		return tools.UserResult(response)
+	})
 
 	channelManager, err := channels.NewManager(cfg, msgBus)
 	if err != nil {
