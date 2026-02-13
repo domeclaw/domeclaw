@@ -186,7 +186,7 @@ picoclaw onboard
   "providers": {
     "openrouter": {
       "api_key": "xxx",
-      "api_base": "https://open.bigmodel.cn/api/paas/v4"
+      "api_base": "https://openrouter.ai/api/v1"
     }
   },
   "tools": {
@@ -223,12 +223,14 @@ picoclaw agent -m "What is 2+2?"
 
 ## 💬 チャットアプリ
 
-Telegram で PicoClaw と会話できます
+Telegram、Discord、QQ、DingTalk で PicoClaw と会話できます
 
 | チャネル | セットアップ |
 |---------|------------|
 | **Telegram** | 簡単（トークンのみ） |
 | **Discord** | 簡単（Bot トークン + Intents） |
+| **QQ** | 簡単（AppID + AppSecret） |
+| **DingTalk** | 普通（アプリ認証情報） |
 
 <details>
 <summary><b>Telegram</b>（推奨）</summary>
@@ -300,6 +302,73 @@ picoclaw gateway
 - 生成された招待 URL を開き、サーバーに Bot を追加
 
 **6. 起動**
+
+```bash
+picoclaw gateway
+```
+
+</details>
+
+<details>
+<summary><b>QQ</b></summary>
+
+**1. Bot を作成**
+
+- [QQ オープンプラットフォーム](https://connect.qq.com/) にアクセス
+- アプリケーションを作成 → **AppID** と **AppSecret** を取得
+
+**2. 設定**
+
+```json
+{
+  "channels": {
+    "qq": {
+      "enabled": true,
+      "app_id": "YOUR_APP_ID",
+      "app_secret": "YOUR_APP_SECRET",
+      "allow_from": []
+    }
+  }
+}
+```
+
+> `allow_from` を空にすると全ユーザーを許可、QQ番号を指定してアクセス制限可能。
+
+**3. 起動**
+
+```bash
+picoclaw gateway
+```
+
+</details>
+
+<details>
+<summary><b>DingTalk</b></summary>
+
+**1. Bot を作成**
+
+- [オープンプラットフォーム](https://open.dingtalk.com/) にアクセス
+- 内部アプリを作成
+- Client ID と Client Secret をコピー
+
+**2. 設定**
+
+```json
+{
+  "channels": {
+    "dingtalk": {
+      "enabled": true,
+      "client_id": "YOUR_CLIENT_ID",
+      "client_secret": "YOUR_CLIENT_SECRET",
+      "allow_from": []
+    }
+  }
+}
+```
+
+> `allow_from` を空にすると全ユーザーを許可、ユーザーIDを指定してアクセス制限可能。
+
+**3. 起動**
 
 ```bash
 picoclaw gateway
