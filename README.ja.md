@@ -330,6 +330,98 @@ PicoClaw は設定されたワークスペース（デフォルト: `~/.picoclaw
 └── USER.md            # ユーザー設定
 ```
 
+### 🔒 セキュリティサンドボックス
+
+PicoClaw はデフォルトでサンドボックス環境で実行されます。エージェントは設定されたワークスペース内のファイルにのみアクセスし、コマンドを実行できます。
+
+#### デフォルト設定
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "workspace": "~/.picoclaw/workspace",
+      "restrict_to_workspace": true
+    }
+  }
+}
+```
+
+| オプション | デフォルト | 説明 |
+|-----------|-----------|------|
+| `workspace` | `~/.picoclaw/workspace` | エージェントの作業ディレクトリ |
+| `restrict_to_workspace` | `true` | ファイル/コマンドアクセスをワークスペースに制限 |
+
+#### 保護対象ツール
+
+`restrict_to_workspace: true` の場合、以下のツールがサンドボックス化されます：
+
+| ツール | 機能 | 制限 |
+|-------|------|------|
+| `read_file` | ファイル読み込み | ワークスペース内のファイルのみ |
+| `write_file` | ファイル書き込み | ワークスペース内のファイルのみ |
+| `list_dir` | ディレクトリ一覧 | ワークスペース内のディレクトリのみ |
+| `edit_file` | ファイル編集 | ワークスペース内のファイルのみ |
+| `append_file` | ファイル追記 | ワークスペース内のファイルのみ |
+| `exec` | コマンド実行 | コマンドパスはワークスペース内である必要あり |
+
+#### exec ツールの追加保護
+
+`restrict_to_workspace: false` でも、`exec` ツールは以下の危険なコマンドをブロックします：
+
+- `rm -rf`, `del /f`, `rmdir /s` — 一括削除
+- `format`, `mkfs`, `diskpart` — ディスクフォーマット
+- `dd if=` — ディスクイメージング
+- `/dev/sd[a-z]` への書き込み — 直接ディスク書き込み
+- `shutdown`, `reboot`, `poweroff` — システムシャットダウン
+- フォークボム `:(){ :|:& };:`
+
+#### エラー例
+
+```
+[ERROR] tool: Tool execution failed
+{tool=exec, error=Command blocked by safety guard (path outside working dir)}
+```
+
+```
+[ERROR] tool: Tool execution failed
+{tool=exec, error=Command blocked by safety guard (dangerous pattern detected)}
+```
+
+#### 制限の無効化（セキュリティリスク）
+
+エージェントにワークスペース外のパスへのアクセスが必要な場合：
+
+**方法1: 設定ファイル**
+```json
+{
+  "agents": {
+    "defaults": {
+      "restrict_to_workspace": false
+    }
+  }
+}
+```
+
+**方法2: 環境変数**
+```bash
+export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
+```
+
+> ⚠️ **警告**: この制限を無効にすると、エージェントはシステム上の任意のパスにアクセスできるようになります。制御された環境でのみ慎重に使用してください。
+
+#### セキュリティ境界の一貫性
+
+`restrict_to_workspace` 設定は、すべての実行パスで一貫して適用されます：
+
+| 実行パス | セキュリティ境界 |
+|---------|-----------------|
+| メインエージェント | `restrict_to_workspace` ✅ |
+| サブエージェント / Spawn | 同じ制限を継承 ✅ |
+| ハートビートタスク | 同じ制限を継承 ✅ |
+
+すべてのパスで同じワークスペース制限が適用されます — サブエージェントやスケジュールタスクを通じてセキュリティ境界をバイパスする方法はありません。
+
 ### ハートビート（定期タスク）
 
 PicoClaw は自動的に定期タスクを実行できます。ワークスペースに `HEARTBEAT.md` ファイルを作成します：
