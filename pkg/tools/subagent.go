@@ -14,6 +14,7 @@ type SubagentTask struct {
 	ID            string
 	Task          string
 	Label         string
+	AgentID       string
 	OriginChannel string
 	OriginChatID  string
 	Status        string
@@ -40,7 +41,7 @@ func NewSubagentManager(provider providers.LLMProvider, workspace string, bus *b
 	}
 }
 
-func (sm *SubagentManager) Spawn(ctx context.Context, task, label, originChannel, originChatID string) (string, error) {
+func (sm *SubagentManager) Spawn(ctx context.Context, task, label, agentID, originChannel, originChatID string) (string, error) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -51,6 +52,7 @@ func (sm *SubagentManager) Spawn(ctx context.Context, task, label, originChannel
 		ID:            taskID,
 		Task:          task,
 		Label:         label,
+		AgentID:       agentID,
 		OriginChannel: originChannel,
 		OriginChatID:  originChatID,
 		Status:        "running",
