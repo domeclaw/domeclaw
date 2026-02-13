@@ -470,8 +470,11 @@ func extractCodeBlocks(text string) codeBlockMatch {
 		codes = append(codes, match[1])
 	}
 
+	i := 0
 	text = re.ReplaceAllStringFunc(text, func(m string) string {
-		return fmt.Sprintf("\x00CB%d\x00", len(codes)-1)
+		placeholder := fmt.Sprintf("\x00CB%d\x00", i)
+		i++
+		return placeholder
 	})
 
 	return codeBlockMatch{text: text, codes: codes}
@@ -491,8 +494,11 @@ func extractInlineCodes(text string) inlineCodeMatch {
 		codes = append(codes, match[1])
 	}
 
+	i := 0
 	text = re.ReplaceAllStringFunc(text, func(m string) string {
-		return fmt.Sprintf("\x00IC%d\x00", len(codes)-1)
+		placeholder := fmt.Sprintf("\x00IC%d\x00", i)
+		i++
+		return placeholder
 	})
 
 	return inlineCodeMatch{text: text, codes: codes}
