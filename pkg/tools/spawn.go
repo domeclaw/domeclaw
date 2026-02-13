@@ -10,6 +10,7 @@ type SpawnTool struct {
 	originChannel  string
 	originChatID   string
 	allowlistCheck func(targetAgentID string) bool
+	callback       AsyncCallback // For async completion notification
 }
 
 func NewSpawnTool(manager *SubagentManager) *SpawnTool {
@@ -18,6 +19,11 @@ func NewSpawnTool(manager *SubagentManager) *SpawnTool {
 		originChannel: "cli",
 		originChatID:  "direct",
 	}
+}
+
+// SetCallback implements AsyncTool interface for async completion notification
+func (t *SpawnTool) SetCallback(cb AsyncCallback) {
+	t.callback = cb
 }
 
 func (t *SpawnTool) Name() string {
@@ -58,10 +64,10 @@ func (t *SpawnTool) SetAllowlistChecker(check func(targetAgentID string) bool) {
 	t.allowlistCheck = check
 }
 
-func (t *SpawnTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
+func (t *SpawnTool) Execute(ctx context.Context, args map[string]interface{}) *ToolResult {
 	task, ok := args["task"].(string)
 	if !ok {
-		return "", fmt.Errorf("task is required")
+		return ErrorResult("task is required")
 	}
 
 	label, _ := args["label"].(string)
@@ -70,18 +76,20 @@ func (t *SpawnTool) Execute(ctx context.Context, args map[string]interface{}) (s
 	// Check allowlist if targeting a specific agent
 	if agentID != "" && t.allowlistCheck != nil {
 		if !t.allowlistCheck(agentID) {
-			return fmt.Sprintf("Error: not allowed to spawn agent '%s'", agentID), nil
+			return ErrorResult(fmt.Sprintf("not allowed to spawn agent '%s'", agentID))
 		}
 	}
 
 	if t.manager == nil {
-		return "Error: Subagent manager not configured", nil
+		return ErrorResult("Subagent manager not configured")
 	}
 
-	result, err := t.manager.Spawn(ctx, task, label, agentID, t.originChannel, t.originChatID)
+	// Pass callback to manager for async completion notification
+	result, err := t.manager.Spawn(ctx, task, label, agentID, t.originChannel, t.originChatID, t.callback)
 	if err != nil {
-		return "", fmt.Errorf("failed to spawn subagent: %w", err)
+		return ErrorResult(fmt.Sprintf("failed to spawn subagent: %v", err))
 	}
 
-	return result, nil
+	// Return AsyncResult since the task runs in background
+	return AsyncResult(result)
 }

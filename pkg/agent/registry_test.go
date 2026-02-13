@@ -8,13 +8,13 @@ import (
 	"github.com/sipeed/picoclaw/pkg/providers"
 )
 
-type mockProvider struct{}
+type mockRegistryProvider struct{}
 
-func (m *mockProvider) Chat(ctx context.Context, messages []providers.Message, tools []providers.ToolDefinition, model string, options map[string]interface{}) (*providers.LLMResponse, error) {
+func (m *mockRegistryProvider) Chat(ctx context.Context, messages []providers.Message, tools []providers.ToolDefinition, model string, options map[string]interface{}) (*providers.LLMResponse, error) {
 	return &providers.LLMResponse{Content: "mock", FinishReason: "stop"}, nil
 }
 
-func (m *mockProvider) GetDefaultModel() string {
+func (m *mockRegistryProvider) GetDefaultModel() string {
 	return "mock-model"
 }
 
@@ -34,7 +34,7 @@ func testCfg(agents []config.AgentConfig) *config.Config {
 
 func TestNewAgentRegistry_ImplicitMain(t *testing.T) {
 	cfg := testCfg(nil)
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	ids := registry.ListAgentIDs()
 	if len(ids) != 1 || ids[0] != "main" {
@@ -55,7 +55,7 @@ func TestNewAgentRegistry_ExplicitAgents(t *testing.T) {
 		{ID: "sales", Default: true, Name: "Sales Bot"},
 		{ID: "support", Name: "Support Bot"},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	ids := registry.ListAgentIDs()
 	if len(ids) != 2 {
@@ -80,7 +80,7 @@ func TestAgentRegistry_GetAgent_Normalize(t *testing.T) {
 	cfg := testCfg([]config.AgentConfig{
 		{ID: "my-agent", Default: true},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	agent, ok := registry.GetAgent("My-Agent")
 	if !ok || agent == nil {
@@ -96,7 +96,7 @@ func TestAgentRegistry_GetDefaultAgent(t *testing.T) {
 		{ID: "alpha"},
 		{ID: "beta", Default: true},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	// GetDefaultAgent first checks for "main", then returns any
 	agent := registry.GetDefaultAgent()
@@ -118,7 +118,7 @@ func TestAgentRegistry_CanSpawnSubagent(t *testing.T) {
 		{ID: "child2"},
 		{ID: "restricted"},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	if !registry.CanSpawnSubagent("parent", "child1") {
 		t.Error("expected parent to be allowed to spawn child1")
@@ -145,7 +145,7 @@ func TestAgentRegistry_CanSpawnSubagent_Wildcard(t *testing.T) {
 		},
 		{ID: "any-agent"},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	if !registry.CanSpawnSubagent("admin", "any-agent") {
 		t.Error("expected wildcard to allow spawning any agent")
@@ -160,7 +160,7 @@ func TestAgentInstance_Model(t *testing.T) {
 	cfg := testCfg([]config.AgentConfig{
 		{ID: "custom", Default: true, Model: model},
 	})
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	agent, _ := registry.GetAgent("custom")
 	if agent.Model != "claude-opus" {
@@ -173,7 +173,7 @@ func TestAgentInstance_FallbackInheritance(t *testing.T) {
 		{ID: "inherit", Default: true},
 	})
 	cfg.Agents.Defaults.ModelFallbacks = []string{"openai/gpt-4o-mini", "anthropic/haiku"}
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	agent, _ := registry.GetAgent("inherit")
 	if len(agent.Fallbacks) != 2 {
@@ -190,7 +190,7 @@ func TestAgentInstance_FallbackExplicitEmpty(t *testing.T) {
 		{ID: "no-fallback", Default: true, Model: model},
 	})
 	cfg.Agents.Defaults.ModelFallbacks = []string{"should-not-inherit"}
-	registry := NewAgentRegistry(cfg, &mockProvider{})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
 
 	agent, _ := registry.GetAgent("no-fallback")
 	if len(agent.Fallbacks) != 0 {
