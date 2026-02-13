@@ -1,26 +1,29 @@
 <div align="center">
-<img src="assets/logo.jpg" alt="PicoClaw" width="512">
+  <img src="assets/logo.jpg" alt="PicoClaw" width="512">
 
-<h1>PicoClaw: Ultra-Efficient AI Assistant in Go</h1>
+  <h1>PicoClaw: Ultra-Efficient AI Assistant in Go</h1>
 
-<h3>$10 Hardware · 10MB RAM · 1s Boot · 皮皮虾，我们走！</h3>
-<h3></h3>
+  <h3>$10 Hardware · 10MB RAM · 1s Boot · 皮皮虾，我们走！</h3>
 
-<p>
-<img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
-<img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20RISC--V-blue" alt="Hardware">
-<img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-</p>
+  <p>
+    <img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
+    <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20RISC--V-blue" alt="Hardware">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+    <br>
+    <a href="https://picoclaw.io"><img src="https://img.shields.io/badge/Website-picoclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
+    <a href="https://x.com/SipeedIO"><img src="https://img.shields.io/badge/X_(Twitter)-SipeedIO-black?style=flat&logo=x&logoColor=white" alt="Twitter"></a>
+  </p>
 
-[日本語](README.ja.md) | **English**
-
+ [中文](README.zh.md) | [日本語](README.ja.md) | **English**
 </div>
+
 
 ---
 
 🦐 PicoClaw is an ultra-lightweight personal AI Assistant inspired by [nanobot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
 
 ⚡️ Runs on $10 hardware with <10MB RAM: That's 99% less memory than OpenClaw and 98% cheaper than a Mac mini!
+
 
 <table align="center">
   <tr align="center">
@@ -37,7 +40,19 @@
   </tr>
 </table>
 
+
+> [!CAUTION]
+> **🚨 SECURITY & OFFICIAL CHANNELS / 安全声明**
+>
+> * **NO CRYPTO:** PicoClaw has **NO** official token/coin. All claims on `pump.fun` or other trading platforms are **SCAMS**.
+> * **OFFICIAL DOMAIN:** The **ONLY** official website is **[picoclaw.io](https://picoclaw.io)**, and company website is **[sipeed.com](https://sipeed.com)**
+> * **Warning:** Many `.ai/.org/.com/.net/...` domains are registered by third parties. 
+>
+
 ## 📢 News
+2026-02-13 🎉 PicoClaw hit 5000 stars in 4days! Thank you for the community! There are so many PRs&issues come in (during Chinese New Year holidays), we are finalizing the Project Roadmap and setting up the Developer Group to accelerate PicoClaw's development.  
+🚀 Call to Action: Please submit your feature requests in GitHub Discussions. We will review and prioritize them during our upcoming weekly meeting.
+
 
 2026-02-09 🎉 PicoClaw Launched! Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 PicoClaw，Let's Go！
 
@@ -626,6 +641,12 @@ Jobs are stored in `~/.picoclaw/workspace/cron/` and processed automatically.
 ## 🤝 Contribute & Roadmap
 
 PRs welcome! The codebase is intentionally small and readable. 🤗
+
+Roadmap coming soon...
+
+Developer group building, Entry Requirement: At least 1 Merged PR.
+
+User Groups:
 
 discord:  <https://discord.gg/V4sAZ9XWpN>
 
