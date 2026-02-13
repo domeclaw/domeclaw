@@ -28,7 +28,7 @@ func TestExecuteHeartbeat_Async(t *testing.T) {
 		Async:   true,
 	}
 
-	hs.SetHandler(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
 		asyncCalled = true
 		if prompt == "" {
 			t.Error("Expected non-empty prompt")
@@ -57,7 +57,7 @@ func TestExecuteHeartbeat_Error(t *testing.T) {
 	hs := NewHeartbeatService(tmpDir, 30, true)
 	hs.started = true // Enable for testing
 
-	hs.SetHandler(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
 		return &tools.ToolResult{
 			ForLLM:  "Heartbeat failed: connection error",
 			ForUser: "",
@@ -95,7 +95,7 @@ func TestExecuteHeartbeat_Silent(t *testing.T) {
 	hs := NewHeartbeatService(tmpDir, 30, true)
 	hs.started = true // Enable for testing
 
-	hs.SetHandler(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
 		return &tools.ToolResult{
 			ForLLM:  "Heartbeat completed successfully",
 			ForUser: "",
@@ -169,7 +169,7 @@ func TestExecuteHeartbeat_NilResult(t *testing.T) {
 	hs := NewHeartbeatService(tmpDir, 30, true)
 	hs.started = true // Enable for testing
 
-	hs.SetHandler(func(prompt string) *tools.ToolResult {
+	hs.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
 		return nil
 	})
 

@@ -654,12 +654,16 @@ func gatewayCmd() {
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
-		30,
+		cfg.Heartbeat.Interval,
 		cfg.Heartbeat.Enabled,
 	)
 	heartbeatService.SetBus(msgBus)
-	heartbeatService.SetHandler(func(prompt string) *tools.ToolResult {
-		response, err := agentLoop.ProcessDirect(context.Background(), prompt, "heartbeat")
+	heartbeatService.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
+		// Use cli:direct as fallback if no valid channel
+		if channel == "" || chatID == "" {
+			channel, chatID = "cli", "direct"
+		}
+		response, err := agentLoop.ProcessDirectWithChannel(context.Background(), prompt, "heartbeat", channel, chatID)
 		if err != nil {
 			return tools.ErrorResult(fmt.Sprintf("Heartbeat error: %v", err))
 		}

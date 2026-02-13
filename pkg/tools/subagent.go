@@ -22,21 +22,23 @@ type SubagentTask struct {
 }
 
 type SubagentManager struct {
-	tasks     map[string]*SubagentTask
-	mu        sync.RWMutex
-	provider  providers.LLMProvider
-	bus       *bus.MessageBus
-	workspace string
-	nextID    int
+	tasks        map[string]*SubagentTask
+	mu           sync.RWMutex
+	provider     providers.LLMProvider
+	defaultModel string
+	bus          *bus.MessageBus
+	workspace    string
+	nextID       int
 }
 
-func NewSubagentManager(provider providers.LLMProvider, workspace string, bus *bus.MessageBus) *SubagentManager {
+func NewSubagentManager(provider providers.LLMProvider, defaultModel, workspace string, bus *bus.MessageBus) *SubagentManager {
 	return &SubagentManager{
-		tasks:     make(map[string]*SubagentTask),
-		provider:  provider,
-		bus:       bus,
-		workspace: workspace,
-		nextID:    1,
+		tasks:        make(map[string]*SubagentTask),
+		provider:     provider,
+		defaultModel: defaultModel,
+		bus:          bus,
+		workspace:    workspace,
+		nextID:       1,
 	}
 }
 
@@ -93,7 +95,7 @@ func (sm *SubagentManager) runTask(ctx context.Context, task *SubagentTask, call
 	default:
 	}
 
-	response, err := sm.provider.Chat(ctx, messages, nil, sm.provider.GetDefaultModel(), map[string]interface{}{
+	response, err := sm.provider.Chat(ctx, messages, nil, sm.defaultModel, map[string]interface{}{
 		"max_tokens": 4096,
 	})
 
@@ -237,7 +239,7 @@ func (t *SubagentTool) Execute(ctx context.Context, args map[string]interface{})
 		},
 	}
 
-	response, err := t.manager.provider.Chat(ctx, messages, nil, t.manager.provider.GetDefaultModel(), map[string]interface{}{
+	response, err := t.manager.provider.Chat(ctx, messages, nil, t.manager.defaultModel, map[string]interface{}{
 		"max_tokens": 4096,
 	})
 

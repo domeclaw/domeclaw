@@ -82,7 +82,7 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 	toolsRegistry.Register(messageTool)
 
 	// Register spawn tool
-	subagentManager := tools.NewSubagentManager(provider, workspace, msgBus)
+	subagentManager := tools.NewSubagentManager(provider, cfg.Agents.Defaults.Model, workspace, msgBus)
 	spawnTool := tools.NewSpawnTool(subagentManager)
 	toolsRegistry.Register(spawnTool)
 
@@ -187,9 +187,14 @@ func (al *AgentLoop) ProcessDirectWithChannel(ctx context.Context, content, sess
 }
 
 func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage) (string, error) {
-	// Add message preview to log
-	preview := utils.Truncate(msg.Content, 80)
-	logger.InfoCF("agent", fmt.Sprintf("Processing message from %s:%s: %s", msg.Channel, msg.SenderID, preview),
+	// Add message preview to log (show full content for error messages)
+	var logContent string
+	if strings.Contains(msg.Content, "Error:") || strings.Contains(msg.Content, "error") {
+		logContent = msg.Content // Full content for errors
+	} else {
+		logContent = utils.Truncate(msg.Content, 80)
+	}
+	logger.InfoCF("agent", fmt.Sprintf("Processing message from %s:%s: %s", msg.Channel, msg.SenderID, logContent),
 		map[string]interface{}{
 			"channel":     msg.Channel,
 			"chat_id":     msg.ChatID,
@@ -255,6 +260,18 @@ func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMe
 // runAgentLoop is the core message processing logic.
 // It handles context building, LLM calls, tool execution, and response handling.
 func (al *AgentLoop) runAgentLoop(ctx context.Context, opts processOptions) (string, error) {
+	// 0. Record last channel for heartbeat notifications (skip internal channels)
+	if opts.Channel != "" && opts.ChatID != "" {
+		// Don't record internal channels (cli, system, subagent)
+		internalChannels := map[string]bool{"cli": true, "system": true, "subagent": true}
+		if !internalChannels[opts.Channel] {
+			channelKey := fmt.Sprintf("%s:%s", opts.Channel, opts.ChatID)
+			if err := al.RecordLastChannel(channelKey); err != nil {
+				logger.WarnCF("agent", "Failed to record last channel: %v", map[string]interface{}{"error": err.Error()})
+			}
+		}
+	}
+
 	// 1. Update tool contexts
 	al.updateToolContexts(opts.Channel, opts.ChatID)
 

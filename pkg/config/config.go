@@ -135,7 +135,8 @@ type SlackConfig struct {
 }
 
 type HeartbeatConfig struct {
-	Enabled bool `json:"enabled" env:"PICOCLAW_HEARTBEAT_ENABLED"`
+	Enabled  bool `json:"enabled" env:"PICOCLAW_HEARTBEAT_ENABLED"`
+	Interval int  `json:"interval" env:"PICOCLAW_HEARTBEAT_INTERVAL"` // minutes, min 5
 }
 
 type ProvidersConfig struct {
@@ -261,7 +262,8 @@ func DefaultConfig() *Config {
 			},
 		},
 		Heartbeat: HeartbeatConfig{
-			Enabled: true,
+			Enabled:  true,
+			Interval: 30, // default 30 minutes
 		},
 	}
 }

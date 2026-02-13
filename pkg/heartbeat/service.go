@@ -27,7 +27,8 @@ const (
 
 // HeartbeatHandler is the function type for handling heartbeat.
 // It returns a ToolResult that can indicate async operations.
-type HeartbeatHandler func(prompt string) *tools.ToolResult
+// channel and chatID are derived from the last active user channel.
+type HeartbeatHandler func(prompt, channel, chatID string) *tools.ToolResult
 
 // HeartbeatService manages periodic heartbeat checks
 type HeartbeatService struct {
@@ -168,7 +169,11 @@ func (hs *HeartbeatService) executeHeartbeat() {
 		return
 	}
 
-	result := handler(prompt)
+	// Get last channel info for context
+	lastChannel := hs.state.GetLastChannel()
+	channel, chatID := hs.parseLastChannel(lastChannel)
+
+	result := handler(prompt, channel, chatID)
 
 	if result == nil {
 		hs.logInfo("Heartbeat handler returned nil result")
@@ -287,13 +292,12 @@ func (hs *HeartbeatService) sendResponse(response string) {
 		return
 	}
 
-	// Parse channel format: "platform:user_id" (e.g., "telegram:123456")
-	parts := strings.SplitN(lastChannel, ":", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		hs.logError("Invalid last channel format: %s", lastChannel)
+	platform, userID := hs.parseLastChannel(lastChannel)
+
+	// Skip internal channels that can't receive messages
+	if platform == "" || userID == "" {
 		return
 	}
-	platform, userID := parts[0], parts[1]
 
 	msgBus.PublishOutbound(bus.OutboundMessage{
 		Channel: platform,
@@ -302,6 +306,32 @@ func (hs *HeartbeatService) sendResponse(response string) {
 	})
 
 	hs.logInfo("Heartbeat result sent to %s", platform)
+}
+
+// parseLastChannel parses the last channel string into platform and userID.
+// Returns empty strings for invalid or internal channels.
+func (hs *HeartbeatService) parseLastChannel(lastChannel string) (platform, userID string) {
+	if lastChannel == "" {
+		return "", ""
+	}
+
+	// Parse channel format: "platform:user_id" (e.g., "telegram:123456")
+	parts := strings.SplitN(lastChannel, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		hs.logError("Invalid last channel format: %s", lastChannel)
+		return "", ""
+	}
+
+	platform, userID = parts[0], parts[1]
+
+	// Skip internal channels
+	internalChannels := map[string]bool{"cli": true, "system": true, "subagent": true}
+	if internalChannels[platform] {
+		hs.logInfo("Skipping internal channel: %s", platform)
+		return "", ""
+	}
+
+	return platform, userID
 }
 
 // logInfo logs an informational message to the heartbeat log
