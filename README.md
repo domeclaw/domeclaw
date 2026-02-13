@@ -17,13 +17,11 @@
  [中文](README.zh.md) | [日本語](README.ja.md) | **English**
 </div>
 
-
 ---
 
 🦐 PicoClaw is an ultra-lightweight personal AI Assistant inspired by [nanobot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
 
 ⚡️ Runs on $10 hardware with <10MB RAM: That's 99% less memory than OpenClaw and 98% cheaper than a Mac mini!
-
 
 <table align="center">
   <tr align="center">
@@ -40,19 +38,18 @@
   </tr>
 </table>
 
-
 > [!CAUTION]
 > **🚨 SECURITY & OFFICIAL CHANNELS / 安全声明**
 >
 > * **NO CRYPTO:** PicoClaw has **NO** official token/coin. All claims on `pump.fun` or other trading platforms are **SCAMS**.
 > * **OFFICIAL DOMAIN:** The **ONLY** official website is **[picoclaw.io](https://picoclaw.io)**, and company website is **[sipeed.com](https://sipeed.com)**
-> * **Warning:** Many `.ai/.org/.com/.net/...` domains are registered by third parties. 
+> * **Warning:** Many `.ai/.org/.com/.net/...` domains are registered by third parties.
 >
 
 ## 📢 News
+
 2026-02-13 🎉 PicoClaw hit 5000 stars in 4days! Thank you for the community! There are so many PRs&issues come in (during Chinese New Year holidays), we are finalizing the Project Roadmap and setting up the Developer Group to accelerate PicoClaw's development.  
 🚀 Call to Action: Please submit your feature requests in GitHub Discussions. We will review and prioritize them during our upcoming weekly meeting.
-
 
 2026-02-09 🎉 PicoClaw Launched! Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 PicoClaw，Let's Go！
 
@@ -103,9 +100,9 @@
 
 PicoClaw can be deployed on almost any Linux device!
 
-- $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html)  E(Ethernet) or W(WiFi6) version, for Minimal Home Assistant
-- $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), or $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) for Automated Server Maintenance
-- $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) or $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera) for Smart Monitoring
+* $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html)  E(Ethernet) or W(WiFi6) version, for Minimal Home Assistant
+* $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), or $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) for Automated Server Maintenance
+* $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) or $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera) for Smart Monitoring
 
 <https://private-user-images.githubusercontent.com/83055338/547056448-e7b031ff-d6f5-4468-bcca-5726b6fecb5c.mp4>
 
@@ -220,8 +217,8 @@ picoclaw onboard
 
 **3. Get API Keys**
 
-- **LLM Provider**: [OpenRouter](https://openrouter.ai/keys) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) · [Anthropic](https://console.anthropic.com) · [OpenAI](https://platform.openai.com) · [Gemini](https://aistudio.google.com/api-keys)
-- **Web Search** (optional): [Brave Search](https://brave.com/search/api) - Free tier available (2000 requests/month)
+* **LLM Provider**: [OpenRouter](https://openrouter.ai/keys) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) · [Anthropic](https://console.anthropic.com) · [OpenAI](https://platform.openai.com) · [Gemini](https://aistudio.google.com/api-keys)
+* **Web Search** (optional): [Brave Search](https://brave.com/search/api) - Free tier available (2000 requests/month)
 
 > **Note**: See `config.example.json` for a complete configuration template.
 
@@ -251,9 +248,9 @@ Talk to your picoclaw through Telegram, Discord, or DingTalk
 
 **1. Create a bot**
 
-- Open Telegram, search `@BotFather`
-- Send `/newbot`, follow prompts
-- Copy the token
+* Open Telegram, search `@BotFather`
+* Send `/newbot`, follow prompts
+* Copy the token
 
 **2. Configure**
 
@@ -284,19 +281,19 @@ picoclaw gateway
 
 **1. Create a bot**
 
-- Go to <https://discord.com/developers/applications>
-- Create an application → Bot → Add Bot
-- Copy the bot token
+* Go to <https://discord.com/developers/applications>
+* Create an application → Bot → Add Bot
+* Copy the bot token
 
 **2. Enable intents**
 
-- In the Bot settings, enable **MESSAGE CONTENT INTENT**
-- (Optional) Enable **SERVER MEMBERS INTENT** if you plan to use allow lists based on member data
+* In the Bot settings, enable **MESSAGE CONTENT INTENT**
+* (Optional) Enable **SERVER MEMBERS INTENT** if you plan to use allow lists based on member data
 
 **3. Get your User ID**
 
-- Discord Settings → Advanced → enable **Developer Mode**
-- Right-click your avatar → **Copy User ID**
+* Discord Settings → Advanced → enable **Developer Mode**
+* Right-click your avatar → **Copy User ID**
 
 **4. Configure**
 
@@ -314,10 +311,10 @@ picoclaw gateway
 
 **5. Invite the bot**
 
-- OAuth2 → URL Generator
-- Scopes: `bot`
-- Bot Permissions: `Send Messages`, `Read Message History`
-- Open the generated invite URL and add the bot to your server
+* OAuth2 → URL Generator
+* Scopes: `bot`
+* Bot Permissions: `Send Messages`, `Read Message History`
+* Open the generated invite URL and add the bot to your server
 
 **6. Run**
 
@@ -332,8 +329,8 @@ picoclaw gateway
 
 **1. Create a bot**
 
-- Go to [QQ Open Platform](https://connect.qq.com/)
-- Create an application → Get **AppID** and **AppSecret**
+* Go to [QQ Open Platform](https://connect.qq.com/)
+* Create an application → Get **AppID** and **AppSecret**
 
 **2. Configure**
 
@@ -365,9 +362,9 @@ picoclaw gateway
 
 **1. Create a bot**
 
-- Go to [Open Platform](https://open.dingtalk.com/)
-- Create an internal app
-- Copy Client ID and Client Secret
+* Go to [Open Platform](https://open.dingtalk.com/)
+* Create an internal app
+* Copy Client ID and Client Secret
 
 **2. Configure**
 
@@ -399,8 +396,6 @@ picoclaw gateway
 Connect Picoclaw to the Agent Social Network simply by sending a single message via the CLI or any integrated Chat App.
 
 **Read `https://clawdchat.ai/skill.md` and follow the instructions to join [ClawdChat.ai](https://clawdchat.ai)**
-
-
 
 ## ⚙️ Configuration
 
@@ -464,12 +459,12 @@ When `restrict_to_workspace: true`, the following tools are sandboxed:
 
 Even with `restrict_to_workspace: false`, the `exec` tool blocks these dangerous commands:
 
-- `rm -rf`, `del /f`, `rmdir /s` — Bulk deletion
-- `format`, `mkfs`, `diskpart` — Disk formatting
-- `dd if=` — Disk imaging
-- Writing to `/dev/sd[a-z]` — Direct disk writes
-- `shutdown`, `reboot`, `poweroff` — System shutdown
-- Fork bomb `:(){ :|:& };:`
+* `rm -rf`, `del /f`, `rmdir /s` — Bulk deletion
+* `format`, `mkfs`, `diskpart` — Disk formatting
+* `dd if=` — Disk imaging
+* Writing to `/dev/sd[a-z]` — Direct disk writes
+* `shutdown`, `reboot`, `poweroff` — System shutdown
+* Fork bomb `:(){ :|:& };:`
 
 #### Error Examples
 
@@ -488,6 +483,7 @@ Even with `restrict_to_workspace: false`, the `exec` tool blocks these dangerous
 If you need the agent to access paths outside the workspace:
 
 **Method 1: Config file**
+
 ```json
 {
   "agents": {
@@ -499,6 +495,7 @@ If you need the agent to access paths outside the workspace:
 ```
 
 **Method 2: Environment variable**
+
 ```bash
 export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 ```
@@ -590,8 +587,9 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 | `interval` | `30` | Check interval in minutes (min: 5) |
 
 **Environment variables:**
-- `PICOCLAW_HEARTBEAT_ENABLED=false` to disable
-- `PICOCLAW_HEARTBEAT_INTERVAL=60` to change interval
+
+* `PICOCLAW_HEARTBEAT_ENABLED=false` to disable
+* `PICOCLAW_HEARTBEAT_INTERVAL=60` to change interval
 
 ### Providers
 
@@ -613,7 +611,7 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 
 **1. Get API key and base URL**
 
-- Get [API key](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)
+* Get [API key](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)
 
 **2. Configure**
 
@@ -724,9 +722,9 @@ picoclaw agent -m "Hello"
 
 PicoClaw supports scheduled reminders and recurring tasks through the `cron` tool:
 
-- **One-time reminders**: "Remind me in 10 minutes" → triggers once after 10min
-- **Recurring tasks**: "Remind me every 2 hours" → triggers every 2 hours
-- **Cron expressions**: "Remind me at 9am daily" → uses cron expression
+* **One-time reminders**: "Remind me in 10 minutes" → triggers once after 10min
+* **Recurring tasks**: "Remind me every 2 hours" → triggers every 2 hours
+* **Cron expressions**: "Remind me at 9am daily" → uses cron expression
 
 Jobs are stored in `~/.picoclaw/workspace/cron/` and processed automatically.
 
