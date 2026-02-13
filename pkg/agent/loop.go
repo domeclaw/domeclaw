@@ -77,9 +77,9 @@ func createToolRegistry(workspace string, restrict bool, cfg *config.Config, msg
 		DuckDuckGoMaxResults: cfg.Tools.Web.DuckDuckGo.MaxResults,
 		DuckDuckGoEnabled:    cfg.Tools.Web.DuckDuckGo.Enabled,
 	}); searchTool != nil {
-		toolsRegistry.Register(searchTool)
+		registry.Register(searchTool)
 	}
-	toolsRegistry.Register(tools.NewWebFetchTool(50000))
+	registry.Register(tools.NewWebFetchTool(50000))
 
 	// Message tool - available to both agent and subagent
 	// Subagent uses it to communicate directly with user

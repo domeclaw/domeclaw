@@ -248,7 +248,7 @@ func (t *WebSearchTool) Parameters() map[string]interface{} {
 	}
 }
 
-func (t *WebSearchTool) Execute(ctx context.Context, args map[string]interface{}) (string, error) {
+func (t *WebSearchTool) Execute(ctx context.Context, args map[string]interface{}) *ToolResult {
 	query, ok := args["query"].(string)
 	if !ok {
 		return ErrorResult("query is required")
@@ -261,7 +261,15 @@ func (t *WebSearchTool) Execute(ctx context.Context, args map[string]interface{}
 		}
 	}
 
-	return t.provider.Search(ctx, query, count)
+	result, err := t.provider.Search(ctx, query, count)
+	if err != nil {
+		return ErrorResult(fmt.Sprintf("search failed: %v", err))
+	}
+
+	return &ToolResult{
+		ForLLM:  result,
+		ForUser: result,
+	}
 }
 
 type WebFetchTool struct {
