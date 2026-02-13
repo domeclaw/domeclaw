@@ -49,18 +49,7 @@ func RunToolLoop(ctx context.Context, config ToolLoopConfig, messages []provider
 		// 1. Build tool definitions
 		var providerToolDefs []providers.ToolDefinition
 		if config.Tools != nil {
-			toolDefs := config.Tools.GetDefinitions()
-			providerToolDefs = make([]providers.ToolDefinition, 0, len(toolDefs))
-			for _, td := range toolDefs {
-				providerToolDefs = append(providerToolDefs, providers.ToolDefinition{
-					Type: td["type"].(string),
-					Function: providers.ToolFunctionDefinition{
-						Name:        td["function"].(map[string]any)["name"].(string),
-						Description: td["function"].(map[string]any)["description"].(string),
-						Parameters:  td["function"].(map[string]any)["parameters"].(map[string]any),
-					},
-				})
-			}
+			providerToolDefs = config.Tools.ToProviderDefs()
 		}
 
 		// 2. Set default LLM options

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/bus"
+	"github.com/sipeed/picoclaw/pkg/constants"
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/state"
 	"github.com/sipeed/picoclaw/pkg/tools"
@@ -332,8 +333,7 @@ func (hs *HeartbeatService) parseLastChannel(lastChannel string) (platform, user
 	platform, userID = parts[0], parts[1]
 
 	// Skip internal channels
-	internalChannels := map[string]bool{"cli": true, "system": true, "subagent": true}
-	if internalChannels[platform] {
+	if constants.IsInternalChannel(platform) {
 		hs.logInfo("Skipping internal channel: %s", platform)
 		return "", ""
 	}

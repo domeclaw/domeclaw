@@ -13,6 +13,7 @@ import (
 
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/sipeed/picoclaw/pkg/constants"
 	"github.com/sipeed/picoclaw/pkg/logger"
 )
 
@@ -218,9 +219,6 @@ func (m *Manager) StopAll(ctx context.Context) error {
 func (m *Manager) dispatchOutbound(ctx context.Context) {
 	logger.InfoC("channels", "Outbound dispatcher started")
 
-	// Internal channels that don't have actual handlers
-	internalChannels := map[string]bool{"cli": true, "system": true, "subagent": true}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -233,7 +231,7 @@ func (m *Manager) dispatchOutbound(ctx context.Context) {
 			}
 
 			// Silently skip internal channels
-			if internalChannels[msg.Channel] {
+			if constants.IsInternalChannel(msg.Channel) {
 				continue
 			}
 

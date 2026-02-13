@@ -264,7 +264,7 @@ func (t *SubagentTool) Execute(ctx context.Context, args map[string]interface{})
 		return ErrorResult("Subagent manager not configured").WithError(fmt.Errorf("manager is nil"))
 	}
 
-	// Execute subagent task synchronously via direct provider call
+	// Build messages for subagent
 	messages := []providers.Message{
 		{
 			Role:    "system",
@@ -276,36 +276,48 @@ func (t *SubagentTool) Execute(ctx context.Context, args map[string]interface{})
 		},
 	}
 
-	response, err := t.manager.provider.Chat(ctx, messages, nil, t.manager.defaultModel, map[string]interface{}{
-		"max_tokens": 4096,
-	})
+	// Use RunToolLoop to execute with tools (same as async SpawnTool)
+	sm := t.manager
+	sm.mu.RLock()
+	tools := sm.tools
+	maxIter := sm.maxIterations
+	sm.mu.RUnlock()
+
+	loopResult, err := RunToolLoop(ctx, ToolLoopConfig{
+		Provider:      sm.provider,
+		Model:         sm.defaultModel,
+		Tools:         tools,
+		MaxIterations: maxIter,
+		LLMOptions: map[string]any{
+			"max_tokens":  4096,
+			"temperature": 0.7,
+		},
+	}, messages, t.originChannel, t.originChatID)
 
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("Subagent execution failed: %v", err)).WithError(err)
 	}
 
 	// ForUser: Brief summary for user (truncated if too long)
-	userContent := response.Content
+	userContent := loopResult.Content
 	maxUserLen := 500
 	if len(userContent) > maxUserLen {
 		userContent = userContent[:maxUserLen] + "..."
 	}
 
 	// ForLLM: Full execution details
-	llmContent := fmt.Sprintf("Subagent task completed:\nLabel: %s\nResult: %s",
-		func() string {
-			if label != "" {
-				return label
-			}
-			return "(unnamed)"
-		}(),
-		response.Content)
+	labelStr := label
+	if labelStr == "" {
+		labelStr = "(unnamed)"
+	}
+	llmContent := fmt.Sprintf("Subagent task completed:\nLabel: %s\nIterations: %d\nResult: %s",
+		labelStr, loopResult.Iterations, loopResult.Content)
 
 	return &ToolResult{
 		ForLLM:  llmContent,
-		ForUser:  userContent,
-		Silent:    false,
-		IsError:   false,
-		Async:     false,
+		ForUser: userContent,
+		Silent:  false,
+		IsError: false,
+		Async:   false,
 	}
 }

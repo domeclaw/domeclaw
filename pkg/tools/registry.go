@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/sipeed/picoclaw/pkg/providers"
 )
 
 type ToolRegistry struct {
@@ -107,6 +108,38 @@ func (r *ToolRegistry) GetDefinitions() []map[string]interface{} {
 	definitions := make([]map[string]interface{}, 0, len(r.tools))
 	for _, tool := range r.tools {
 		definitions = append(definitions, ToolToSchema(tool))
+	}
+	return definitions
+}
+
+// ToProviderDefs converts tool definitions to provider-compatible format.
+// This is the format expected by LLM provider APIs.
+func (r *ToolRegistry) ToProviderDefs() []providers.ToolDefinition {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	definitions := make([]providers.ToolDefinition, 0, len(r.tools))
+	for _, tool := range r.tools {
+		schema := ToolToSchema(tool)
+
+		// Safely extract nested values with type checks
+		fn, ok := schema["function"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		name, _ := fn["name"].(string)
+		desc, _ := fn["description"].(string)
+		params, _ := fn["parameters"].(map[string]interface{})
+
+		definitions = append(definitions, providers.ToolDefinition{
+			Type: "function",
+			Function: providers.ToolFunctionDefinition{
+				Name:        name,
+				Description: desc,
+				Parameters:  params,
+			},
+		})
 	}
 	return definitions
 }
