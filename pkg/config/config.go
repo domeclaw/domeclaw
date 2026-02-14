@@ -167,6 +167,7 @@ type ProvidersConfig struct {
 	Nvidia       ProviderConfig `json:"nvidia"`
 	Moonshot     ProviderConfig `json:"moonshot"`
 	ShengSuanYun ProviderConfig `json:"shengsuanyun"`
+	DeepSeek     ProviderConfig `json:"deepseek"`
 }
 
 type ProviderConfig struct {
