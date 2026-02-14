@@ -71,11 +71,11 @@ func (p *GitHubCopilotProvider) Chat(ctx context.Context, messages []Message, to
     
 
 
-    fmt.Println("[DEBUG] call p.session.Send")
+    
     content,_ := p.session.Send(ctx,copilot.MessageOptions{
         Prompt: string(fullcontent),
     })
-    fmt.Println("[DEBUG] end cal")
+    
     
     return &LLMResponse{
         FinishReason : "stop",
