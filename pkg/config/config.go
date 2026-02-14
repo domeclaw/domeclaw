@@ -168,6 +168,7 @@ type ProvidersConfig struct {
 	Moonshot     ProviderConfig `json:"moonshot"`
 	ShengSuanYun ProviderConfig `json:"shengsuanyun"`
 	DeepSeek     ProviderConfig `json:"deepseek"`
+	GitHubCopilot ProviderConfig `json:"github_copilot"`
 }
 
 type ProviderConfig struct {
@@ -175,7 +176,10 @@ type ProviderConfig struct {
 	APIBase    string `json:"api_base" env:"PICOCLAW_PROVIDERS_{{.Name}}_API_BASE"`
 	Proxy      string `json:"proxy,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_PROXY"`
 	AuthMethod string `json:"auth_method,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_AUTH_METHOD"`
+	ConnectMode string `json:"connect_mode,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_CONNECT_MODE"`   //only for Github Copilot, `stdio` or `grpc`
 }
+
+
 
 type GatewayConfig struct {
 	Host string `json:"host" env:"PICOCLAW_GATEWAY_HOST"`
