@@ -177,15 +177,17 @@ func (c *TelegramChannel) handleMessage(ctx context.Context, update telego.Updat
 		return
 	}
 
-	senderID := fmt.Sprintf("%d", user.ID)
+	userID := fmt.Sprintf("%d", user.ID)
+	senderID := userID
 	if user.Username != "" {
-		senderID = fmt.Sprintf("%d|%s", user.ID, user.Username)
+		senderID = fmt.Sprintf("%s|%s", userID, user.Username)
 	}
 
 	// 检查白名单，避免为被拒绝的用户下载附件
-	if !c.IsAllowed(senderID) {
+	if !c.IsAllowed(userID) && !c.IsAllowed(senderID) {
 		logger.DebugCF("telegram", "Message rejected by allowlist", map[string]interface{}{
-			"user_id": senderID,
+			"user_id":  userID,
+			"username": user.Username,
 		})
 		return
 	}
@@ -368,7 +370,7 @@ func (c *TelegramChannel) handleMessage(ctx context.Context, update telego.Updat
 		"peer_id":    peerID,
 	}
 
-	c.HandleMessage(fmt.Sprintf("%d", user.ID), fmt.Sprintf("%d", chatID), content, mediaPaths, metadata)
+	c.HandleMessage(senderID, fmt.Sprintf("%d", chatID), content, mediaPaths, metadata)
 }
 
 func (c *TelegramChannel) downloadPhoto(ctx context.Context, fileID string) string {

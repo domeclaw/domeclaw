@@ -52,6 +52,7 @@ type Config struct {
 	Gateway   GatewayConfig   `json:"gateway"`
 	Tools     ToolsConfig     `json:"tools"`
 	Heartbeat HeartbeatConfig `json:"heartbeat"`
+	Devices   DevicesConfig   `json:"devices"`
 	mu        sync.RWMutex
 }
 
@@ -159,6 +160,7 @@ type ChannelsConfig struct {
 	QQ       QQConfig       `json:"qq"`
 	DingTalk DingTalkConfig `json:"dingtalk"`
 	Slack    SlackConfig    `json:"slack"`
+	LINE     LINEConfig     `json:"line"`
 }
 
 type WhatsAppConfig struct {
@@ -217,9 +219,24 @@ type SlackConfig struct {
 	AllowFrom []string `json:"allow_from" env:"PICOCLAW_CHANNELS_SLACK_ALLOW_FROM"`
 }
 
+type LINEConfig struct {
+	Enabled            bool                `json:"enabled" env:"PICOCLAW_CHANNELS_LINE_ENABLED"`
+	ChannelSecret      string              `json:"channel_secret" env:"PICOCLAW_CHANNELS_LINE_CHANNEL_SECRET"`
+	ChannelAccessToken string              `json:"channel_access_token" env:"PICOCLAW_CHANNELS_LINE_CHANNEL_ACCESS_TOKEN"`
+	WebhookHost        string              `json:"webhook_host" env:"PICOCLAW_CHANNELS_LINE_WEBHOOK_HOST"`
+	WebhookPort        int                 `json:"webhook_port" env:"PICOCLAW_CHANNELS_LINE_WEBHOOK_PORT"`
+	WebhookPath        string              `json:"webhook_path" env:"PICOCLAW_CHANNELS_LINE_WEBHOOK_PATH"`
+	AllowFrom          FlexibleStringSlice `json:"allow_from" env:"PICOCLAW_CHANNELS_LINE_ALLOW_FROM"`
+}
+
 type HeartbeatConfig struct {
 	Enabled  bool `json:"enabled" env:"PICOCLAW_HEARTBEAT_ENABLED"`
 	Interval int  `json:"interval" env:"PICOCLAW_HEARTBEAT_INTERVAL"` // minutes, min 5
+}
+
+type DevicesConfig struct {
+	Enabled    bool `json:"enabled" env:"PICOCLAW_DEVICES_ENABLED"`
+	MonitorUSB bool `json:"monitor_usb" env:"PICOCLAW_DEVICES_MONITOR_USB"`
 }
 
 type ProvidersConfig struct {
@@ -233,6 +250,7 @@ type ProvidersConfig struct {
 	Nvidia       ProviderConfig `json:"nvidia"`
 	Moonshot     ProviderConfig `json:"moonshot"`
 	ShengSuanYun ProviderConfig `json:"shengsuanyun"`
+	DeepSeek     ProviderConfig `json:"deepseek"`
 }
 
 type ProviderConfig struct {
@@ -247,13 +265,20 @@ type GatewayConfig struct {
 	Port int    `json:"port" env:"PICOCLAW_GATEWAY_PORT"`
 }
 
-type WebSearchConfig struct {
-	APIKey     string `json:"api_key" env:"PICOCLAW_TOOLS_WEB_SEARCH_API_KEY"`
-	MaxResults int    `json:"max_results" env:"PICOCLAW_TOOLS_WEB_SEARCH_MAX_RESULTS"`
+type BraveConfig struct {
+	Enabled    bool   `json:"enabled" env:"PICOCLAW_TOOLS_WEB_BRAVE_ENABLED"`
+	APIKey     string `json:"api_key" env:"PICOCLAW_TOOLS_WEB_BRAVE_API_KEY"`
+	MaxResults int    `json:"max_results" env:"PICOCLAW_TOOLS_WEB_BRAVE_MAX_RESULTS"`
+}
+
+type DuckDuckGoConfig struct {
+	Enabled    bool `json:"enabled" env:"PICOCLAW_TOOLS_WEB_DUCKDUCKGO_ENABLED"`
+	MaxResults int  `json:"max_results" env:"PICOCLAW_TOOLS_WEB_DUCKDUCKGO_MAX_RESULTS"`
 }
 
 type WebToolsConfig struct {
-	Search WebSearchConfig `json:"search"`
+	Brave      BraveConfig      `json:"brave"`
+	DuckDuckGo DuckDuckGoConfig `json:"duckduckgo"`
 }
 
 type ToolsConfig struct {
@@ -321,6 +346,15 @@ func DefaultConfig() *Config {
 				AppToken:  "",
 				AllowFrom: []string{},
 			},
+			LINE: LINEConfig{
+				Enabled:            false,
+				ChannelSecret:      "",
+				ChannelAccessToken: "",
+				WebhookHost:        "0.0.0.0",
+				WebhookPort:        18791,
+				WebhookPath:        "/webhook/line",
+				AllowFrom:          FlexibleStringSlice{},
+			},
 		},
 		Providers: ProvidersConfig{
 			Anthropic:    ProviderConfig{},
@@ -340,8 +374,13 @@ func DefaultConfig() *Config {
 		},
 		Tools: ToolsConfig{
 			Web: WebToolsConfig{
-				Search: WebSearchConfig{
+				Brave: BraveConfig{
+					Enabled:    false,
 					APIKey:     "",
+					MaxResults: 5,
+				},
+				DuckDuckGo: DuckDuckGoConfig{
+					Enabled:    true,
 					MaxResults: 5,
 				},
 			},
@@ -349,6 +388,10 @@ func DefaultConfig() *Config {
 		Heartbeat: HeartbeatConfig{
 			Enabled:  true,
 			Interval: 30, // default 30 minutes
+		},
+		Devices: DevicesConfig{
+			Enabled:    false,
+			MonitorUSB: true,
 		},
 	}
 }

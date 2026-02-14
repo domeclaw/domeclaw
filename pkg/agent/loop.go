@@ -77,8 +77,6 @@ func NewAgentLoop(cfg *config.Config, msgBus *bus.MessageBus, provider providers
 
 // registerSharedTools registers tools that are shared across all agents (web, message, spawn).
 func registerSharedTools(cfg *config.Config, msgBus *bus.MessageBus, registry *AgentRegistry, provider providers.LLMProvider) {
-	braveAPIKey := cfg.Tools.Web.Search.APIKey
-
 	for _, agentID := range registry.ListAgentIDs() {
 		agent, ok := registry.GetAgent(agentID)
 		if !ok {
@@ -86,8 +84,20 @@ func registerSharedTools(cfg *config.Config, msgBus *bus.MessageBus, registry *A
 		}
 
 		// Web tools
-		agent.Tools.Register(tools.NewWebSearchTool(braveAPIKey, cfg.Tools.Web.Search.MaxResults))
+		if searchTool := tools.NewWebSearchTool(tools.WebSearchToolOptions{
+			BraveAPIKey:          cfg.Tools.Web.Brave.APIKey,
+			BraveMaxResults:      cfg.Tools.Web.Brave.MaxResults,
+			BraveEnabled:         cfg.Tools.Web.Brave.Enabled,
+			DuckDuckGoMaxResults: cfg.Tools.Web.DuckDuckGo.MaxResults,
+			DuckDuckGoEnabled:    cfg.Tools.Web.DuckDuckGo.Enabled,
+		}); searchTool != nil {
+			agent.Tools.Register(searchTool)
+		}
 		agent.Tools.Register(tools.NewWebFetchTool(50000))
+
+		// Hardware tools (I2C, SPI) - Linux only, returns error on other platforms
+		agent.Tools.Register(tools.NewI2CTool())
+		agent.Tools.Register(tools.NewSPITool())
 
 		// Message tool
 		messageTool := tools.NewMessageTool()
