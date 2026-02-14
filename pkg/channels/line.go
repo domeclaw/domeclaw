@@ -44,9 +44,9 @@ type LINEChannel struct {
 	*BaseChannel
 	config         config.LINEConfig
 	httpServer     *http.Server
-	botUserID      string // Bot's user ID
-	botBasicID     string // Bot's basic ID (e.g. @216ru...)
-	botDisplayName string // Bot's display name for text-based mention detection
+	botUserID      string   // Bot's user ID
+	botBasicID     string   // Bot's basic ID (e.g. @216ru...)
+	botDisplayName string   // Bot's display name for text-based mention detection
 	replyTokens    sync.Map // chatID -> replyTokenEntry
 	quoteTokens    sync.Map // chatID -> quoteToken (string)
 	ctx            context.Context
