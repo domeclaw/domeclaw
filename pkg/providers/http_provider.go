@@ -317,13 +317,12 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 		case "github_copilot", "copilot":
 			if cfg.Providers.GitHubCopilot.APIBase != "" {
 				apiBase = cfg.Providers.GitHubCopilot.APIBase
-			}else {
-				apiBase = "localhost:4321"   // no `http://`  beacause grpc mode`
- 			}
+			} else {
+				apiBase = "localhost:4321" // no `http://`  beacause grpc mode`
+			}
 			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model), nil
-			
+
 		}
-		
 
 	}
 
