@@ -310,6 +310,9 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				if apiBase == "" {
 					apiBase = "https://api.deepseek.com/v1"
 				}
+				if model != "deepseek-chat" && model != "deepseek-reasoner" {
+					model = "deepseek-chat"
+				}
 			}
 		}
 	}
