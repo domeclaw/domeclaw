@@ -280,11 +280,9 @@ func (c *OneBotChannel) buildSendRequest(msg bus.OutboundMessage) (string, inter
 }
 
 func (c *OneBotChannel) listen() {
-	logger.InfoC("onebot", "WebSocket listener started")
 	for {
 		select {
 		case <-c.ctx.Done():
-			logger.InfoC("onebot", "WebSocket listener stopping (context cancelled)")
 			return
 		default:
 			c.mu.Lock()
