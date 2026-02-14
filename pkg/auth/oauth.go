@@ -359,6 +359,9 @@ func parseTokenResponse(body []byte, provider string) (*AuthCredential, error) {
 
 	if accountID := extractAccountID(tokenResp.AccessToken); accountID != "" {
 		cred.AccountID = accountID
+	} else if accountID := extractAccountID(tokenResp.IDToken); accountID != "" {
+		// Recent OpenAI OAuth responses may only include chatgpt_account_id in id_token claims.
+		cred.AccountID = accountID
 	}
 
 	return cred, nil

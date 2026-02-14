@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -89,6 +90,32 @@ func TestParseTokenResponseNoAccessToken(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for missing access_token")
 	}
+}
+
+func TestParseTokenResponseAccountIDFromIDToken(t *testing.T) {
+	idToken := makeJWTWithAccountID("acc-from-id")
+	resp := map[string]interface{}{
+		"access_token":  "not-a-jwt",
+		"refresh_token": "test-refresh-token",
+		"expires_in":    3600,
+		"id_token":      idToken,
+	}
+	body, _ := json.Marshal(resp)
+
+	cred, err := parseTokenResponse(body, "openai")
+	if err != nil {
+		t.Fatalf("parseTokenResponse() error: %v", err)
+	}
+
+	if cred.AccountID != "acc-from-id" {
+		t.Errorf("AccountID = %q, want %q", cred.AccountID, "acc-from-id")
+	}
+}
+
+func makeJWTWithAccountID(accountID string) string {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"https://api.openai.com/auth":{"chatgpt_account_id":"` + accountID + `"}}`))
+	return header + "." + payload + ".sig"
 }
 
 func TestExchangeCodeForTokens(t *testing.T) {
