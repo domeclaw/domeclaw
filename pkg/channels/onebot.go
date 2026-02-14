@@ -18,18 +18,17 @@ import (
 
 type OneBotChannel struct {
 	*BaseChannel
-	config       config.OneBotConfig
-	conn         *websocket.Conn
-	ctx          context.Context
-	cancel       context.CancelFunc
-	dedup        map[string]struct{}
-	dedupRing    []string
-	dedupIdx     int
-	mu           sync.Mutex
-	writeMu      sync.Mutex
-	echoCounter  int64
+	config      config.OneBotConfig
+	conn        *websocket.Conn
+	ctx         context.Context
+	cancel      context.CancelFunc
+	dedup       map[string]struct{}
+	dedupRing   []string
+	dedupIdx    int
+	mu          sync.Mutex
+	writeMu     sync.Mutex
+	echoCounter int64
 }
-
 
 type oneBotRawEvent struct {
 	PostType      string          `json:"post_type"`
@@ -44,9 +43,9 @@ type oneBotRawEvent struct {
 	SelfID        json.RawMessage `json:"self_id"`
 	Time          json.RawMessage `json:"time"`
 	MetaEventType string          `json:"meta_event_type"`
-	Echo   string          `json:"echo"`
-	RetCode json.RawMessage `json:"retcode"`
-	Status string          `json:"status"`
+	Echo          string          `json:"echo"`
+	RetCode       json.RawMessage `json:"retcode"`
+	Status        string          `json:"status"`
 }
 
 type oneBotSender struct {
@@ -56,19 +55,19 @@ type oneBotSender struct {
 }
 
 type oneBotEvent struct {
-	PostType      string
-	MessageType   string
-	SubType       string
-	MessageID     string
-	UserID        int64
-	GroupID       int64
-	Content       string
-	RawContent    string
-	IsBotMentioned bool 
-	Sender        oneBotSender
-	SelfID        int64
-	Time          int64
-	MetaEventType string
+	PostType       string
+	MessageType    string
+	SubType        string
+	MessageID      string
+	UserID         int64
+	GroupID        int64
+	Content        string
+	RawContent     string
+	IsBotMentioned bool
+	Sender         oneBotSender
+	SelfID         int64
+	Time           int64
+	MetaEventType  string
 }
 
 type oneBotAPIRequest struct {
@@ -264,7 +263,7 @@ func (c *OneBotChannel) buildSendRequest(msg bus.OutboundMessage) (string, inter
 			return "", nil, fmt.Errorf("invalid user ID in chatID: %s", chatID)
 		}
 		return "send_private_msg", oneBotSendPrivateMsgParams{
-			UserID: userID,
+			UserID:  userID,
 			Message: msg.Content,
 		}, nil
 	}
