@@ -338,7 +338,7 @@ picoclaw gateway
 
 **1. Create a bot**
 
-- Go to [QQ Open Platform](https://connect.qq.com/)
+- Go to [QQ Open Platform](https://q.qq.com/#)
 - Create an application → Get **AppID** and **AppSecret**
 
 **2. Configure**
