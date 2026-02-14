@@ -67,6 +67,8 @@ all: build
 build:
 	@echo "Building $(BINARY_NAME) for $(PLATFORM)/$(ARCH)..."
 	@mkdir -p $(BUILD_DIR)
+	@rm -r ./$(CMD_DIR)/workspace 2>/dev/null || true
+	@cp -r workspace ./$(CMD_DIR)/workspace 2>/dev/null || true
 	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_PATH) ./$(CMD_DIR)
 	@echo "Build complete: $(BINARY_PATH)"
 	@ln -sf $(BINARY_NAME)-$(PLATFORM)-$(ARCH) $(BUILD_DIR)/$(BINARY_NAME)
@@ -74,6 +76,8 @@ build:
 ## build-all: Build picoclaw for all platforms
 build-all:
 	@echo "Building for multiple platforms..."
+	@rm -r ./$(CMD_DIR)/workspace 2>/dev/null || true
+	@cp -r workspace ./$(CMD_DIR)/workspace 2>/dev/null || true
 	@mkdir -p $(BUILD_DIR)
 	GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./$(CMD_DIR)
 	GOOS=linux GOARCH=arm64 $(GO) build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 ./$(CMD_DIR)
@@ -89,34 +93,7 @@ install: build
 	@cp $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_BIN_DIR)/$(BINARY_NAME)
 	@chmod +x $(INSTALL_BIN_DIR)/$(BINARY_NAME)
 	@echo "Installed binary to $(INSTALL_BIN_DIR)/$(BINARY_NAME)"
-	@echo "Installing builtin skills to $(WORKSPACE_SKILLS_DIR)..."
-	@mkdir -p $(WORKSPACE_SKILLS_DIR)
-	@for skill in $(BUILTIN_SKILLS_DIR)/*/; do \
-		if [ -d "$$skill" ]; then \
-			skill_name=$$(basename "$$skill"); \
-			if [ -f "$$skill/SKILL.md" ]; then \
-				cp -r "$$skill" $(WORKSPACE_SKILLS_DIR); \
-				echo "  ✓ Installed skill: $$skill_name"; \
-			fi; \
-		fi; \
-	done
 	@echo "Installation complete!"
-
-## install-skills: Install builtin skills to workspace
-install-skills:
-	@echo "Installing builtin skills to $(WORKSPACE_SKILLS_DIR)..."
-	@mkdir -p $(WORKSPACE_SKILLS_DIR)
-	@for skill in $(BUILTIN_SKILLS_DIR)/*/; do \
-		if [ -d "$$skill" ]; then \
-			skill_name=$$(basename "$$skill"); \
-			if [ -f "$$skill/SKILL.md" ]; then \
-				mkdir -p $(WORKSPACE_SKILLS_DIR)/$$skill_name; \
-				cp -r "$$skill" $(WORKSPACE_SKILLS_DIR); \
-				echo "  ✓ Installed skill: $$skill_name"; \
-			fi; \
-		fi; \
-	done
-	@echo "Skills installation complete!"
 
 ## uninstall: Remove picoclaw from system
 uninstall:
