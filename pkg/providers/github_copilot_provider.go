@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
-    json "encoding/json"
+	json "encoding/json"
+
 	copilot "github.com/github/copilot-sdk/go"
+
 )
 
 type GitHubCopilotProvider struct {
@@ -18,7 +20,9 @@ type GitHubCopilotProvider struct {
 func NewGitHubCopilotProvider(uri string, connectMode string, model string) *GitHubCopilotProvider {
 
 	var session *copilot.Session
-
+    if connectMode == "" {
+        connectMode = "grpc" 
+	}
 	switch connectMode {
 
 	case "stdio":
@@ -37,6 +41,7 @@ func NewGitHubCopilotProvider(uri string, connectMode string, model string) *Git
 
             },
 		})
+    
 	}
 
 	return &GitHubCopilotProvider{
@@ -66,10 +71,11 @@ func (p *GitHubCopilotProvider) Chat(ctx context.Context, messages []Message, to
     
 
 
-
+    fmt.Println("[DEBUG] call p.session.Send")
     content,_ := p.session.Send(ctx,copilot.MessageOptions{
         Prompt: string(fullcontent),
     })
+    fmt.Println("[DEBUG] end cal")
     
     return &LLMResponse{
         FinishReason : "stop",
