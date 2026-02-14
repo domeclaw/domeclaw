@@ -50,7 +50,7 @@ type oneBotRawEvent struct {
 
 type BotStatus struct {
 	Online bool `json:"online"`
-	Good bool `json:"good"`
+	Good   bool `json:"good"`
 }
 
 type oneBotSender struct {
