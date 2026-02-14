@@ -25,7 +25,7 @@ func NewGitHubCopilotProvider(uri string, connectMode string, model string) *Git
 	switch connectMode {
 
 	case "stdio":
-
+		//todo
 	case "grpc":
 		client := copilot.NewClient(&copilot.ClientOptions{
 			CLIUrl: uri,
