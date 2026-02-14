@@ -314,7 +314,7 @@ picoclaw gateway
 
 **1. Bot を作成**
 
-- [QQ オープンプラットフォーム](https://connect.qq.com/) にアクセス
+- [QQ オープンプラットフォーム](https://q.qq.com/#) にアクセス
 - アプリケーションを作成 → **AppID** と **AppSecret** を取得
 
 **2. 設定**
