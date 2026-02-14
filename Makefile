@@ -63,21 +63,24 @@ BINARY_PATH=$(BUILD_DIR)/$(BINARY_NAME)-$(PLATFORM)-$(ARCH)
 # Default target
 all: build
 
+## generate: Run generate
+generate:
+	@echo "Run generate..."
+	@rm -r ./$(CMD_DIR)/workspace 2>/dev/null || true
+	@$(GO) generate ./...
+	@echo "Run generate complete"
+
 ## build: Build the picoclaw binary for current platform
-build:
+build: generate
 	@echo "Building $(BINARY_NAME) for $(PLATFORM)/$(ARCH)..."
 	@mkdir -p $(BUILD_DIR)
-	@rm -r ./$(CMD_DIR)/workspace 2>/dev/null || true
-	@cp -r workspace ./$(CMD_DIR)/workspace 2>/dev/null || true
-	$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_PATH) ./$(CMD_DIR)
+	@$(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BINARY_PATH) ./$(CMD_DIR)
 	@echo "Build complete: $(BINARY_PATH)"
 	@ln -sf $(BINARY_NAME)-$(PLATFORM)-$(ARCH) $(BUILD_DIR)/$(BINARY_NAME)
 
 ## build-all: Build picoclaw for all platforms
-build-all:
+build-all: generate
 	@echo "Building for multiple platforms..."
-	@rm -r ./$(CMD_DIR)/workspace 2>/dev/null || true
-	@cp -r workspace ./$(CMD_DIR)/workspace 2>/dev/null || true
 	@mkdir -p $(BUILD_DIR)
 	GOOS=linux GOARCH=amd64 $(GO) build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./$(CMD_DIR)
 	GOOS=linux GOARCH=arm64 $(GO) build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 ./$(CMD_DIR)
@@ -115,6 +118,14 @@ clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(BUILD_DIR)
 	@echo "Clean complete"
+
+## fmt: Format Go code
+vet:
+	@$(GO) vet ./...
+
+## fmt: Format Go code
+test:
+	@$(GO) test ./...
 
 ## fmt: Format Go code
 fmt:
