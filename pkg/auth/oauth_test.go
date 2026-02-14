@@ -10,10 +10,11 @@ import (
 
 func TestBuildAuthorizeURL(t *testing.T) {
 	cfg := OAuthProviderConfig{
-		Issuer:   "https://auth.example.com",
-		ClientID: "test-client-id",
-		Scopes:   "openid profile",
-		Port:     1455,
+		Issuer:     "https://auth.example.com",
+		ClientID:   "test-client-id",
+		Scopes:     "openid profile",
+		Originator: "codex_cli_rs",
+		Port:       1455,
 	}
 	pkce := PKCECodes{
 		CodeVerifier:  "test-verifier",
@@ -22,7 +23,7 @@ func TestBuildAuthorizeURL(t *testing.T) {
 
 	u := BuildAuthorizeURL(cfg, pkce, "test-state", "http://localhost:1455/auth/callback")
 
-	if !strings.HasPrefix(u, "https://auth.example.com/authorize?") {
+	if !strings.HasPrefix(u, "https://auth.example.com/oauth/authorize?") {
 		t.Errorf("URL does not start with expected prefix: %s", u)
 	}
 	if !strings.Contains(u, "client_id=test-client-id") {
@@ -39,6 +40,15 @@ func TestBuildAuthorizeURL(t *testing.T) {
 	}
 	if !strings.Contains(u, "response_type=code") {
 		t.Error("URL missing response_type")
+	}
+	if !strings.Contains(u, "id_token_add_organizations=true") {
+		t.Error("URL missing id_token_add_organizations")
+	}
+	if !strings.Contains(u, "codex_cli_simplified_flow=true") {
+		t.Error("URL missing codex_cli_simplified_flow")
+	}
+	if !strings.Contains(u, "originator=codex_cli_rs") {
+		t.Error("URL missing originator")
 	}
 }
 
