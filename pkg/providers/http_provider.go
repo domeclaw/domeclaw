@@ -314,7 +314,16 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 					model = "deepseek-chat"
 				}
 			}
+		case "github_copilot", "copilot":
+			if cfg.Providers.GitHubCopilot.APIBase != "" {
+				apiBase = cfg.Providers.GitHubCopilot.APIBase
+			} else {
+				apiBase = "localhost:4321"
+			}
+			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model)
+
 		}
+
 	}
 
 	// Fallback: detect provider from model name
