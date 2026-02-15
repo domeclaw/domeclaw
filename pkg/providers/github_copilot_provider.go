@@ -16,7 +16,7 @@ type GitHubCopilotProvider struct {
 	session *copilot.Session
 }
 
-func NewGitHubCopilotProvider(uri string, connectMode string, model string) *GitHubCopilotProvider {
+func NewGitHubCopilotProvider(uri string, connectMode string, model string) (*GitHubCopilotProvider, error) {
 
 	var session *copilot.Session
 	if connectMode == "" {
@@ -31,7 +31,7 @@ func NewGitHubCopilotProvider(uri string, connectMode string, model string) *Git
 			CLIUrl: uri,
 		})
 		if err := client.Start(context.Background()); err != nil {
-			fmt.Errorf("Can't connect to Github Copilot, https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md#connecting-to-an-external-cli-server for details")
+			return nil, fmt.Errorf("Can't connect to Github Copilot, https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md#connecting-to-an-external-cli-server for details")
 		}
 		defer client.Stop()
 		session, _ = client.CreateSession(context.Background(), &copilot.SessionConfig{
@@ -44,9 +44,8 @@ func NewGitHubCopilotProvider(uri string, connectMode string, model string) *Git
 	return &GitHubCopilotProvider{
 		uri:         uri,
 		connectMode: connectMode,
-
-		session: session,
-	}
+		session:     session,
+	}, nil
 }
 
 // Chat sends a chat request to GitHub Copilot
