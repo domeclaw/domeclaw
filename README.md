@@ -697,6 +697,9 @@ picoclaw agent -m "Hello"
       "search": {
         "api_key": "BSA..."
       }
+    },
+    "cron": {
+      "exec_timeout_minutes": 5
     }
   },
   "heartbeat": {
