@@ -303,7 +303,27 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				workspace = "."
 			}
 			return NewClaudeCliProvider(workspace), nil
+		case "deepseek":
+			if cfg.Providers.DeepSeek.APIKey != "" {
+				apiKey = cfg.Providers.DeepSeek.APIKey
+				apiBase = cfg.Providers.DeepSeek.APIBase
+				if apiBase == "" {
+					apiBase = "https://api.deepseek.com/v1"
+				}
+				if model != "deepseek-chat" && model != "deepseek-reasoner" {
+					model = "deepseek-chat"
+				}
+			}
+		case "github_copilot", "copilot":
+			if cfg.Providers.GitHubCopilot.APIBase != "" {
+				apiBase = cfg.Providers.GitHubCopilot.APIBase
+			} else {
+				apiBase = "localhost:4321"
+			}
+			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model)
+
 		}
+
 	}
 
 	// Fallback: detect provider from model name
