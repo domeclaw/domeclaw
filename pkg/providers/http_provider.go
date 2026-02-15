@@ -320,7 +320,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			} else {
 				apiBase = "localhost:4321"
 			}
-			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model), nil
+			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model)
 
 		}
 
