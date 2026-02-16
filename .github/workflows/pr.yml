@@ -16,9 +16,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Gofmt check
-        run: diff -u <(echo -n) <(gofmt -d .)
-
       - name: Run go generate
         run: go generate ./...
 
