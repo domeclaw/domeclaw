@@ -618,6 +618,22 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
 - `PICOCLAW_HEARTBEAT_ENABLED=false` で無効化
 - `PICOCLAW_HEARTBEAT_INTERVAL=60` で間隔変更
 
+### プロバイダー
+
+> [!NOTE]
+> Groq は Whisper による無料の音声文字起こしを提供しています。設定すると、Telegram の音声メッセージが自動的に文字起こしされます。
+
+| プロバイダー | 用途 | API キー取得先 |
+| --- | --- | --- |
+| `gemini` | LLM（Gemini 直接） | [aistudio.google.com](https://aistudio.google.com) |
+| `zhipu` | LLM（Zhipu 直接） | [bigmodel.cn](https://bigmodel.cn) |
+| `openrouter`（未テスト） | LLM（推奨、全モデルにアクセス可能） | [openrouter.ai](https://openrouter.ai) |
+| `anthropic`（未テスト） | LLM（Claude 直接） | [console.anthropic.com](https://console.anthropic.com) |
+| `openai`（未テスト） | LLM（GPT 直接） | [platform.openai.com](https://platform.openai.com) |
+| `deepseek`（未テスト） | LLM（DeepSeek 直接） | [platform.deepseek.com](https://platform.deepseek.com) |
+| `groq` | LLM + **音声文字起こし**（Whisper） | [console.groq.com](https://console.groq.com) |
+| `cerebras` | LLM（Cerebras 直接） | [cerebras.ai](https://cerebras.ai) |
+
 ### 基本設定
 
 1.  **設定ファイルの作成:**
@@ -767,3 +783,4 @@ Web 検索を有効にするには：
 | **Zhipu** | 月 200K トークン | 中国ユーザー向け最適 |
 | **Brave Search** | 月 2000 クエリ | Web 検索機能 |
 | **Groq** | 無料枠あり | 高速推論（Llama, Mixtral） |
+| **Cerebras** | 無料枠あり | 高速推論（Llama, Qwen など） |

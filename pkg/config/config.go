@@ -179,6 +179,7 @@ type ProvidersConfig struct {
 	Moonshot      ProviderConfig `json:"moonshot"`
 	ShengSuanYun  ProviderConfig `json:"shengsuanyun"`
 	DeepSeek      ProviderConfig `json:"deepseek"`
+	Cerebras      ProviderConfig `json:"cerebras"`
 	GitHubCopilot ProviderConfig `json:"github_copilot"`
 }
 
@@ -305,6 +306,7 @@ func DefaultConfig() *Config {
 			Nvidia:       ProviderConfig{},
 			Moonshot:     ProviderConfig{},
 			ShengSuanYun: ProviderConfig{},
+			Cerebras:     ProviderConfig{},
 		},
 		Gateway: GatewayConfig{
 			Host: "0.0.0.0",
@@ -405,6 +407,9 @@ func (c *Config) GetAPIKey() string {
 	}
 	if c.Providers.ShengSuanYun.APIKey != "" {
 		return c.Providers.ShengSuanYun.APIKey
+	}
+	if c.Providers.Cerebras.APIKey != "" {
+		return c.Providers.Cerebras.APIKey
 	}
 	return ""
 }
