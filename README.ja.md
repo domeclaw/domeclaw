@@ -627,10 +627,10 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
 | --- | --- | --- |
 | `gemini` | LLM（Gemini 直接） | [aistudio.google.com](https://aistudio.google.com) |
 | `zhipu` | LLM（Zhipu 直接） | [bigmodel.cn](https://bigmodel.cn) |
-| `openrouter`（未テスト） | LLM（推奨、全モデルにアクセス可能） | [openrouter.ai](https://openrouter.ai) |
-| `anthropic`（未テスト） | LLM（Claude 直接） | [console.anthropic.com](https://console.anthropic.com) |
-| `openai`（未テスト） | LLM（GPT 直接） | [platform.openai.com](https://platform.openai.com) |
-| `deepseek`（未テスト） | LLM（DeepSeek 直接） | [platform.deepseek.com](https://platform.deepseek.com) |
+| `openrouter`（要テスト） | LLM（推奨、全モデルにアクセス可能） | [openrouter.ai](https://openrouter.ai) |
+| `anthropic`（要テスト） | LLM（Claude 直接） | [console.anthropic.com](https://console.anthropic.com) |
+| `openai`（要テスト） | LLM（GPT 直接） | [platform.openai.com](https://platform.openai.com) |
+| `deepseek`（要テスト） | LLM（DeepSeek 直接） | [platform.deepseek.com](https://platform.deepseek.com) |
 | `groq` | LLM + **音声文字起こし**（Whisper） | [console.groq.com](https://console.groq.com) |
 | `cerebras` | LLM（Cerebras 直接） | [cerebras.ai](https://cerebras.ai) |
 
