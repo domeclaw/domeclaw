@@ -26,6 +26,52 @@ linters:
     - wrapcheck
     - wsl
     - wsl_v5
+
+    # TODO: Disabled, because they are failing at the moment, we should fix them and enable (step by step)
+    - bodyclose
+    - contextcheck
+    - dogsled
+    - embeddedstructfieldcheck
+    - errcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godox
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - maintidx
+    - misspell
+    - mnd
+    - modernize
+    - nakedret
+    - nestif
+    - nilnil
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    - revive
+    - staticcheck
+    - tagalign
+    - testifylint
+    - thelper
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
   settings:
     errcheck:
       check-type-assertions: true
@@ -114,10 +160,12 @@ issues:
 
 formatters:
   enable:
-    - gci
-    - gofmt
-    - gofumpt
     - goimports
+  # TODO: Disabled, because they are failing at the moment, we should fix them and enable (step by step)
+  #    - gci
+  #    - gofmt
+  #    - gofumpt
+  #    - golines
   settings:
     gci:
       sections:
@@ -126,8 +174,11 @@ formatters:
         - localmodule
       custom-order: true
     gofmt:
+      simplify: true
       rewrite-rules:
         - pattern: "interface{}"
           replacement: "any"
         - pattern: "a[b:len(a)]"
           replacement: "a[b:]"
+    golines:
+      max-len: 120

@@ -7,8 +7,6 @@ jobs:
   lint:
     name: Linter
     runs-on: ubuntu-latest
-    # TODO: Remove continue-on-error once linter issues are fixed
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -29,7 +27,7 @@ jobs:
         with:
           version: latest
 
-  # TODO: Remove once linter job is required
+  # TODO: Remove once linter is properly configured
   fmt-check:
     name: Formatting
     runs-on: ubuntu-latest
@@ -47,7 +45,7 @@ jobs:
           make fmt
           git diff --exit-code || (echo "::error::Code is not formatted. Run 'make fmt' and commit the changes." && exit 1)
 
-  # TODO: Remove once linter job is required
+  # TODO: Remove once linter is properly configured
   vet:
     name: Vet
     runs-on: ubuntu-latest
