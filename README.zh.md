@@ -100,6 +100,23 @@
 </tr>
 </table>
 
+### 📱 在手机上轻松运行
+picoclaw 可以将你10年前的老旧手机废物利用，变身成为你的AI助理！快速指南:
+1. 先去应用商店下载安装Termux
+2. 打开后执行指令
+```bash
+# 注意: 下面的v0.1.1 可以换为你实际看到的最新版本
+wget https://github.com/sipeed/picoclaw/releases/download/v0.1.1/picoclaw-linux-arm64
+chmod +x picoclaw-linux-arm64
+pkg install proot
+termux-chroot ./picoclaw-linux-arm64 onboard
+```
+然后跟随下面的“快速开始”章节继续配置picoclaw即可使用！
+<img src="assets/termux.jpg" alt="PicoClaw" width="512">
+
+
+
+
 ### 🐜 创新的低占用部署
 
 PicoClaw 几乎可以部署在任何 Linux 设备上！
