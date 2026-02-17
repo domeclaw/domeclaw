@@ -428,7 +428,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			}
 			fmt.Println("Ollama apiBase:", apiBase)
 
-		case (strings.Contains(lowerModel, "doubao") || strings.HasPrefix(model, "doubao") || strings.Contains(lowerModel, "volcengine")) && cfg.Providers.VolcEngine.APIKey != "":
+		case (strings.Contains(lowerModel, "doubao") || strings.HasPrefix(lowerModel, "doubao") || strings.Contains(lowerModel, "volcengine")) && cfg.Providers.VolcEngine.APIKey != "":
 			apiKey = cfg.Providers.VolcEngine.APIKey
 			apiBase = cfg.Providers.VolcEngine.APIBase
 			proxy = cfg.Providers.VolcEngine.Proxy
