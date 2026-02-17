@@ -28,8 +28,8 @@ type CronTool struct {
 }
 
 // NewCronTool creates a new CronTool
-func NewCronTool(cronService *cron.CronService, executor JobExecutor, msgBus *bus.MessageBus, workspace string, execTimeout time.Duration) *CronTool {
-	execTool := NewExecTool(workspace, false)
+func NewCronTool(cronService *cron.CronService, executor JobExecutor, msgBus *bus.MessageBus, workspace string, restrict bool, execTimeout time.Duration) *CronTool {
+	execTool := NewExecTool(workspace, restrict)
 	if execTimeout > 0 {
 		execTool.SetTimeout(execTimeout)
 	}
