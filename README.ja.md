@@ -253,7 +253,7 @@ Telegram、Discord、QQ、DingTalk、LINE で PicoClaw と会話できます
     "telegram": {
       "enabled": true,
       "token": "YOUR_BOT_TOKEN",
-      "allowFrom": ["YOUR_USER_ID"]
+      "allow_from": ["YOUR_USER_ID"]
     }
   }
 }
@@ -293,7 +293,7 @@ picoclaw gateway
     "discord": {
       "enabled": true,
       "token": "YOUR_BOT_TOKEN",
-      "allowFrom": ["YOUR_USER_ID"]
+      "allow_from": ["YOUR_USER_ID"]
     }
   }
 }
@@ -676,7 +676,7 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
     "telegram": {
       "enabled": true,
       "token": "123456:ABC...",
-      "allowFrom": ["123456789"]
+      "allow_from": ["123456789"]
     },
     "discord": {
       "enabled": true,
@@ -692,7 +692,7 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
       "appSecret": "xxx",
       "encryptKey": "",
       "verificationToken": "",
-      "allowFrom": []
+      "allow_from": []
     }
   },
   "tools": {
