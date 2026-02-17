@@ -14,7 +14,9 @@ const (
 	providerTypeHTTPCompat providerType = iota
 	providerTypeClaudeAuth
 	providerTypeCodexAuth
+	providerTypeCodexCLIToken
 	providerTypeClaudeCLI
+	providerTypeCodexCLI
 	providerTypeGitHubCopilot
 )
 
@@ -73,6 +75,10 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			}
 		case "openai", "gpt":
 			if cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != "" {
+				if cfg.Providers.OpenAI.AuthMethod == "codex-cli" {
+					sel.providerType = providerTypeCodexCLIToken
+					return sel, nil
+				}
 				if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
 					sel.providerType = providerTypeCodexAuth
 					return sel, nil
@@ -134,11 +140,19 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 				}
 			}
 		case "claude-cli", "claude-code", "claudecode":
-			workspace := cfg.Agents.Defaults.Workspace
+			workspace := cfg.WorkspacePath()
 			if workspace == "" {
 				workspace = "."
 			}
 			sel.providerType = providerTypeClaudeCLI
+			sel.workspace = workspace
+			return sel, nil
+		case "codex-cli", "codex-code":
+			workspace := cfg.WorkspacePath()
+			if workspace == "" {
+				workspace = "."
+			}
+			sel.providerType = providerTypeCodexCLI
 			sel.workspace = workspace
 			return sel, nil
 		case "deepseek":
@@ -201,6 +215,10 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			}
 		case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) &&
 			(cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != ""):
+			if cfg.Providers.OpenAI.AuthMethod == "codex-cli" {
+				sel.providerType = providerTypeCodexCLIToken
+				return sel, nil
+			}
 			if cfg.Providers.OpenAI.AuthMethod == "oauth" || cfg.Providers.OpenAI.AuthMethod == "token" {
 				sel.providerType = providerTypeCodexAuth
 				return sel, nil
@@ -238,6 +256,13 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			sel.proxy = cfg.Providers.Nvidia.Proxy
 			if sel.apiBase == "" {
 				sel.apiBase = "https://integrate.api.nvidia.com/v1"
+			}
+		case (strings.Contains(lowerModel, "ollama") || strings.HasPrefix(model, "ollama/")) && cfg.Providers.Ollama.APIKey != "":
+			sel.apiKey = cfg.Providers.Ollama.APIKey
+			sel.apiBase = cfg.Providers.Ollama.APIBase
+			sel.proxy = cfg.Providers.Ollama.Proxy
+			if sel.apiBase == "" {
+				sel.apiBase = "http://localhost:11434/v1"
 			}
 		case cfg.Providers.VLLM.APIBase != "":
 			sel.apiKey = cfg.Providers.VLLM.APIKey
@@ -281,8 +306,12 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 		return createClaudeAuthProvider()
 	case providerTypeCodexAuth:
 		return createCodexAuthProvider()
+	case providerTypeCodexCLIToken:
+		return NewCodexProviderWithTokenSource("", "", CreateCodexCliTokenSource()), nil
 	case providerTypeClaudeCLI:
 		return NewClaudeCliProvider(sel.workspace), nil
+	case providerTypeCodexCLI:
+		return NewCodexCliProvider(sel.workspace), nil
 	case providerTypeGitHubCopilot:
 		return NewGitHubCopilotProvider(sel.apiBase, sel.connectMode, sel.model)
 	default:

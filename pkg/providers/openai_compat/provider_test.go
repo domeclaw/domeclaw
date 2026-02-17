@@ -147,3 +147,56 @@ func TestProviderChat_StripsMoonshotPrefixAndNormalizesKimiTemperature(t *testin
 		t.Fatalf("temperature = %v, want 1.0", requestBody["temperature"])
 	}
 }
+
+func TestProviderChat_StripsGroqAndOllamaPrefixes(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantModel string
+	}{
+		{
+			name:      "strips groq prefix and keeps nested model",
+			input:     "groq/openai/gpt-oss-120b",
+			wantModel: "openai/gpt-oss-120b",
+		},
+		{
+			name:      "strips ollama prefix",
+			input:     "ollama/qwen2.5:14b",
+			wantModel: "qwen2.5:14b",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var requestBody map[string]interface{}
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				resp := map[string]interface{}{
+					"choices": []map[string]interface{}{
+						{
+							"message":       map[string]interface{}{"content": "ok"},
+							"finish_reason": "stop",
+						},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(resp)
+			}))
+			defer server.Close()
+
+			p := NewProvider("key", server.URL)
+			_, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hi"}}, nil, tt.input, nil)
+			if err != nil {
+				t.Fatalf("Chat() error = %v", err)
+			}
+
+			if requestBody["model"] != tt.wantModel {
+				t.Fatalf("model = %v, want %s", requestBody["model"], tt.wantModel)
+			}
+		})
+	}
+}

@@ -92,10 +92,10 @@ func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDef
 		return nil, fmt.Errorf("API base not configured")
 	}
 
-	// Strip provider prefix (moonshot/kimi-*, nvidia/*) for OpenAI-compatible backends.
+	// Strip provider prefix for OpenAI-compatible backends.
 	if idx := strings.Index(model, "/"); idx != -1 {
 		prefix := model[:idx]
-		if prefix == "moonshot" || prefix == "nvidia" {
+		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" {
 			model = model[idx+1:]
 		}
 	}

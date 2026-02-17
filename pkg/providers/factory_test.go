@@ -58,6 +58,22 @@ func TestResolveProviderSelection(t *testing.T) {
 			wantType: providerTypeCodexAuth,
 		},
 		{
+			name: "openai codex-cli auth routes to codex cli token provider",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Model = "gpt-4o"
+				cfg.Providers.OpenAI.AuthMethod = "codex-cli"
+			},
+			wantType: providerTypeCodexCLIToken,
+		},
+		{
+			name: "explicit codex-code provider routes to codex cli provider type",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Provider = "codex-code"
+				cfg.Agents.Defaults.Workspace = "/tmp/ws"
+			},
+			wantType: providerTypeCodexCLI,
+		},
+		{
 			name: "zhipu model uses zhipu base default",
 			setup: func(cfg *config.Config) {
 				cfg.Agents.Defaults.Model = "glm-4.7"
@@ -74,6 +90,15 @@ func TestResolveProviderSelection(t *testing.T) {
 			},
 			wantType:    providerTypeHTTPCompat,
 			wantAPIBase: "https://api.groq.com/openai/v1",
+		},
+		{
+			name: "ollama model uses ollama base default",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Model = "ollama/qwen2.5:14b"
+				cfg.Providers.Ollama.APIKey = "ollama-key"
+			},
+			wantType:    providerTypeHTTPCompat,
+			wantAPIBase: "http://localhost:11434/v1",
 		},
 		{
 			name: "moonshot model keeps proxy and default base",
@@ -146,5 +171,34 @@ func TestCreateProviderReturnsHTTPProviderForOpenRouter(t *testing.T) {
 
 	if _, ok := provider.(*HTTPProvider); !ok {
 		t.Fatalf("provider type = %T, want *HTTPProvider", provider)
+	}
+}
+
+func TestCreateProviderReturnsCodexCliProviderForCodexCode(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Agents.Defaults.Provider = "codex-code"
+
+	provider, err := CreateProvider(cfg)
+	if err != nil {
+		t.Fatalf("CreateProvider() error = %v", err)
+	}
+
+	if _, ok := provider.(*CodexCliProvider); !ok {
+		t.Fatalf("provider type = %T, want *CodexCliProvider", provider)
+	}
+}
+
+func TestCreateProviderReturnsCodexProviderForCodexCliAuthMethod(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Agents.Defaults.Provider = "openai"
+	cfg.Providers.OpenAI.AuthMethod = "codex-cli"
+
+	provider, err := CreateProvider(cfg)
+	if err != nil {
+		t.Fatalf("CreateProvider() error = %v", err)
+	}
+
+	if _, ok := provider.(*CodexProvider); !ok {
+		t.Fatalf("provider type = %T, want *CodexProvider", provider)
 	}
 }
