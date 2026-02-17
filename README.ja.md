@@ -209,7 +209,7 @@ picoclaw onboard
 
 **3. API キーの取得**
 
-- **LLM プロバイダー**: [OpenRouter](https://openrouter.ai/keys) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) · [Anthropic](https://console.anthropic.com) · [OpenAI](https://platform.openai.com) · [Gemini](https://aistudio.google.com/api-keys)
+- **LLM プロバイダー**: [OpenRouter](https://openrouter.ai/keys) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) · [Anthropic](https://console.anthropic.com) · [OpenAI](https://platform.openai.com) · [Gemini](https://aistudio.google.com/api-keys) · [Qwen](https://dashscope.console.aliyun.com)
 - **Web 検索**（任意）: [Brave Search](https://brave.com/search/api) - 無料枠あり（月 2000 リクエスト）
 
 > **注意**: 完全な設定テンプレートは `config.example.json` を参照してください。
@@ -771,5 +771,6 @@ Web 検索を有効にするには：
 |---------|--------|------------|
 | **OpenRouter** | 月 200K トークン | 複数モデル（Claude, GPT-4 など） |
 | **Zhipu** | 月 200K トークン | 中国ユーザー向け最適 |
+| **Qwen** | 無料枠あり | 通義千問 (Qwen) |
 | **Brave Search** | 月 2000 クエリ | Web 検索機能 |
 | **Groq** | 無料枠あり | 高速推論（Llama, Mixtral） |

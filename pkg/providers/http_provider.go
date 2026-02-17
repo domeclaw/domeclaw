@@ -56,7 +56,7 @@ func (p *HTTPProvider) Chat(ctx context.Context, messages []Message, tools []Too
 	// Strip provider prefix from model name (e.g., moonshot/kimi-k2.5 -> kimi-k2.5, groq/openai/gpt-oss-120b -> openai/gpt-oss-120b, ollama/qwen2.5:14b -> qwen2.5:14b)
 	if idx := strings.Index(model, "/"); idx != -1 {
 		prefix := model[:idx]
-		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" {
+		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" || prefix == "qwen" {
 			model = model[idx+1:]
 		}
 	}
@@ -324,6 +324,14 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 					model = "deepseek-chat"
 				}
 			}
+		case "qwen":
+			if cfg.Providers.Qwen.APIKey != "" {
+				apiKey = cfg.Providers.Qwen.APIKey
+				apiBase = cfg.Providers.Qwen.APIBase
+				if apiBase == "" {
+					apiBase = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+				}
+			}
 		case "github_copilot", "copilot":
 			if cfg.Providers.GitHubCopilot.APIBase != "" {
 				apiBase = cfg.Providers.GitHubCopilot.APIBase
@@ -400,6 +408,14 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			proxy = cfg.Providers.Groq.Proxy
 			if apiBase == "" {
 				apiBase = "https://api.groq.com/openai/v1"
+			}
+
+		case (strings.Contains(lowerModel, "qwen") || strings.HasPrefix(model, "qwen/")) && cfg.Providers.Qwen.APIKey != "":
+			apiKey = cfg.Providers.Qwen.APIKey
+			apiBase = cfg.Providers.Qwen.APIBase
+			proxy = cfg.Providers.Qwen.Proxy
+			if apiBase == "" {
+				apiBase = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 			}
 
 		case (strings.Contains(lowerModel, "nvidia") || strings.HasPrefix(model, "nvidia/")) && cfg.Providers.Nvidia.APIKey != "":
