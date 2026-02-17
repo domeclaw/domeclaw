@@ -180,6 +180,7 @@ type ProvidersConfig struct {
 	ShengSuanYun  ProviderConfig `json:"shengsuanyun"`
 	DeepSeek      ProviderConfig `json:"deepseek"`
 	Cerebras      ProviderConfig `json:"cerebras"`
+	VolcEngine    ProviderConfig `json:"volcengine"`
 	GitHubCopilot ProviderConfig `json:"github_copilot"`
 	Qwen          ProviderConfig `json:"qwen"`
 }
@@ -320,6 +321,7 @@ func DefaultConfig() *Config {
 			Moonshot:     ProviderConfig{},
 			ShengSuanYun: ProviderConfig{},
 			Cerebras:     ProviderConfig{},
+			VolcEngine:   ProviderConfig{},
 		},
 		Gateway: GatewayConfig{
 			Host: "0.0.0.0",

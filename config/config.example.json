@@ -121,6 +121,10 @@
     "cerebras": {
       "api_key": "",
       "api_base": ""
+    },
+    "volcengine": {
+      "api_key": "",
+      "api_base": ""
     }
   },
   "tools": {
