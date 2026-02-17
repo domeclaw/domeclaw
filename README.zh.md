@@ -556,6 +556,7 @@ Agent 读取 HEARTBEAT.md
 | `deepseek(待测试)` | LLM (DeepSeek 直连) | [platform.deepseek.com](https://platform.deepseek.com) |
 | `qwen` | LLM (通义千问) | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
 | `groq` | LLM + **语音转录** (Whisper) | [console.groq.com](https://console.groq.com) |
+| `cerebras` | LLM (Cerebras 直连) | [cerebras.ai](https://cerebras.ai) |
 
 <details>
 <summary><b>智谱 (Zhipu) 配置示例</b></summary>
@@ -743,3 +744,4 @@ Discord:  [https://discord.gg/V4sAZ9XWpN](https://discord.gg/V4sAZ9XWpN)
 | **智谱 (Zhipu)** | 200K tokens/月 | 最适合中国用户 |
 | **Brave Search** | 2000 次查询/月 | 网络搜索功能 |
 | **Groq** | 提供免费层级 | 极速推理 (Llama, Mixtral) |
+| **Cerebras** | 提供免费层级 | 极速推理 (Llama, Qwen 等) |

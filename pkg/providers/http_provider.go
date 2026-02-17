@@ -56,7 +56,7 @@ func (p *HTTPProvider) Chat(ctx context.Context, messages []Message, tools []Too
 	// Strip provider prefix from model name (e.g., moonshot/kimi-k2.5 -> kimi-k2.5, groq/openai/gpt-oss-120b -> openai/gpt-oss-120b, ollama/qwen2.5:14b -> qwen2.5:14b)
 	if idx := strings.Index(model, "/"); idx != -1 {
 		prefix := model[:idx]
-		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" || prefix == "qwen" {
+		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" || prefix == "qwen" || prefix == "cerebras" {
 			model = model[idx+1:]
 		}
 	}
@@ -313,6 +313,14 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				workspace = "."
 			}
 			return NewCodexCliProvider(workspace), nil
+		case "cerebras":
+			if cfg.Providers.Cerebras.APIKey != "" {
+				apiKey = cfg.Providers.Cerebras.APIKey
+				apiBase = cfg.Providers.Cerebras.APIBase
+				if apiBase == "" {
+					apiBase = "https://api.cerebras.ai/v1"
+				}
+			}
 		case "deepseek":
 			if cfg.Providers.DeepSeek.APIKey != "" {
 				apiKey = cfg.Providers.DeepSeek.APIKey
@@ -425,6 +433,14 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			if apiBase == "" {
 				apiBase = "https://integrate.api.nvidia.com/v1"
 			}
+		case (strings.Contains(lowerModel, "cerebras") || strings.HasPrefix(model, "cerebras/")) && cfg.Providers.Cerebras.APIKey != "":
+			apiKey = cfg.Providers.Cerebras.APIKey
+			apiBase = cfg.Providers.Cerebras.APIBase
+			proxy = cfg.Providers.Cerebras.Proxy
+			if apiBase == "" {
+				apiBase = "https://api.cerebras.ai/v1"
+			}
+
 		case (strings.Contains(lowerModel, "ollama") || strings.HasPrefix(model, "ollama/")) && cfg.Providers.Ollama.APIKey != "":
 			fmt.Println("Ollama provider selected based on model name prefix")
 			apiKey = cfg.Providers.Ollama.APIKey

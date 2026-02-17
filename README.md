@@ -679,6 +679,7 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 | `deepseek(To be tested)`   | LLM (DeepSeek direct)                   | [platform.deepseek.com](https://platform.deepseek.com) |
 | `qwen`                     | LLM (Qwen direct)                       | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
 | `groq`                     | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com)           |
+| `cerebras`                 | LLM (Cerebras direct)                   | [cerebras.ai](https://cerebras.ai)                     |
 
 <details>
 <summary><b>Zhipu</b></summary>
@@ -874,3 +875,4 @@ This happens when another instance of the bot is running. Make sure only one `pi
 | **Zhipu**        | 200K tokens/month   | Best for Chinese users                |
 | **Brave Search** | 2000 queries/month  | Web search functionality              |
 | **Groq**         | Free tier available | Fast inference (Llama, Mixtral)       |
+| **Cerebras**     | Free tier available | Fast inference (Llama, Qwen, etc.)    |
