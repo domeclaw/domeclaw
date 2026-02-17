@@ -534,6 +534,7 @@ Agent 读取 HEARTBEAT.md
 | `anthropic(待测试)` | LLM (Claude 直连) | [console.anthropic.com](https://console.anthropic.com) |
 | `openai(待测试)` | LLM (GPT 直连) | [platform.openai.com](https://platform.openai.com) |
 | `deepseek(待测试)` | LLM (DeepSeek 直连) | [platform.deepseek.com](https://platform.deepseek.com) |
+| `qwen` | LLM (通义千问) | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
 | `groq` | LLM + **语音转录** (Whisper) | [console.groq.com](https://console.groq.com) |
 
 <details>

@@ -19,6 +19,8 @@ var supportedProviders = map[string]bool{
 	"zhipu":      true,
 	"vllm":       true,
 	"gemini":     true,
+	"qwen":       true,
+	"deepseek":   true,
 }
 
 var supportedChannels = map[string]bool{
@@ -252,6 +254,15 @@ func MergeConfig(existing, incoming *config.Config) *config.Config {
 	}
 	if existing.Providers.Gemini.APIKey == "" {
 		existing.Providers.Gemini = incoming.Providers.Gemini
+	}
+	if existing.Providers.DeepSeek.APIKey == "" {
+		existing.Providers.DeepSeek = incoming.Providers.DeepSeek
+	}
+	if existing.Providers.GitHubCopilot.APIBase == "" {
+		existing.Providers.GitHubCopilot = incoming.Providers.GitHubCopilot
+	}
+	if existing.Providers.Qwen.APIKey == "" {
+		existing.Providers.Qwen = incoming.Providers.Qwen
 	}
 
 	if !existing.Channels.Telegram.Enabled && incoming.Channels.Telegram.Enabled {
