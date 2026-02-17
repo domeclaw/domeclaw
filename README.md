@@ -774,6 +774,9 @@ picoclaw agent -m "Hello"
         "enabled": true,
         "max_results": 5
       }
+    },
+    "cron": {
+      "exec_timeout_minutes": 5
     }
   },
   "heartbeat": {

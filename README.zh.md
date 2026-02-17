@@ -236,6 +236,9 @@ picoclaw onboard
         "api_key": "YOUR_BRAVE_API_KEY",
         "max_results": 5
       }
+    },
+    "cron": {
+      "exec_timeout_minutes": 5
     }
   }
 }
@@ -644,6 +647,9 @@ picoclaw agent -m "你好"
       "search": {
         "api_key": "BSA..."
       }
+    },
+    "cron": {
+      "exec_timeout_minutes": 5
     }
   },
   "heartbeat": {
