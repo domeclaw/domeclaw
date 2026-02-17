@@ -12,7 +12,7 @@
 <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
 
-**日本語** | [Tiếng Việt](README.vi.md) | [English](README.md)
+**日本語** | [中文](README.zh.md) | [Tiếng Việt](README.vi.md) | [English](README.md)
 
 </div>
 
