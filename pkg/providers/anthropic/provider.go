@@ -4,74 +4,59 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/sipeed/picoclaw/pkg/providers/protocoltypes"
 )
 
-type ToolCall struct {
-	ID        string                 `json:"id"`
-	Type      string                 `json:"type,omitempty"`
-	Function  *FunctionCall          `json:"function,omitempty"`
-	Name      string                 `json:"name,omitempty"`
-	Arguments map[string]interface{} `json:"arguments,omitempty"`
-}
+type ToolCall = protocoltypes.ToolCall
+type FunctionCall = protocoltypes.FunctionCall
+type LLMResponse = protocoltypes.LLMResponse
+type UsageInfo = protocoltypes.UsageInfo
+type Message = protocoltypes.Message
+type ToolDefinition = protocoltypes.ToolDefinition
+type ToolFunctionDefinition = protocoltypes.ToolFunctionDefinition
 
-type FunctionCall struct {
-	Name      string `json:"name"`
-	Arguments string `json:"arguments"`
-}
-
-type LLMResponse struct {
-	Content      string     `json:"content"`
-	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
-	FinishReason string     `json:"finish_reason"`
-	Usage        *UsageInfo `json:"usage,omitempty"`
-}
-
-type UsageInfo struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
-}
-
-type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string     `json:"tool_call_id,omitempty"`
-}
-
-type ToolDefinition struct {
-	Type     string                 `json:"type"`
-	Function ToolFunctionDefinition `json:"function"`
-}
-
-type ToolFunctionDefinition struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters"`
-}
+const defaultBaseURL = "https://api.anthropic.com"
 
 type Provider struct {
 	client      *anthropic.Client
 	tokenSource func() (string, error)
+	baseURL     string
 }
 
 func NewProvider(token string) *Provider {
+	return NewProviderWithBaseURL(token, "")
+}
+
+func NewProviderWithBaseURL(token, apiBase string) *Provider {
+	baseURL := normalizeBaseURL(apiBase)
 	client := anthropic.NewClient(
 		option.WithAuthToken(token),
-		option.WithBaseURL("https://api.anthropic.com"),
+		option.WithBaseURL(baseURL),
 	)
-	return &Provider{client: &client}
+	return &Provider{
+		client:  &client,
+		baseURL: baseURL,
+	}
 }
 
 func NewProviderWithClient(client *anthropic.Client) *Provider {
-	return &Provider{client: client}
+	return &Provider{
+		client:  client,
+		baseURL: defaultBaseURL,
+	}
 }
 
 func NewProviderWithTokenSource(token string, tokenSource func() (string, error)) *Provider {
-	p := NewProvider(token)
+	return NewProviderWithTokenSourceAndBaseURL(token, tokenSource, "")
+}
+
+func NewProviderWithTokenSourceAndBaseURL(token string, tokenSource func() (string, error), apiBase string) *Provider {
+	p := NewProviderWithBaseURL(token, apiBase)
 	p.tokenSource = tokenSource
 	return p
 }
@@ -101,6 +86,10 @@ func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDef
 
 func (p *Provider) GetDefaultModel() string {
 	return "claude-sonnet-4-5-20250929"
+}
+
+func (p *Provider) BaseURL() string {
+	return p.baseURL
 }
 
 func buildParams(messages []Message, tools []ToolDefinition, model string, options map[string]interface{}) (anthropic.MessageNewParams, error) {
@@ -208,6 +197,7 @@ func parseResponse(resp *anthropic.Message) *LLMResponse {
 			tu := block.AsToolUse()
 			var args map[string]interface{}
 			if err := json.Unmarshal(tu.Input, &args); err != nil {
+				log.Printf("anthropic: failed to decode tool call input for %q: %v", tu.Name, err)
 				args = map[string]interface{}{"raw": string(tu.Input)}
 			}
 			toolCalls = append(toolCalls, ToolCall{
@@ -238,4 +228,21 @@ func parseResponse(resp *anthropic.Message) *LLMResponse {
 			TotalTokens:      int(resp.Usage.InputTokens + resp.Usage.OutputTokens),
 		},
 	}
+}
+
+func normalizeBaseURL(apiBase string) string {
+	base := strings.TrimSpace(apiBase)
+	if base == "" {
+		return defaultBaseURL
+	}
+
+	base = strings.TrimRight(base, "/")
+	if strings.HasSuffix(base, "/v1") {
+		base = strings.TrimSuffix(base, "/v1")
+	}
+	if base == "" {
+		return defaultBaseURL
+	}
+
+	return base
 }

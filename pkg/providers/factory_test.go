@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sipeed/picoclaw/pkg/auth"
 	"github.com/sipeed/picoclaw/pkg/config"
 )
 
@@ -31,6 +32,40 @@ func TestResolveProviderSelection(t *testing.T) {
 			},
 			wantType:    providerTypeGitHubCopilot,
 			wantAPIBase: "localhost:4321",
+		},
+		{
+			name: "explicit deepseek provider uses deepseek defaults",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Provider = "deepseek"
+				cfg.Agents.Defaults.Model = "deepseek/deepseek-chat"
+				cfg.Providers.DeepSeek.APIKey = "deepseek-key"
+				cfg.Providers.DeepSeek.Proxy = "http://127.0.0.1:7890"
+			},
+			wantType:    providerTypeHTTPCompat,
+			wantAPIBase: "https://api.deepseek.com/v1",
+			wantProxy:   "http://127.0.0.1:7890",
+		},
+		{
+			name: "explicit shengsuanyun provider uses defaults",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Provider = "shengsuanyun"
+				cfg.Providers.ShengSuanYun.APIKey = "ssy-key"
+				cfg.Providers.ShengSuanYun.Proxy = "http://127.0.0.1:7890"
+			},
+			wantType:    providerTypeHTTPCompat,
+			wantAPIBase: "https://router.shengsuanyun.com/api/v1",
+			wantProxy:   "http://127.0.0.1:7890",
+		},
+		{
+			name: "explicit nvidia provider uses defaults",
+			setup: func(cfg *config.Config) {
+				cfg.Agents.Defaults.Provider = "nvidia"
+				cfg.Providers.Nvidia.APIKey = "nvapi-test"
+				cfg.Providers.Nvidia.Proxy = "http://127.0.0.1:7890"
+			},
+			wantType:    providerTypeHTTPCompat,
+			wantAPIBase: "https://integrate.api.nvidia.com/v1",
+			wantProxy:   "http://127.0.0.1:7890",
 		},
 		{
 			name: "openrouter model uses openrouter defaults",
@@ -192,6 +227,66 @@ func TestCreateProviderReturnsCodexProviderForCodexCliAuthMethod(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Agents.Defaults.Provider = "openai"
 	cfg.Providers.OpenAI.AuthMethod = "codex-cli"
+
+	provider, err := CreateProvider(cfg)
+	if err != nil {
+		t.Fatalf("CreateProvider() error = %v", err)
+	}
+
+	if _, ok := provider.(*CodexProvider); !ok {
+		t.Fatalf("provider type = %T, want *CodexProvider", provider)
+	}
+}
+
+func TestCreateProviderReturnsClaudeProviderForAnthropicOAuth(t *testing.T) {
+	originalGetCredential := getCredential
+	t.Cleanup(func() { getCredential = originalGetCredential })
+
+	getCredential = func(provider string) (*auth.AuthCredential, error) {
+		if provider != "anthropic" {
+			t.Fatalf("provider = %q, want anthropic", provider)
+		}
+		return &auth.AuthCredential{
+			AccessToken: "anthropic-token",
+		}, nil
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.Agents.Defaults.Provider = "anthropic"
+	cfg.Providers.Anthropic.AuthMethod = "oauth"
+	cfg.Providers.Anthropic.APIBase = "https://proxy.example.com/v1"
+
+	provider, err := CreateProvider(cfg)
+	if err != nil {
+		t.Fatalf("CreateProvider() error = %v", err)
+	}
+
+	claudeProvider, ok := provider.(*ClaudeProvider)
+	if !ok {
+		t.Fatalf("provider type = %T, want *ClaudeProvider", provider)
+	}
+	if got := claudeProvider.delegate.BaseURL(); got != "https://proxy.example.com" {
+		t.Fatalf("anthropic baseURL = %q, want %q", got, "https://proxy.example.com")
+	}
+}
+
+func TestCreateProviderReturnsCodexProviderForOpenAIOAuth(t *testing.T) {
+	originalGetCredential := getCredential
+	t.Cleanup(func() { getCredential = originalGetCredential })
+
+	getCredential = func(provider string) (*auth.AuthCredential, error) {
+		if provider != "openai" {
+			t.Fatalf("provider = %q, want openai", provider)
+		}
+		return &auth.AuthCredential{
+			AccessToken: "openai-token",
+			AccountID:   "acct_123",
+		}, nil
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.Agents.Defaults.Provider = "openai"
+	cfg.Providers.OpenAI.AuthMethod = "oauth"
 
 	provider, err := CreateProvider(cfg)
 	if err != nil {

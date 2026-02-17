@@ -8,6 +8,10 @@ import (
 	"github.com/sipeed/picoclaw/pkg/config"
 )
 
+const defaultAnthropicAPIBase = "https://api.anthropic.com/v1"
+
+var getCredential = auth.GetCredential
+
 type providerType int
 
 const (
@@ -30,19 +34,22 @@ type providerSelection struct {
 	connectMode  string
 }
 
-func createClaudeAuthProvider() (LLMProvider, error) {
-	cred, err := auth.GetCredential("anthropic")
+func createClaudeAuthProvider(apiBase string) (LLMProvider, error) {
+	if apiBase == "" {
+		apiBase = defaultAnthropicAPIBase
+	}
+	cred, err := getCredential("anthropic")
 	if err != nil {
 		return nil, fmt.Errorf("loading auth credentials: %w", err)
 	}
 	if cred == nil {
 		return nil, fmt.Errorf("no credentials for anthropic. Run: picoclaw auth login --provider anthropic")
 	}
-	return NewClaudeProviderWithTokenSource(cred.AccessToken, createClaudeTokenSource()), nil
+	return NewClaudeProviderWithTokenSourceAndBaseURL(cred.AccessToken, createClaudeTokenSource(), apiBase), nil
 }
 
 func createCodexAuthProvider() (LLMProvider, error) {
-	cred, err := auth.GetCredential("openai")
+	cred, err := getCredential("openai")
 	if err != nil {
 		return nil, fmt.Errorf("loading auth credentials: %w", err)
 	}
@@ -69,6 +76,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			if cfg.Providers.Groq.APIKey != "" {
 				sel.apiKey = cfg.Providers.Groq.APIKey
 				sel.apiBase = cfg.Providers.Groq.APIBase
+				sel.proxy = cfg.Providers.Groq.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://api.groq.com/openai/v1"
 				}
@@ -85,6 +93,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 				}
 				sel.apiKey = cfg.Providers.OpenAI.APIKey
 				sel.apiBase = cfg.Providers.OpenAI.APIBase
+				sel.proxy = cfg.Providers.OpenAI.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://api.openai.com/v1"
 				}
@@ -92,18 +101,24 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 		case "anthropic", "claude":
 			if cfg.Providers.Anthropic.APIKey != "" || cfg.Providers.Anthropic.AuthMethod != "" {
 				if cfg.Providers.Anthropic.AuthMethod == "oauth" || cfg.Providers.Anthropic.AuthMethod == "token" {
+					sel.apiBase = cfg.Providers.Anthropic.APIBase
+					if sel.apiBase == "" {
+						sel.apiBase = defaultAnthropicAPIBase
+					}
 					sel.providerType = providerTypeClaudeAuth
 					return sel, nil
 				}
 				sel.apiKey = cfg.Providers.Anthropic.APIKey
 				sel.apiBase = cfg.Providers.Anthropic.APIBase
+				sel.proxy = cfg.Providers.Anthropic.Proxy
 				if sel.apiBase == "" {
-					sel.apiBase = "https://api.anthropic.com/v1"
+					sel.apiBase = defaultAnthropicAPIBase
 				}
 			}
 		case "openrouter":
 			if cfg.Providers.OpenRouter.APIKey != "" {
 				sel.apiKey = cfg.Providers.OpenRouter.APIKey
+				sel.proxy = cfg.Providers.OpenRouter.Proxy
 				if cfg.Providers.OpenRouter.APIBase != "" {
 					sel.apiBase = cfg.Providers.OpenRouter.APIBase
 				} else {
@@ -114,6 +129,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			if cfg.Providers.Zhipu.APIKey != "" {
 				sel.apiKey = cfg.Providers.Zhipu.APIKey
 				sel.apiBase = cfg.Providers.Zhipu.APIBase
+				sel.proxy = cfg.Providers.Zhipu.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://open.bigmodel.cn/api/paas/v4"
 				}
@@ -122,6 +138,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			if cfg.Providers.Gemini.APIKey != "" {
 				sel.apiKey = cfg.Providers.Gemini.APIKey
 				sel.apiBase = cfg.Providers.Gemini.APIBase
+				sel.proxy = cfg.Providers.Gemini.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://generativelanguage.googleapis.com/v1beta"
 				}
@@ -130,13 +147,24 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			if cfg.Providers.VLLM.APIBase != "" {
 				sel.apiKey = cfg.Providers.VLLM.APIKey
 				sel.apiBase = cfg.Providers.VLLM.APIBase
+				sel.proxy = cfg.Providers.VLLM.Proxy
 			}
 		case "shengsuanyun":
 			if cfg.Providers.ShengSuanYun.APIKey != "" {
 				sel.apiKey = cfg.Providers.ShengSuanYun.APIKey
 				sel.apiBase = cfg.Providers.ShengSuanYun.APIBase
+				sel.proxy = cfg.Providers.ShengSuanYun.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://router.shengsuanyun.com/api/v1"
+				}
+			}
+		case "nvidia":
+			if cfg.Providers.Nvidia.APIKey != "" {
+				sel.apiKey = cfg.Providers.Nvidia.APIKey
+				sel.apiBase = cfg.Providers.Nvidia.APIBase
+				sel.proxy = cfg.Providers.Nvidia.Proxy
+				if sel.apiBase == "" {
+					sel.apiBase = "https://integrate.api.nvidia.com/v1"
 				}
 			}
 		case "claude-cli", "claude-code", "claudecode":
@@ -159,6 +187,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			if cfg.Providers.DeepSeek.APIKey != "" {
 				sel.apiKey = cfg.Providers.DeepSeek.APIKey
 				sel.apiBase = cfg.Providers.DeepSeek.APIBase
+				sel.proxy = cfg.Providers.DeepSeek.Proxy
 				if sel.apiBase == "" {
 					sel.apiBase = "https://api.deepseek.com/v1"
 				}
@@ -204,6 +233,10 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 		case (strings.Contains(lowerModel, "claude") || strings.HasPrefix(model, "anthropic/")) &&
 			(cfg.Providers.Anthropic.APIKey != "" || cfg.Providers.Anthropic.AuthMethod != ""):
 			if cfg.Providers.Anthropic.AuthMethod == "oauth" || cfg.Providers.Anthropic.AuthMethod == "token" {
+				sel.apiBase = cfg.Providers.Anthropic.APIBase
+				if sel.apiBase == "" {
+					sel.apiBase = defaultAnthropicAPIBase
+				}
 				sel.providerType = providerTypeClaudeAuth
 				return sel, nil
 			}
@@ -211,7 +244,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			sel.apiBase = cfg.Providers.Anthropic.APIBase
 			sel.proxy = cfg.Providers.Anthropic.Proxy
 			if sel.apiBase == "" {
-				sel.apiBase = "https://api.anthropic.com/v1"
+				sel.apiBase = defaultAnthropicAPIBase
 			}
 		case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) &&
 			(cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != ""):
@@ -303,7 +336,7 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 
 	switch sel.providerType {
 	case providerTypeClaudeAuth:
-		return createClaudeAuthProvider()
+		return createClaudeAuthProvider(sel.apiBase)
 	case providerTypeCodexAuth:
 		return createCodexAuthProvider()
 	case providerTypeCodexCLIToken:

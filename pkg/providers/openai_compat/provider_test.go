@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestProviderChat_UsesMaxCompletionTokensForGLM(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := NewProvider("key", server.URL)
+	p := NewProvider("key", server.URL, "")
 	_, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hi"}}, nil, "glm-4.7", map[string]interface{}{"max_tokens": 1234})
 	if err != nil {
 		t.Fatalf("Chat() error = %v", err)
@@ -78,7 +79,7 @@ func TestProviderChat_ParsesToolCalls(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := NewProvider("key", server.URL)
+	p := NewProvider("key", server.URL, "")
 	out, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hi"}}, nil, "gpt-4o", nil)
 	if err != nil {
 		t.Fatalf("Chat() error = %v", err)
@@ -100,7 +101,7 @@ func TestProviderChat_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := NewProvider("key", server.URL)
+	p := NewProvider("key", server.URL, "")
 	_, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hi"}}, nil, "gpt-4o", nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -128,7 +129,7 @@ func TestProviderChat_StripsMoonshotPrefixAndNormalizesKimiTemperature(t *testin
 	}))
 	defer server.Close()
 
-	p := NewProvider("key", server.URL)
+	p := NewProvider("key", server.URL, "")
 	_, err := p.Chat(
 		t.Context(),
 		[]Message{{Role: "user", Content: "hi"}},
@@ -164,6 +165,11 @@ func TestProviderChat_StripsGroqAndOllamaPrefixes(t *testing.T) {
 			input:     "ollama/qwen2.5:14b",
 			wantModel: "qwen2.5:14b",
 		},
+		{
+			name:      "strips deepseek prefix",
+			input:     "deepseek/deepseek-chat",
+			wantModel: "deepseek-chat",
+		},
 	}
 
 	for _, tt := range tests {
@@ -188,7 +194,7 @@ func TestProviderChat_StripsGroqAndOllamaPrefixes(t *testing.T) {
 			}))
 			defer server.Close()
 
-			p := NewProvider("key", server.URL)
+			p := NewProvider("key", server.URL, "")
 			_, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hi"}}, nil, tt.input, nil)
 			if err != nil {
 				t.Fatalf("Chat() error = %v", err)
@@ -198,5 +204,74 @@ func TestProviderChat_StripsGroqAndOllamaPrefixes(t *testing.T) {
 				t.Fatalf("model = %v, want %s", requestBody["model"], tt.wantModel)
 			}
 		})
+	}
+}
+
+func TestProvider_ProxyConfigured(t *testing.T) {
+	proxyURL := "http://127.0.0.1:8080"
+	p := NewProvider("key", "https://example.com", proxyURL)
+
+	transport, ok := p.httpClient.Transport.(*http.Transport)
+	if !ok || transport == nil {
+		t.Fatalf("expected http transport with proxy, got %T", p.httpClient.Transport)
+	}
+
+	req := &http.Request{URL: &url.URL{Scheme: "https", Host: "api.example.com"}}
+	gotProxy, err := transport.Proxy(req)
+	if err != nil {
+		t.Fatalf("proxy function returned error: %v", err)
+	}
+	if gotProxy == nil || gotProxy.String() != proxyURL {
+		t.Fatalf("proxy = %v, want %s", gotProxy, proxyURL)
+	}
+}
+
+func TestProviderChat_AcceptsNumericOptionTypes(t *testing.T) {
+	var requestBody map[string]interface{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		resp := map[string]interface{}{
+			"choices": []map[string]interface{}{
+				{
+					"message":       map[string]interface{}{"content": "ok"},
+					"finish_reason": "stop",
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	p := NewProvider("key", server.URL, "")
+	_, err := p.Chat(
+		t.Context(),
+		[]Message{{Role: "user", Content: "hi"}},
+		nil,
+		"gpt-4o",
+		map[string]interface{}{"max_tokens": float64(512), "temperature": 1},
+	)
+	if err != nil {
+		t.Fatalf("Chat() error = %v", err)
+	}
+
+	if requestBody["max_tokens"] != float64(512) {
+		t.Fatalf("max_tokens = %v, want 512", requestBody["max_tokens"])
+	}
+	if requestBody["temperature"] != float64(1) {
+		t.Fatalf("temperature = %v, want 1", requestBody["temperature"])
+	}
+}
+
+func TestNormalizeModel_UsesAPIBase(t *testing.T) {
+	if got := normalizeModel("deepseek/deepseek-chat", "https://api.deepseek.com/v1"); got != "deepseek-chat" {
+		t.Fatalf("normalizeModel(deepseek) = %q, want %q", got, "deepseek-chat")
+	}
+	if got := normalizeModel("openrouter/auto", "https://openrouter.ai/api/v1"); got != "openrouter/auto" {
+		t.Fatalf("normalizeModel(openrouter) = %q, want %q", got, "openrouter/auto")
 	}
 }

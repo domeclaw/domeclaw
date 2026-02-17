@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -196,6 +197,62 @@ func TestProvider_GetDefaultModel(t *testing.T) {
 	p := NewProvider("test-token")
 	if got := p.GetDefaultModel(); got != "claude-sonnet-4-5-20250929" {
 		t.Errorf("GetDefaultModel() = %q, want %q", got, "claude-sonnet-4-5-20250929")
+	}
+}
+
+func TestProvider_NewProviderWithBaseURL_NormalizesV1Suffix(t *testing.T) {
+	p := NewProviderWithBaseURL("token", "https://api.anthropic.com/v1/")
+	if got := p.BaseURL(); got != "https://api.anthropic.com" {
+		t.Fatalf("BaseURL() = %q, want %q", got, "https://api.anthropic.com")
+	}
+}
+
+func TestProvider_ChatUsesTokenSource(t *testing.T) {
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/messages" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		atomic.AddInt32(&requests, 1)
+
+		if got := r.Header.Get("Authorization"); got != "Bearer refreshed-token" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		var reqBody map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&reqBody)
+
+		resp := map[string]interface{}{
+			"id":          "msg_test",
+			"type":        "message",
+			"role":        "assistant",
+			"model":       reqBody["model"],
+			"stop_reason": "end_turn",
+			"content": []map[string]interface{}{
+				{"type": "text", "text": "ok"},
+			},
+			"usage": map[string]interface{}{
+				"input_tokens":  1,
+				"output_tokens": 1,
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	p := NewProviderWithTokenSourceAndBaseURL("stale-token", func() (string, error) {
+		return "refreshed-token", nil
+	}, server.URL)
+
+	_, err := p.Chat(t.Context(), []Message{{Role: "user", Content: "hello"}}, nil, "claude-sonnet-4-5-20250929", map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("Chat() error: %v", err)
+	}
+	if got := atomic.LoadInt32(&requests); got != 1 {
+		t.Fatalf("requests = %d, want 1", got)
 	}
 }
 

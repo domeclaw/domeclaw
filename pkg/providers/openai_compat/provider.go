@@ -6,55 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/sipeed/picoclaw/pkg/providers/protocoltypes"
 )
 
-type ToolCall struct {
-	ID        string                 `json:"id"`
-	Type      string                 `json:"type,omitempty"`
-	Function  *FunctionCall          `json:"function,omitempty"`
-	Name      string                 `json:"name,omitempty"`
-	Arguments map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type FunctionCall struct {
-	Name      string `json:"name"`
-	Arguments string `json:"arguments"`
-}
-
-type LLMResponse struct {
-	Content      string     `json:"content"`
-	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
-	FinishReason string     `json:"finish_reason"`
-	Usage        *UsageInfo `json:"usage,omitempty"`
-}
-
-type UsageInfo struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
-}
-
-type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string     `json:"tool_call_id,omitempty"`
-}
-
-type ToolDefinition struct {
-	Type     string                 `json:"type"`
-	Function ToolFunctionDefinition `json:"function"`
-}
-
-type ToolFunctionDefinition struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Parameters  map[string]interface{} `json:"parameters"`
-}
+type ToolCall = protocoltypes.ToolCall
+type FunctionCall = protocoltypes.FunctionCall
+type LLMResponse = protocoltypes.LLMResponse
+type UsageInfo = protocoltypes.UsageInfo
+type Message = protocoltypes.Message
+type ToolDefinition = protocoltypes.ToolDefinition
+type ToolFunctionDefinition = protocoltypes.ToolFunctionDefinition
 
 type Provider struct {
 	apiKey     string
@@ -62,21 +29,19 @@ type Provider struct {
 	httpClient *http.Client
 }
 
-func NewProvider(apiKey, apiBase string, proxy ...string) *Provider {
-	proxyURL := ""
-	if len(proxy) > 0 {
-		proxyURL = proxy[0]
-	}
+func NewProvider(apiKey, apiBase, proxy string) *Provider {
 	client := &http.Client{
 		Timeout: 120 * time.Second,
 	}
 
-	if proxyURL != "" {
-		parsed, err := url.Parse(proxyURL)
+	if proxy != "" {
+		parsed, err := url.Parse(proxy)
 		if err == nil {
 			client.Transport = &http.Transport{
 				Proxy: http.ProxyURL(parsed),
 			}
+		} else {
+			log.Printf("openai_compat: invalid proxy URL %q: %v", proxy, err)
 		}
 	}
 
@@ -92,13 +57,7 @@ func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDef
 		return nil, fmt.Errorf("API base not configured")
 	}
 
-	// Strip provider prefix for OpenAI-compatible backends.
-	if idx := strings.Index(model, "/"); idx != -1 {
-		prefix := model[:idx]
-		if prefix == "moonshot" || prefix == "nvidia" || prefix == "groq" || prefix == "ollama" {
-			model = model[idx+1:]
-		}
-	}
+	model = normalizeModel(model, p.apiBase)
 
 	requestBody := map[string]interface{}{
 		"model":    model,
@@ -110,7 +69,7 @@ func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDef
 		requestBody["tool_choice"] = "auto"
 	}
 
-	if maxTokens, ok := options["max_tokens"].(int); ok {
+	if maxTokens, ok := asInt(options["max_tokens"]); ok {
 		lowerModel := strings.ToLower(model)
 		if strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "o1") {
 			requestBody["max_completion_tokens"] = maxTokens
@@ -119,7 +78,7 @@ func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDef
 		}
 	}
 
-	if temperature, ok := options["temperature"].(float64); ok {
+	if temperature, ok := asFloat(options["temperature"]); ok {
 		lowerModel := strings.ToLower(model)
 		// Kimi k2 models only support temperature=1.
 		if strings.Contains(lowerModel, "kimi") && strings.Contains(lowerModel, "k2") {
@@ -198,17 +157,11 @@ func parseResponse(body []byte) (*LLMResponse, error) {
 		arguments := make(map[string]interface{})
 		name := ""
 
-		if tc.Type == "function" && tc.Function != nil {
+		if tc.Function != nil {
 			name = tc.Function.Name
 			if tc.Function.Arguments != "" {
 				if err := json.Unmarshal([]byte(tc.Function.Arguments), &arguments); err != nil {
-					arguments["raw"] = tc.Function.Arguments
-				}
-			}
-		} else if tc.Function != nil {
-			name = tc.Function.Name
-			if tc.Function.Arguments != "" {
-				if err := json.Unmarshal([]byte(tc.Function.Arguments), &arguments); err != nil {
+					log.Printf("openai_compat: failed to decode tool call arguments for %q: %v", name, err)
 					arguments["raw"] = tc.Function.Arguments
 				}
 			}
@@ -227,4 +180,53 @@ func parseResponse(body []byte) (*LLMResponse, error) {
 		FinishReason: choice.FinishReason,
 		Usage:        apiResponse.Usage,
 	}, nil
+}
+
+func normalizeModel(model, apiBase string) string {
+	idx := strings.Index(model, "/")
+	if idx == -1 {
+		return model
+	}
+
+	if strings.Contains(strings.ToLower(apiBase), "openrouter.ai") {
+		return model
+	}
+
+	prefix := strings.ToLower(model[:idx])
+	switch prefix {
+	case "moonshot", "nvidia", "groq", "ollama", "deepseek", "google", "openrouter", "zhipu":
+		return model[idx+1:]
+	default:
+		return model
+	}
+}
+
+func asInt(v interface{}) (int, bool) {
+	switch val := v.(type) {
+	case int:
+		return val, true
+	case int64:
+		return int(val), true
+	case float64:
+		return int(val), true
+	case float32:
+		return int(val), true
+	default:
+		return 0, false
+	}
+}
+
+func asFloat(v interface{}) (float64, bool) {
+	switch val := v.(type) {
+	case float64:
+		return val, true
+	case float32:
+		return float64(val), true
+	case int:
+		return float64(val), true
+	case int64:
+		return float64(val), true
+	default:
+		return 0, false
+	}
 }
