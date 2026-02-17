@@ -11,6 +11,8 @@ builds:
   - id: picoclaw
     env:
       - CGO_ENABLED=0
+    tags:
+      - stdjson
     goos:
       - linux
       - windows
