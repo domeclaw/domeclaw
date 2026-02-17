@@ -179,6 +179,7 @@ type ProvidersConfig struct {
 	Moonshot      ProviderConfig `json:"moonshot"`
 	ShengSuanYun  ProviderConfig `json:"shengsuanyun"`
 	DeepSeek      ProviderConfig `json:"deepseek"`
+	VolcEngine    ProviderConfig `json:"volcengine"`
 	GitHubCopilot ProviderConfig `json:"github_copilot"`
 }
 
@@ -317,6 +318,7 @@ func DefaultConfig() *Config {
 			Nvidia:       ProviderConfig{},
 			Moonshot:     ProviderConfig{},
 			ShengSuanYun: ProviderConfig{},
+			VolcEngine:   ProviderConfig{},
 		},
 		Gateway: GatewayConfig{
 			Host: "0.0.0.0",

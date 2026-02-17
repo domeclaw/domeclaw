@@ -332,6 +332,15 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 			}
 			return NewGitHubCopilotProvider(apiBase, cfg.Providers.GitHubCopilot.ConnectMode, model)
 
+		case "volcengine", "doubao":
+			if cfg.Providers.VolcEngine.APIKey != "" {
+				apiKey = cfg.Providers.VolcEngine.APIKey
+				apiBase = cfg.Providers.VolcEngine.APIBase
+				if apiBase == "" {
+					apiBase = "https://ark.cn-beijing.volces.com/api/v3"
+				}
+			}
+
 		}
 
 	}
@@ -418,6 +427,15 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 				apiBase = "http://localhost:11434/v1"
 			}
 			fmt.Println("Ollama apiBase:", apiBase)
+
+		case (strings.Contains(lowerModel, "doubao") || strings.HasPrefix(model, "doubao") || strings.Contains(lowerModel, "volcengine")) && cfg.Providers.VolcEngine.APIKey != "":
+			apiKey = cfg.Providers.VolcEngine.APIKey
+			apiBase = cfg.Providers.VolcEngine.APIBase
+			proxy = cfg.Providers.VolcEngine.Proxy
+			if apiBase == "" {
+				apiBase = "https://ark.cn-beijing.volces.com/api/v3"
+			}
+
 		case cfg.Providers.VLLM.APIBase != "":
 			apiKey = cfg.Providers.VLLM.APIKey
 			apiBase = cfg.Providers.VLLM.APIBase
