@@ -111,7 +111,7 @@ chmod +x picoclaw-linux-arm64
 pkg install proot
 termux-chroot ./picoclaw-linux-arm64 onboard
 ```
-然后跟随下面的“快速开始”章节继续配置picoclaw即可使用！
+然后跟随下面的“快速开始”章节继续配置picoclaw即可使用！   
 <img src="assets/termux.jpg" alt="PicoClaw" width="512">
 
 
