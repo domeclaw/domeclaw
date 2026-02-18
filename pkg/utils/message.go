@@ -48,13 +48,48 @@ func SplitMessage(content string, maxLen int) []string {
 					// Extend to include the closing ```
 					msgEnd = closingIdx
 				} else {
-					// Can't find closing within maxLen, split before the code block
-					msgEnd = FindLastNewline(content[:unclosedIdx], 200)
-					if msgEnd <= 0 {
-						msgEnd = FindLastSpace(content[:unclosedIdx], 100)
+					// Code block is too long to fit in one chunk or missing closing fence.
+					// Try to split inside by injecting closing and reopening fences.
+					headerEnd := strings.Index(content[unclosedIdx:], "\n")
+					if headerEnd == -1 {
+						headerEnd = unclosedIdx + 3
+					} else {
+						headerEnd += unclosedIdx
 					}
-					if msgEnd <= 0 {
-						msgEnd = unclosedIdx
+					header := strings.TrimSpace(content[unclosedIdx:headerEnd])
+
+					// If we have a reasonable amount of content after the header, split inside
+					if msgEnd > headerEnd+20 {
+						// Find a better split point closer to maxLen
+						innerLimit := maxLen - 5 // Leave room for "\n```"
+						betterEnd := FindLastNewline(content[:innerLimit], 200)
+						if betterEnd > headerEnd {
+							msgEnd = betterEnd
+						} else {
+							msgEnd = innerLimit
+						}
+						messages = append(messages, strings.TrimRight(content[:msgEnd], " \t\n\r")+"\n```")
+						content = strings.TrimSpace(header + "\n" + content[msgEnd:])
+						continue
+					}
+
+					// Otherwise, try to split before the code block starts
+					newEnd := FindLastNewline(content[:unclosedIdx], 200)
+					if newEnd <= 0 {
+						newEnd = FindLastSpace(content[:unclosedIdx], 100)
+					}
+					if newEnd > 0 {
+						msgEnd = newEnd
+					} else {
+						// If we can't split before, we MUST split inside (last resort)
+						if unclosedIdx > 20 {
+							msgEnd = unclosedIdx
+						} else {
+							msgEnd = maxLen - 5
+							messages = append(messages, strings.TrimRight(content[:msgEnd], " \t\n\r")+"\n```")
+							content = strings.TrimSpace(header + "\n" + content[msgEnd:])
+							continue
+						}
 					}
 				}
 			}
