@@ -290,10 +290,15 @@ func (sl *SkillsLoader) getSkillMetadata(skillPath string) *SkillMetadata {
 
 // parseSimpleYAML parses simple key: value YAML format
 // Example: name: github\n description: "..."
+// Normalizes line endings to handle \n (Unix), \r\n (Windows), and \r (classic Mac)
 func (sl *SkillsLoader) parseSimpleYAML(content string) map[string]string {
 	result := make(map[string]string)
 
-	for _, line := range strings.Split(content, "\n") {
+	// Normalize line endings: convert \r\n and \r to \n
+	normalized := strings.ReplaceAll(content, "\r\n", "\n")
+	normalized = strings.ReplaceAll(normalized, "\r", "\n")
+
+	for _, line := range strings.Split(normalized, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -325,7 +330,11 @@ func (sl *SkillsLoader) extractFrontmatter(content string) string {
 }
 
 func (sl *SkillsLoader) stripFrontmatter(content string) string {
-	re := regexp.MustCompile(`^---\n.*?\n---\n`)
+	// Support \n (Unix), \r\n (Windows), and \r (classic Mac) line endings for frontmatter blocks
+	// (?s) enables DOTALL so . matches newlines;
+	// ^--- at start, then ... --- at start of line, honoring all three line ending types
+	// Match zero or more trailing line endings after closing --- (handles both with and without blank lines)
+	re := regexp.MustCompile(`(?s)^---(?:\r\n|\n|\r)(.*?)(?:\r\n|\n|\r)---(?:\r\n|\n|\r)*`)
 	return re.ReplaceAllString(content, "")
 }
 
