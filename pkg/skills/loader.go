@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/sipeed/picoclaw/pkg/logger"
 )
 
 var namePattern = regexp.MustCompile(`^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$`)
@@ -251,6 +253,11 @@ func (sl *SkillsLoader) BuildSkillsSummary() string {
 func (sl *SkillsLoader) getSkillMetadata(skillPath string) *SkillMetadata {
 	content, err := os.ReadFile(skillPath)
 	if err != nil {
+		logger.WarnCF("skills", "Failed to read skill metadata",
+			map[string]interface{}{
+				"skill_path": skillPath,
+				"error":      err.Error(),
+			})
 		return nil
 	}
 
@@ -306,9 +313,9 @@ func (sl *SkillsLoader) parseSimpleYAML(content string) map[string]string {
 }
 
 func (sl *SkillsLoader) extractFrontmatter(content string) string {
-	// (?s) enables DOTALL mode so . matches newlines
-	// Match first ---, capture everything until next --- on its own line
-	re := regexp.MustCompile(`(?s)^---\n(.*)\n---`)
+	// Support both Unix (\n) and Windows (\r\n) line endings for frontmatter blocks
+	// (?s) enables DOTALL so . matches newlines; ^--- at start, then ... --- at start of line
+	re := regexp.MustCompile(`(?s)^---\r?\n(.*?)\r?\n---`)
 	match := re.FindStringSubmatch(content)
 	if len(match) > 1 {
 		return match[1]
