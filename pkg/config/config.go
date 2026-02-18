@@ -167,19 +167,19 @@ type DevicesConfig struct {
 }
 
 type ProvidersConfig struct {
-	Anthropic     ProviderConfig `json:"anthropic"`
-	OpenAI        ProviderConfig `json:"openai"`
-	OpenRouter    ProviderConfig `json:"openrouter"`
-	Groq          ProviderConfig `json:"groq"`
-	Zhipu         ProviderConfig `json:"zhipu"`
-	VLLM          ProviderConfig `json:"vllm"`
-	Gemini        ProviderConfig `json:"gemini"`
-	Nvidia        ProviderConfig `json:"nvidia"`
-	Ollama        ProviderConfig `json:"ollama"`
-	Moonshot      ProviderConfig `json:"moonshot"`
-	ShengSuanYun  ProviderConfig `json:"shengsuanyun"`
-	DeepSeek      ProviderConfig `json:"deepseek"`
-	GitHubCopilot ProviderConfig `json:"github_copilot"`
+	Anthropic     ProviderConfig       `json:"anthropic"`
+	OpenAI        OpenAIProviderConfig `json:"openai"`
+	OpenRouter    ProviderConfig       `json:"openrouter"`
+	Groq          ProviderConfig       `json:"groq"`
+	Zhipu         ProviderConfig       `json:"zhipu"`
+	VLLM          ProviderConfig       `json:"vllm"`
+	Gemini        ProviderConfig       `json:"gemini"`
+	Nvidia        ProviderConfig       `json:"nvidia"`
+	Ollama        ProviderConfig       `json:"ollama"`
+	Moonshot      ProviderConfig       `json:"moonshot"`
+	ShengSuanYun  ProviderConfig       `json:"shengsuanyun"`
+	DeepSeek      ProviderConfig       `json:"deepseek"`
+	GitHubCopilot ProviderConfig       `json:"github_copilot"`
 }
 
 type ProviderConfig struct {
@@ -188,6 +188,11 @@ type ProviderConfig struct {
 	Proxy       string `json:"proxy,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_PROXY"`
 	AuthMethod  string `json:"auth_method,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_AUTH_METHOD"`
 	ConnectMode string `json:"connect_mode,omitempty" env:"PICOCLAW_PROVIDERS_{{.Name}}_CONNECT_MODE"` //only for Github Copilot, `stdio` or `grpc`
+}
+
+type OpenAIProviderConfig struct {
+	ProviderConfig
+	WebSearch bool `json:"web_search" env:"PICOCLAW_PROVIDERS_OPENAI_WEB_SEARCH"`
 }
 
 type GatewayConfig struct {
@@ -308,7 +313,7 @@ func DefaultConfig() *Config {
 		},
 		Providers: ProvidersConfig{
 			Anthropic:    ProviderConfig{},
-			OpenAI:       ProviderConfig{},
+			OpenAI:       OpenAIProviderConfig{WebSearch: true},
 			OpenRouter:   ProviderConfig{},
 			Groq:         ProviderConfig{},
 			Zhipu:        ProviderConfig{},
