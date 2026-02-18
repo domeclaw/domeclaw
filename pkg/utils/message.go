@@ -9,6 +9,8 @@ import (
 // but may extend to maxLen when needed.
 // Call SplitMessage with the full text content and the maximum allowed length of a single message;
 // it returns a slice of message chunks that each respect maxLen and avoid splitting fenced code blocks.
+// Call SplitMessage with the full text content and the maximum allowed length of a single message;
+// it returns a slice of message chunks that each respect maxLen and avoid splitting fenced code blocks.
 func SplitMessage(content string, maxLen int) []string {
 	var messages []string
 
