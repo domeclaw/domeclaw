@@ -313,9 +313,10 @@ func (sl *SkillsLoader) parseSimpleYAML(content string) map[string]string {
 }
 
 func (sl *SkillsLoader) extractFrontmatter(content string) string {
-	// Support both Unix (\n) and Windows (\r\n) line endings for frontmatter blocks
-	// (?s) enables DOTALL so . matches newlines; ^--- at start, then ... --- at start of line
-	re := regexp.MustCompile(`(?s)^---\r?\n(.*?)\r?\n---`)
+	// Support \n (Unix), \r\n (Windows), and \r (classic Mac) line endings for frontmatter blocks
+	// (?s) enables DOTALL so . matches newlines;
+	// ^--- at start, then ... --- at start of line, honoring all three line ending types
+	re := regexp.MustCompile(`(?s)^---(?:\r\n|\n|\r)(.*?)(?:\r\n|\n|\r)---`)
 	match := re.FindStringSubmatch(content)
 	if len(match) > 1 {
 		return match[1]
