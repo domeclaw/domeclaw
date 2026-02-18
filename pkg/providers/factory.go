@@ -25,13 +25,14 @@ const (
 )
 
 type providerSelection struct {
-	providerType providerType
-	apiKey       string
-	apiBase      string
-	proxy        string
-	model        string
-	workspace    string
-	connectMode  string
+	providerType    providerType
+	apiKey          string
+	apiBase         string
+	proxy           string
+	model           string
+	workspace       string
+	connectMode     string
+	enableWebSearch bool
 }
 
 func createClaudeAuthProvider(apiBase string) (LLMProvider, error) {
@@ -48,7 +49,7 @@ func createClaudeAuthProvider(apiBase string) (LLMProvider, error) {
 	return NewClaudeProviderWithTokenSourceAndBaseURL(cred.AccessToken, createClaudeTokenSource(), apiBase), nil
 }
 
-func createCodexAuthProvider() (LLMProvider, error) {
+func createCodexAuthProvider(enableWebSearch bool) (LLMProvider, error) {
 	cred, err := getCredential("openai")
 	if err != nil {
 		return nil, fmt.Errorf("loading auth credentials: %w", err)
@@ -56,7 +57,9 @@ func createCodexAuthProvider() (LLMProvider, error) {
 	if cred == nil {
 		return nil, fmt.Errorf("no credentials for openai. Run: picoclaw auth login --provider openai")
 	}
-	return NewCodexProviderWithTokenSource(cred.AccessToken, cred.AccountID, createCodexTokenSource()), nil
+	p := NewCodexProviderWithTokenSource(cred.AccessToken, cred.AccountID, createCodexTokenSource())
+	p.enableWebSearch = enableWebSearch
+	return p, nil
 }
 
 func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
@@ -83,6 +86,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			}
 		case "openai", "gpt":
 			if cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != "" {
+				sel.enableWebSearch = cfg.Providers.OpenAI.WebSearch
 				if cfg.Providers.OpenAI.AuthMethod == "codex-cli" {
 					sel.providerType = providerTypeCodexCLIToken
 					return sel, nil
@@ -248,6 +252,7 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 			}
 		case (strings.Contains(lowerModel, "gpt") || strings.HasPrefix(model, "openai/")) &&
 			(cfg.Providers.OpenAI.APIKey != "" || cfg.Providers.OpenAI.AuthMethod != ""):
+			sel.enableWebSearch = cfg.Providers.OpenAI.WebSearch
 			if cfg.Providers.OpenAI.AuthMethod == "codex-cli" {
 				sel.providerType = providerTypeCodexCLIToken
 				return sel, nil
@@ -338,9 +343,11 @@ func CreateProvider(cfg *config.Config) (LLMProvider, error) {
 	case providerTypeClaudeAuth:
 		return createClaudeAuthProvider(sel.apiBase)
 	case providerTypeCodexAuth:
-		return createCodexAuthProvider()
+		return createCodexAuthProvider(sel.enableWebSearch)
 	case providerTypeCodexCLIToken:
-		return NewCodexProviderWithTokenSource("", "", CreateCodexCliTokenSource()), nil
+		c := NewCodexProviderWithTokenSource("", "", CreateCodexCliTokenSource())
+		c.enableWebSearch = sel.enableWebSearch
+		return c, nil
 	case providerTypeClaudeCLI:
 		return NewClaudeCliProvider(sel.workspace), nil
 	case providerTypeCodexCLI:
