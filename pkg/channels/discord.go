@@ -105,7 +105,7 @@ func (c *DiscordChannel) Send(ctx context.Context, msg bus.OutboundMessage) erro
 		return nil
 	}
 
-	chunks := utils.SplitMessage(msg.Content, 1500) // Discord has a limit of 2000 characters per message, leave 500 for natural split e.g. code blocks
+	chunks := utils.SplitMessage(msg.Content, 2000) // Discord hard limit: 2000 chars (prefers split at 1500 to leave room for code blocks)
 
 	for _, chunk := range chunks {
 		if err := c.sendChunk(ctx, channelID, chunk); err != nil {

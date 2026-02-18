@@ -4,26 +4,35 @@ import (
 	"strings"
 )
 
-// SplitMessage splits long messages into chunks, preserving code block integrity
-// Uses natural boundaries (newlines, spaces) and extends messages slightly to avoid breaking code blocks
-func SplitMessage(content string, limit int) []string {
+const defaultCodeBlockBuffer = 500
+
+// SplitMessage splits long messages into chunks, preserving code block integrity.
+// The maxLen parameter is the hard upper limit - no message will exceed this length.
+// The function prefers to split at maxLen - defaultCodeBlockBuffer to leave room for code blocks,
+// but may extend up to maxLen when needed to avoid breaking incomplete code blocks.
+func SplitMessage(content string, maxLen int) []string {
 	var messages []string
+	codeBlockBuffer := defaultCodeBlockBuffer
 
 	for len(content) > 0 {
-		if len(content) <= limit {
+		if len(content) <= maxLen {
 			messages = append(messages, content)
 			break
 		}
 
-		msgEnd := limit
+		// Effective split point: maxLen minus buffer, to leave room for code blocks
+		effectiveLimit := maxLen - codeBlockBuffer
+		if effectiveLimit < maxLen/2 {
+			effectiveLimit = maxLen / 2
+		}
 
-		// Find natural split point within the limit
-		msgEnd = FindLastNewline(content[:limit], 200)
+		// Find natural split point within the effective limit
+		msgEnd := FindLastNewline(content[:effectiveLimit], 200)
 		if msgEnd <= 0 {
-			msgEnd = FindLastSpace(content[:limit], 100)
+			msgEnd = FindLastSpace(content[:effectiveLimit], 100)
 		}
 		if msgEnd <= 0 {
-			msgEnd = limit
+			msgEnd = effectiveLimit
 		}
 
 		// Check if this would end with an incomplete code block
@@ -32,15 +41,14 @@ func SplitMessage(content string, limit int) []string {
 
 		if unclosedIdx >= 0 {
 			// Message would end with incomplete code block
-			// Try to extend to include the closing ``` (with some buffer)
-			extendedLimit := limit + 500 // Allow 500 char buffer for code blocks
-			if len(content) > extendedLimit {
+			// Try to extend up to maxLen (hard limit, never exceed) to include the closing ```
+			if len(content) > msgEnd {
 				closingIdx := FindNextClosingCodeBlock(content, msgEnd)
-				if closingIdx > 0 && closingIdx <= extendedLimit {
+				if closingIdx > 0 && closingIdx <= maxLen {
 					// Extend to include the closing ```
 					msgEnd = closingIdx
 				} else {
-					// Can't find closing, split before the code block
+					// Can't find closing within maxLen, split before the code block
 					msgEnd = FindLastNewline(content[:unclosedIdx], 200)
 					if msgEnd <= 0 {
 						msgEnd = FindLastSpace(content[:unclosedIdx], 100)
@@ -49,14 +57,11 @@ func SplitMessage(content string, limit int) []string {
 						msgEnd = unclosedIdx
 					}
 				}
-			} else {
-				// Remaining content fits within extended limit
-				msgEnd = len(content)
 			}
 		}
 
 		if msgEnd <= 0 {
-			msgEnd = limit
+			msgEnd = effectiveLimit
 		}
 
 		messages = append(messages, content[:msgEnd])
