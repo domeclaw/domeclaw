@@ -80,11 +80,11 @@ func TestExtractFrontmatter(t *testing.T) {
 	sl := &SkillsLoader{}
 
 	testcases := []struct {
-		name            string
-		content         string
-		expectedName    string
-		expectedDesc    string
-		lineEndingType  string
+		name           string
+		content        string
+		expectedName   string
+		expectedDesc   string
+		lineEndingType string
 	}{
 		{
 			name:           "unix-line-endings",
@@ -117,8 +117,20 @@ func TestExtractFrontmatter(t *testing.T) {
 
 			// Parse YAML to get name and description (parseSimpleYAML now handles all line ending types)
 			yamlMeta := sl.parseSimpleYAML(frontmatter)
-			assert.Equal(t, tc.expectedName, yamlMeta["name"], "Name should be correctly parsed from frontmatter with %s line endings", tc.lineEndingType)
-			assert.Equal(t, tc.expectedDesc, yamlMeta["description"], "Description should be correctly parsed from frontmatter with %s line endings", tc.lineEndingType)
+			assert.Equal(
+				t,
+				tc.expectedName,
+				yamlMeta["name"],
+				"Name should be correctly parsed from frontmatter with %s line endings",
+				tc.lineEndingType,
+			)
+			assert.Equal(
+				t,
+				tc.expectedDesc,
+				yamlMeta["description"],
+				"Description should be correctly parsed from frontmatter with %s line endings",
+				tc.lineEndingType,
+			)
 		})
 	}
 }
@@ -173,7 +185,13 @@ func TestStripFrontmatter(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := sl.stripFrontmatter(tc.content)
-			assert.Equal(t, tc.expectedContent, result, "Frontmatter should be stripped correctly for %s", tc.lineEndingType)
+			assert.Equal(
+				t,
+				tc.expectedContent,
+				result,
+				"Frontmatter should be stripped correctly for %s",
+				tc.lineEndingType,
+			)
 		})
 	}
 }
