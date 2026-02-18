@@ -7,9 +7,9 @@ import (
 const defaultCodeBlockBuffer = 500
 
 // SplitMessage splits long messages into chunks, preserving code block integrity.
-// The maxLen parameter is the hard upper limit - no message will exceed this length.
 // The function prefers to split at maxLen - defaultCodeBlockBuffer to leave room for code blocks,
 // but may extend up to maxLen when needed to avoid breaking incomplete code blocks.
+// Please refer to pkg/channels/discord.go for usage.
 func SplitMessage(content string, maxLen int) []string {
 	var messages []string
 	codeBlockBuffer := defaultCodeBlockBuffer
@@ -41,7 +41,7 @@ func SplitMessage(content string, maxLen int) []string {
 
 		if unclosedIdx >= 0 {
 			// Message would end with incomplete code block
-			// Try to extend up to maxLen (hard limit, never exceed) to include the closing ```
+			// Try to extend up to maxLen to include the closing ```
 			if len(content) > msgEnd {
 				closingIdx := FindNextClosingCodeBlock(content, msgEnd)
 				if closingIdx > 0 && closingIdx <= maxLen {
