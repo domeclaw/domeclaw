@@ -200,8 +200,11 @@ func LoginDeviceCode(cfg OAuthProviderConfig) (*AuthCredential, error) {
 		deviceResp.Interval = 5
 	}
 
-	fmt.Printf("\nTo authenticate, open this URL in your browser:\n\n  %s/codex/device\n\nThen enter this code: %s\n\nWaiting for authentication...\n",
-		cfg.Issuer, deviceResp.UserCode)
+	fmt.Printf(
+		"\nTo authenticate, open this URL in your browser:\n\n  %s/codex/device\n\nThen enter this code: %s\n\nWaiting for authentication...\n",
+		cfg.Issuer,
+		deviceResp.UserCode,
+	)
 
 	deadline := time.After(15 * time.Minute)
 	ticker := time.NewTicker(time.Duration(deviceResp.Interval) * time.Second)
@@ -396,15 +399,15 @@ func extractAccountID(token string) string {
 		return accountID
 	}
 
-	if authClaim, ok := claims["https://api.openai.com/auth"].(map[string]interface{}); ok {
+	if authClaim, ok := claims["https://api.openai.com/auth"].(map[string]any); ok {
 		if accountID, ok := authClaim["chatgpt_account_id"].(string); ok && accountID != "" {
 			return accountID
 		}
 	}
 
-	if orgs, ok := claims["organizations"].([]interface{}); ok {
+	if orgs, ok := claims["organizations"].([]any); ok {
 		for _, org := range orgs {
-			if orgMap, ok := org.(map[string]interface{}); ok {
+			if orgMap, ok := org.(map[string]any); ok {
 				if accountID, ok := orgMap["id"].(string); ok && accountID != "" {
 					return accountID
 				}
@@ -415,7 +418,7 @@ func extractAccountID(token string) string {
 	return ""
 }
 
-func parseJWTClaims(token string) (map[string]interface{}, error) {
+func parseJWTClaims(token string) (map[string]any, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) < 2 {
 		return nil, fmt.Errorf("token is not a JWT")
@@ -434,7 +437,7 @@ func parseJWTClaims(token string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	var claims map[string]interface{}
+	var claims map[string]any
 	if err := json.Unmarshal(decoded, &claims); err != nil {
 		return nil, err
 	}

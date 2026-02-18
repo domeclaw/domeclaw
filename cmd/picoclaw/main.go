@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/chzyer/readline"
+
 	"github.com/sipeed/picoclaw/pkg/agent"
 	"github.com/sipeed/picoclaw/pkg/auth"
 	"github.com/sipeed/picoclaw/pkg/bus"
@@ -248,7 +249,7 @@ func onboard() {
 
 func copyEmbeddedToTarget(targetDir string) error {
 	// Ensure target directory exists
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
 		return fmt.Errorf("Failed to create target directory: %w", err)
 	}
 
@@ -278,12 +279,12 @@ func copyEmbeddedToTarget(targetDir string) error {
 		targetPath := filepath.Join(targetDir, new_path)
 
 		// Ensure target file's directory exists
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 			return fmt.Errorf("Failed to create directory %s: %w", filepath.Dir(targetPath), err)
 		}
 
 		// Write file
-		if err := os.WriteFile(targetPath, data, 0644); err != nil {
+		if err := os.WriteFile(targetPath, data, 0o644); err != nil {
 			return fmt.Errorf("Failed to write file %s: %w", targetPath, err)
 		}
 
@@ -411,10 +412,10 @@ func agentCmd() {
 	// Print agent startup info (only for interactive mode)
 	startupInfo := agentLoop.GetStartupInfo()
 	logger.InfoCF("agent", "Agent initialized",
-		map[string]interface{}{
-			"tools_count":      startupInfo["tools"].(map[string]interface{})["count"],
-			"skills_total":     startupInfo["skills"].(map[string]interface{})["total"],
-			"skills_available": startupInfo["skills"].(map[string]interface{})["available"],
+		map[string]any{
+			"tools_count":      startupInfo["tools"].(map[string]any)["count"],
+			"skills_total":     startupInfo["skills"].(map[string]any)["total"],
+			"skills_available": startupInfo["skills"].(map[string]any)["available"],
 		})
 
 	if message != "" {
@@ -441,7 +442,6 @@ func interactiveMode(agentLoop *agent.AgentLoop, sessionKey string) {
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 	})
-
 	if err != nil {
 		fmt.Printf("Error initializing readline: %v\n", err)
 		fmt.Println("Falling back to simple input mode...")
@@ -546,8 +546,8 @@ func gatewayCmd() {
 	// Print agent startup info
 	fmt.Println("\n📦 Agent Status:")
 	startupInfo := agentLoop.GetStartupInfo()
-	toolsInfo := startupInfo["tools"].(map[string]interface{})
-	skillsInfo := startupInfo["skills"].(map[string]interface{})
+	toolsInfo := startupInfo["tools"].(map[string]any)
+	skillsInfo := startupInfo["skills"].(map[string]any)
 	fmt.Printf("  • Tools: %d loaded\n", toolsInfo["count"])
 	fmt.Printf("  • Skills: %d/%d available\n",
 		skillsInfo["available"],
@@ -555,7 +555,7 @@ func gatewayCmd() {
 
 	// Log to file as well
 	logger.InfoCF("agent", "Agent initialized",
-		map[string]interface{}{
+		map[string]any{
 			"tools_count":      toolsInfo["count"],
 			"skills_total":     skillsInfo["total"],
 			"skills_available": skillsInfo["available"],
@@ -563,7 +563,14 @@ func gatewayCmd() {
 
 	// Setup cron tool and service
 	execTimeout := time.Duration(cfg.Tools.Cron.ExecTimeoutMinutes) * time.Minute
-	cronService := setupCronTool(agentLoop, msgBus, cfg.WorkspacePath(), cfg.Agents.Defaults.RestrictToWorkspace, execTimeout, cfg)
+	cronService := setupCronTool(
+		agentLoop,
+		msgBus,
+		cfg.WorkspacePath(),
+		cfg.Agents.Defaults.RestrictToWorkspace,
+		execTimeout,
+		cfg,
+	)
 
 	heartbeatService := heartbeat.NewHeartbeatService(
 		cfg.WorkspacePath(),
@@ -667,7 +674,7 @@ func gatewayCmd() {
 	healthServer := health.NewServer(cfg.Gateway.Host, cfg.Gateway.Port)
 	go func() {
 		if err := healthServer.Start(); err != nil && err != http.ErrServerClosed {
-			logger.ErrorCF("health", "Health server error", map[string]interface{}{"error": err.Error()})
+			logger.ErrorCF("health", "Health server error", map[string]any{"error": err.Error()})
 		}
 	}()
 	fmt.Printf("✓ Health endpoints available at http://%s:%d/health and /ready\n", cfg.Gateway.Host, cfg.Gateway.Port)
@@ -988,7 +995,10 @@ func getConfigPath() string {
 	return filepath.Join(home, ".picoclaw", "config.json")
 }
 
-func setupCronTool(agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string, restrict bool, execTimeout time.Duration, config *config.Config) *cron.CronService {
+func setupCronTool(
+	agentLoop *agent.AgentLoop, msgBus *bus.MessageBus, workspace string, restrict bool, execTimeout time.Duration,
+	config *config.Config,
+) *cron.CronService {
 	cronStorePath := filepath.Join(workspace, "cron", "jobs.json")
 
 	// Create cron service
@@ -1315,7 +1325,7 @@ func skillsInstallBuiltinCmd(workspace string) {
 			continue
 		}
 
-		if err := os.MkdirAll(workspacePath, 0755); err != nil {
+		if err := os.MkdirAll(workspacePath, 0o755); err != nil {
 			fmt.Printf("✗ Failed to create directory for %s: %v\n", skillName, err)
 			continue
 		}

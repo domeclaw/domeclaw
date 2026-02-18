@@ -15,13 +15,15 @@ import (
 	"github.com/sipeed/picoclaw/pkg/providers/protocoltypes"
 )
 
-type ToolCall = protocoltypes.ToolCall
-type FunctionCall = protocoltypes.FunctionCall
-type LLMResponse = protocoltypes.LLMResponse
-type UsageInfo = protocoltypes.UsageInfo
-type Message = protocoltypes.Message
-type ToolDefinition = protocoltypes.ToolDefinition
-type ToolFunctionDefinition = protocoltypes.ToolFunctionDefinition
+type (
+	ToolCall               = protocoltypes.ToolCall
+	FunctionCall           = protocoltypes.FunctionCall
+	LLMResponse            = protocoltypes.LLMResponse
+	UsageInfo              = protocoltypes.UsageInfo
+	Message                = protocoltypes.Message
+	ToolDefinition         = protocoltypes.ToolDefinition
+	ToolFunctionDefinition = protocoltypes.ToolFunctionDefinition
+)
 
 type Provider struct {
 	apiKey     string
@@ -52,14 +54,20 @@ func NewProvider(apiKey, apiBase, proxy string) *Provider {
 	}
 }
 
-func (p *Provider) Chat(ctx context.Context, messages []Message, tools []ToolDefinition, model string, options map[string]interface{}) (*LLMResponse, error) {
+func (p *Provider) Chat(
+	ctx context.Context,
+	messages []Message,
+	tools []ToolDefinition,
+	model string,
+	options map[string]any,
+) (*LLMResponse, error) {
 	if p.apiBase == "" {
 		return nil, fmt.Errorf("API base not configured")
 	}
 
 	model = normalizeModel(model, p.apiBase)
 
-	requestBody := map[string]interface{}{
+	requestBody := map[string]any{
 		"model":    model,
 		"messages": messages,
 	}
@@ -154,7 +162,7 @@ func parseResponse(body []byte) (*LLMResponse, error) {
 	choice := apiResponse.Choices[0]
 	toolCalls := make([]ToolCall, 0, len(choice.Message.ToolCalls))
 	for _, tc := range choice.Message.ToolCalls {
-		arguments := make(map[string]interface{})
+		arguments := make(map[string]any)
 		name := ""
 
 		if tc.Function != nil {
@@ -201,7 +209,7 @@ func normalizeModel(model, apiBase string) string {
 	}
 }
 
-func asInt(v interface{}) (int, bool) {
+func asInt(v any) (int, bool) {
 	switch val := v.(type) {
 	case int:
 		return val, true
@@ -216,7 +224,7 @@ func asInt(v interface{}) (int, bool) {
 	}
 }
 
-func asFloat(v interface{}) (float64, bool) {
+func asFloat(v any) (float64, bool) {
 	switch val := v.(type) {
 	case float64:
 		return val, true
