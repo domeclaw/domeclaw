@@ -4,16 +4,22 @@ import (
 	"strings"
 )
 
-const defaultCodeBlockBuffer = 500
-
 // SplitMessage splits long messages into chunks, preserving code block integrity.
-// The function prefers to split at maxLen - defaultCodeBlockBuffer to leave room for code blocks,
-// but may extend up to maxLen when needed to avoid breaking incomplete code blocks.
+// The function reserves a buffer (10% of maxLen, min 50) to leave room for closing code blocks,
+// but may extend to maxLen when needed.
 // Call SplitMessage with the full text content and the maximum allowed length of a single message;
 // it returns a slice of message chunks that each respect maxLen and avoid splitting fenced code blocks.
 func SplitMessage(content string, maxLen int) []string {
 	var messages []string
-	codeBlockBuffer := defaultCodeBlockBuffer
+
+	// Dynamic buffer: 10% of maxLen, but at least 50 chars if possible
+	codeBlockBuffer := maxLen / 10
+	if codeBlockBuffer < 50 {
+		codeBlockBuffer = 50
+	}
+	if codeBlockBuffer > maxLen/2 {
+		codeBlockBuffer = maxLen / 2
+	}
 
 	for len(content) > 0 {
 		if len(content) <= maxLen {
