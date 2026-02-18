@@ -35,6 +35,7 @@ type AgentInstance struct {
 func NewAgentInstance(
 	agentCfg *config.AgentConfig,
 	defaults *config.AgentDefaults,
+	cfg *config.Config,
 	provider providers.LLMProvider,
 ) *AgentInstance {
 	workspace := resolveAgentWorkspace(agentCfg, defaults)
@@ -48,7 +49,7 @@ func NewAgentInstance(
 	toolsRegistry.Register(tools.NewReadFileTool(workspace, restrict))
 	toolsRegistry.Register(tools.NewWriteFileTool(workspace, restrict))
 	toolsRegistry.Register(tools.NewListDirTool(workspace, restrict))
-	toolsRegistry.Register(tools.NewExecTool(workspace, restrict))
+	toolsRegistry.Register(tools.NewExecToolWithConfig(workspace, restrict, cfg))
 	toolsRegistry.Register(tools.NewEditFileTool(workspace, restrict))
 	toolsRegistry.Register(tools.NewAppendFileTool(workspace, restrict))
 
