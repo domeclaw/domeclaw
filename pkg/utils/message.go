@@ -27,9 +27,9 @@ func SplitMessage(content string, maxLen int) []string {
 		}
 
 		// Find natural split point within the effective limit
-		msgEnd := FindLastNewline(content[:effectiveLimit], 200)
+		msgEnd := findLastNewline(content[:effectiveLimit], 200)
 		if msgEnd <= 0 {
-			msgEnd = FindLastSpace(content[:effectiveLimit], 100)
+			msgEnd = findLastSpace(content[:effectiveLimit], 100)
 		}
 		if msgEnd <= 0 {
 			msgEnd = effectiveLimit
@@ -37,13 +37,13 @@ func SplitMessage(content string, maxLen int) []string {
 
 		// Check if this would end with an incomplete code block
 		candidate := content[:msgEnd]
-		unclosedIdx := FindLastUnclosedCodeBlock(candidate)
+		unclosedIdx := findLastUnclosedCodeBlock(candidate)
 
 		if unclosedIdx >= 0 {
 			// Message would end with incomplete code block
 			// Try to extend up to maxLen to include the closing ```
 			if len(content) > msgEnd {
-				closingIdx := FindNextClosingCodeBlock(content, msgEnd)
+				closingIdx := findNextClosingCodeBlock(content, msgEnd)
 				if closingIdx > 0 && closingIdx <= maxLen {
 					// Extend to include the closing ```
 					msgEnd = closingIdx
@@ -62,7 +62,7 @@ func SplitMessage(content string, maxLen int) []string {
 					if msgEnd > headerEnd+20 {
 						// Find a better split point closer to maxLen
 						innerLimit := maxLen - 5 // Leave room for "\n```"
-						betterEnd := FindLastNewline(content[:innerLimit], 200)
+						betterEnd := findLastNewline(content[:innerLimit], 200)
 						if betterEnd > headerEnd {
 							msgEnd = betterEnd
 						} else {
@@ -74,9 +74,9 @@ func SplitMessage(content string, maxLen int) []string {
 					}
 
 					// Otherwise, try to split before the code block starts
-					newEnd := FindLastNewline(content[:unclosedIdx], 200)
+					newEnd := findLastNewline(content[:unclosedIdx], 200)
 					if newEnd <= 0 {
-						newEnd = FindLastSpace(content[:unclosedIdx], 100)
+						newEnd = findLastSpace(content[:unclosedIdx], 100)
 					}
 					if newEnd > 0 {
 						msgEnd = newEnd
@@ -106,9 +106,9 @@ func SplitMessage(content string, maxLen int) []string {
 	return messages
 }
 
-// FindLastUnclosedCodeBlock finds the last opening ``` that doesn't have a closing ```
+// findLastUnclosedCodeBlock finds the last opening ``` that doesn't have a closing ```
 // Returns the position of the opening ``` or -1 if all code blocks are complete
-func FindLastUnclosedCodeBlock(text string) int {
+func findLastUnclosedCodeBlock(text string) int {
 	inCodeBlock := false
 	lastOpenIdx := -1
 
@@ -130,9 +130,9 @@ func FindLastUnclosedCodeBlock(text string) int {
 	return -1
 }
 
-// FindNextClosingCodeBlock finds the next closing ``` starting from a position
+// findNextClosingCodeBlock finds the next closing ``` starting from a position
 // Returns the position after the closing ``` or -1 if not found
-func FindNextClosingCodeBlock(text string, startIdx int) int {
+func findNextClosingCodeBlock(text string, startIdx int) int {
 	for i := startIdx; i < len(text); i++ {
 		if i+2 < len(text) && text[i] == '`' && text[i+1] == '`' && text[i+2] == '`' {
 			return i + 3
@@ -141,9 +141,9 @@ func FindNextClosingCodeBlock(text string, startIdx int) int {
 	return -1
 }
 
-// FindLastNewline finds the last newline character within the last N characters
+// findLastNewline finds the last newline character within the last N characters
 // Returns the position of the newline or -1 if not found
-func FindLastNewline(s string, searchWindow int) int {
+func findLastNewline(s string, searchWindow int) int {
 	searchStart := len(s) - searchWindow
 	if searchStart < 0 {
 		searchStart = 0
@@ -156,9 +156,9 @@ func FindLastNewline(s string, searchWindow int) int {
 	return -1
 }
 
-// FindLastSpace finds the last space character within the last N characters
+// findLastSpace finds the last space character within the last N characters
 // Returns the position of the space or -1 if not found
-func FindLastSpace(s string, searchWindow int) int {
+func findLastSpace(s string, searchWindow int) int {
 	searchStart := len(s) - searchWindow
 	if searchStart < 0 {
 		searchStart = 0
