@@ -74,21 +74,22 @@ func SplitMessage(content string, maxLen int) []string {
 // FindLastUnclosedCodeBlock finds the last opening ``` that doesn't have a closing ```
 // Returns the position of the opening ``` or -1 if all code blocks are complete
 func FindLastUnclosedCodeBlock(text string) int {
-	count := 0
+	inCodeBlock := false
 	lastOpenIdx := -1
 
 	for i := 0; i < len(text); i++ {
 		if i+2 < len(text) && text[i] == '`' && text[i+1] == '`' && text[i+2] == '`' {
-			if count == 0 {
+			// Toggle code block state on each fence
+			if !inCodeBlock {
+				// Entering a code block: record this opening fence
 				lastOpenIdx = i
 			}
-			count++
+			inCodeBlock = !inCodeBlock
 			i += 2
 		}
 	}
 
-	// If odd number of ``` markers, last one is unclosed
-	if count%2 == 1 {
+	if inCodeBlock {
 		return lastOpenIdx
 	}
 	return -1
