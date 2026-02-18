@@ -79,7 +79,7 @@ func TestSplitMessage(t *testing.T) {
 		},
 		{
 			name:         "Preserve Unicode characters",
-			content:      strings.Repeat("世", 1000), // 3000 bytes
+			content:      strings.Repeat("\u4e16", 1000), // 3000 bytes
 			maxLen:       2000,
 			expectChunks: 2,
 			checkContent: func(t *testing.T, chunks []string) {
@@ -87,7 +87,7 @@ func TestSplitMessage(t *testing.T) {
 				// Go strings are UTF-8, if we split mid-rune it would be bad,
 				// but standard slicing might do that.
 				// Let's assume standard behavior is acceptable or check if it produces invalid rune?
-				if !strings.Contains(chunks[0], "世") {
+				if !strings.Contains(chunks[0], "\u4e16") {
 					t.Error("Chunk should contain unicode characters")
 				}
 			},
