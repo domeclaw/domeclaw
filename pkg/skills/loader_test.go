@@ -80,11 +80,11 @@ func TestExtractFrontmatter(t *testing.T) {
 	sl := &SkillsLoader{}
 
 	testcases := []struct {
-		name            string
-		content         string
-		expectedName    string
-		expectedDesc    string
-		lineEndingType  string
+		name           string
+		content        string
+		expectedName   string
+		expectedDesc   string
+		lineEndingType string
 	}{
 		{
 			name:           "unix-line-endings",
