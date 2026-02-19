@@ -79,7 +79,8 @@ func (p *Provider) Chat(
 
 	if maxTokens, ok := asInt(options["max_tokens"]); ok {
 		lowerModel := strings.ToLower(model)
-		if strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "o1") || strings.Contains(lowerModel, "gpt-5") {
+		if strings.Contains(lowerModel, "glm") || strings.Contains(lowerModel, "o1") ||
+			strings.Contains(lowerModel, "gpt-5") {
 			requestBody["max_completion_tokens"] = maxTokens
 		} else {
 			requestBody["max_tokens"] = maxTokens

@@ -255,7 +255,8 @@ func TestWebFetchTool_extractText(t *testing.T) {
 				if len(lines) < 2 {
 					t.Errorf("Expected multiple lines, got %d: %q", len(lines), got)
 				}
-				if !strings.Contains(got, "Title") || !strings.Contains(got, "Paragraph 1") || !strings.Contains(got, "Paragraph 2") {
+				if !strings.Contains(got, "Title") || !strings.Contains(got, "Paragraph 1") ||
+					!strings.Contains(got, "Paragraph 2") {
 					t.Errorf("Missing expected text: %q", got)
 				}
 			},
