@@ -333,6 +333,9 @@ func DefaultConfig() *Config {
 				MaxToolIterations:   20,
 			},
 		},
+		Session: SessionConfig{
+			DMScope: "main",
+		},
 		Channels: ChannelsConfig{
 			WhatsApp: WhatsAppConfig{
 				Enabled:   false,
