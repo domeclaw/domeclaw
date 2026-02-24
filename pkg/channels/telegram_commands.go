@@ -13,6 +13,8 @@ import (
 type TelegramCommander interface {
 	Help(ctx context.Context, message telego.Message) error
 	Start(ctx context.Context, message telego.Message) error
+	Model(ctx context.Context, message telego.Message) error
+	Status(ctx context.Context, message telego.Message) error
 	Show(ctx context.Context, message telego.Message) error
 	List(ctx context.Context, message telego.Message) error
 }
@@ -38,14 +40,23 @@ func commandArgs(text string) string {
 }
 
 func (c *cmd) Help(ctx context.Context, message telego.Message) error {
-	msg := `/start - Start the bot
+	msg := `🦞 *DomeClaw Bot Commands*
+
+/start - Start the bot
 /help - Show this help message
-/show [model|channel] - Show current configuration
+/model - Show current model info
+/status - Show bot status and configuration
+/show [model|channel] - Show specific configuration
 /list [models|channels] - List available options
-	`
+
+*Examples:*
+/model - See which AI model is being used
+/show model - Same as /model
+/list models - See all configured models`
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
-		ChatID: telego.ChatID{ID: message.Chat.ID},
-		Text:   msg,
+		ChatID:    telego.ChatID{ID: message.Chat.ID},
+		Text:      msg,
+		ParseMode: "Markdown",
 		ReplyParameters: &telego.ReplyParameters{
 			MessageID: message.MessageID,
 		},
@@ -56,7 +67,68 @@ func (c *cmd) Help(ctx context.Context, message telego.Message) error {
 func (c *cmd) Start(ctx context.Context, message telego.Message) error {
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 		ChatID: telego.ChatID{ID: message.Chat.ID},
-		Text:   "Hello! I am DomeClaw 🦞",
+		Text:   "Hello! I am DomeClaw 🦞\n\nUse /help to see available commands.",
+		ReplyParameters: &telego.ReplyParameters{
+			MessageID: message.MessageID,
+		},
+	})
+	return err
+}
+
+func (c *cmd) Model(ctx context.Context, message telego.Message) error {
+	model := c.config.Agents.Defaults.Model
+	provider := c.config.Agents.Defaults.Provider
+
+	// Find model details from model_list
+	var modelDetails string
+	for _, mc := range c.config.ModelList {
+		if mc.ModelName == model || mc.Model == provider+"/"+model {
+			if mc.APIBase != "" {
+				modelDetails = fmt.Sprintf("\n📡 API: %s", mc.APIBase)
+			}
+			break
+		}
+	}
+
+	msg := fmt.Sprintf("🤖 *Current AI Model*\n\n"+
+		"*Model:* `%s`%s\n"+
+		"*Provider:* `%s`%s",
+		model,
+		modelDetails,
+		provider,
+		"",
+	)
+
+	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+		ChatID:    telego.ChatID{ID: message.Chat.ID},
+		Text:      msg,
+		ParseMode: "Markdown",
+		ReplyParameters: &telego.ReplyParameters{
+			MessageID: message.MessageID,
+		},
+	})
+	return err
+}
+
+func (c *cmd) Status(ctx context.Context, message telego.Message) error {
+	model := c.config.Agents.Defaults.Model
+	provider := c.config.Agents.Defaults.Provider
+	workspace := c.config.Agents.Defaults.Workspace
+
+	msg := fmt.Sprintf("🦞 *DomeClaw Status*\n\n"+
+		"*Model:* `%s`\n"+
+		"*Provider:* `%s`\n"+
+		"*Workspace:* `%s`\n"+
+		"*Channel:* Telegram",
+		model,
+		provider,
+		workspace,
+	)
+
+	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+		ChatID:    telego.ChatID{ID: message.Chat.ID},
+		Text:      msg,
+		ParseMode: "Markdown",
 		ReplyParameters: &telego.ReplyParameters{
 			MessageID: message.MessageID,
 		},
@@ -69,7 +141,7 @@ func (c *cmd) Show(ctx context.Context, message telego.Message) error {
 	if args == "" {
 		_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 			ChatID: telego.ChatID{ID: message.Chat.ID},
-			Text:   "Usage: /show [model|channel]",
+			Text:   "Usage: /show [model|channel]\n\nUse /model for detailed model info.",
 			ReplyParameters: &telego.ReplyParameters{
 				MessageID: message.MessageID,
 			},
@@ -80,18 +152,19 @@ func (c *cmd) Show(ctx context.Context, message telego.Message) error {
 	var response string
 	switch args {
 	case "model":
-		response = fmt.Sprintf("Current Model: %s (Provider: %s)",
+		response = fmt.Sprintf("🤖 Current Model: `%s`\nProvider: `%s`",
 			c.config.Agents.Defaults.Model,
 			c.config.Agents.Defaults.Provider)
 	case "channel":
-		response = "Current Channel: telegram"
+		response = "📱 Current Channel: `telegram`"
 	default:
-		response = fmt.Sprintf("Unknown parameter: %s. Try 'model' or 'channel'.", args)
+		response = fmt.Sprintf("❌ Unknown parameter: %s. Try 'model' or 'channel'.", args)
 	}
 
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
-		ChatID: telego.ChatID{ID: message.Chat.ID},
-		Text:   response,
+		ChatID:    telego.ChatID{ID: message.Chat.ID},
+		Text:      response,
+		ParseMode: "Markdown",
 		ReplyParameters: &telego.ReplyParameters{
 			MessageID: message.MessageID,
 		},
