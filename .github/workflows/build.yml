@@ -1,11 +1,13 @@
 name: Build Release
 
 on:
-  # Build เฉพาะตอน push tags (v1.0.0, v2.0.0, etc.)
   push:
     tags: [ 'v*' ]
-  # หรือกดปุ่ม Run workflow เองบน GitHub
   workflow_dispatch:
+
+# Add permissions for creating releases
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -78,7 +80,6 @@ jobs:
         mkdir -p release
         cd artifacts
         for dir in domeclaw-*/; do
-          # Find the binary file inside each artifact directory
           find "$dir" -type f -name "domeclaw-*" -exec cp {} ../release/ \;
         done
         cd ../release
