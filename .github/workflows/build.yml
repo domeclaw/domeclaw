@@ -71,22 +71,31 @@ jobs:
       with:
         path: artifacts
         pattern: domeclaw-*
+        merge-multiple: false
+
+    - name: Organize artifacts
+      run: |
+        mkdir -p release
+        cd artifacts
+        for dir in domeclaw-*/; do
+          # Find the binary file inside each artifact directory
+          find "$dir" -type f -name "domeclaw-*" -exec cp {} ../release/ \;
+        done
+        cd ../release
+        ls -la
 
     - name: Create checksums
       run: |
-        cd artifacts
-        for dir in domeclaw-*; do
-          mv "$dir"/domeclaw* ./
-          rmdir "$dir"
-        done
+        cd release
         sha256sum domeclaw-* > checksums.txt
+        cat checksums.txt
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          artifacts/domeclaw-*
-          artifacts/checksums.txt
+          release/domeclaw-*
+          release/checksums.txt
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
