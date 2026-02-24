@@ -1,6 +1,6 @@
 module github.com/sipeed/domeclaw
 
-go 1.23
+go 1.25.5
 
 require (
 	github.com/adhocore/gronx v1.19.6

@@ -1,9 +1,12 @@
 # ============================================================
 # Stage 1: Build the domeclaw binary
 # ============================================================
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25.7-alpine AS builder
 
 RUN apk add --no-cache git make
+
+# Allow Go to automatically download required toolchain version
+ENV GOTOOLCHAIN=auto
 
 WORKDIR /src
 
