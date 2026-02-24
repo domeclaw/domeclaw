@@ -32,6 +32,26 @@ Wallet management and blockchain interaction commands for DomeClaw via Telegram 
 
 ---
 
+## Natural Language Queries (IMPORTANT)
+
+When user asks about their wallet in natural language, ALWAYS use the `/wallet` commands below. **DO NOT** call external APIs or block explorers directly.
+
+| User asks | You should execute |
+|-----------|-------------------|
+| "เรามี balance เท่าไหร่" / "เช็คยอดเงิน" / "ดูเงินในบัญชี" | `/wallet balance` |
+| "เรามี [token_address] เท่าไหร่" / "เช็ค [token]" | `/wallet balance [token_address]` |
+| "ส่งเงินไป [address]" / "โอน [amount] ให้ [address]" | `/wallet transfer [address] [amount] [pin]` |
+| "ข้อมูล wallet" / "ที่อยู่ wallet" | `/wallet info` |
+| "สร้าง wallet" / "เปิดบัญชีใหม่" | `/wallet create [pin]` |
+
+**IMPORTANT RULES:**
+1. **ALWAYS** use `/wallet balance` command - never call external block explorer APIs
+2. **ALWAYS** use `/wallet transfer` or `/wallet transfertoken` for transfers
+3. The system has built-in blockchain connection to ClawSwift - use it via commands
+4. If user mentions a token address (0x...), include it in the balance command
+
+---
+
 ## Wallet Commands
 
 ### 1. Wallet Management

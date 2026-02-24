@@ -149,6 +149,14 @@ func registerSharedTools(
 		})
 		agent.Tools.Register(spawnTool)
 
+		// Wallet tools (hotwallet mode - AI can query, transfer, and interact with contracts)
+		if cfg.Wallet.Enabled {
+			agent.Tools.Register(tools.NewWalletAutoTool(agent.Workspace, cfg))
+			agent.Tools.Register(tools.NewWalletQueryTool(agent.Workspace, cfg))
+			agent.Tools.Register(tools.NewWalletContractCallTool(agent.Workspace, cfg))
+			agent.Tools.Register(tools.NewWalletContractWriteTool(agent.Workspace, cfg))
+		}
+
 		// Update context builder with the complete tools registry
 		agent.ContextBuilder.SetToolsRegistry(agent.Tools)
 	}
