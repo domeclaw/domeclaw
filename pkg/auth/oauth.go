@@ -41,13 +41,14 @@ func OpenAIOAuthConfig() OAuthProviderConfig {
 }
 
 // GoogleAntigravityOAuthConfig returns the OAuth configuration for Google Cloud Code Assist (Antigravity).
-// Client credentials are the same ones used by OpenCode/pi-ai for Cloud Code Assist access.
+// Client credentials should be set via environment variables or config file.
 func GoogleAntigravityOAuthConfig() OAuthProviderConfig {
-	// These are the same client credentials used by the OpenCode antigravity plugin.
-	clientID := decodeBase64(
-		"",
-	)
-	clientSecret := decodeBase64("")
+	// Client ID and Secret should be loaded from environment or config
+	// Example:
+	// clientID := os.Getenv("GOOGLE_ANTIGRAVITY_CLIENT_ID")
+	// clientSecret := os.Getenv("GOOGLE_ANTIGRAVITY_CLIENT_SECRET")
+	clientID := ""
+	clientSecret := ""
 	return OAuthProviderConfig{
 		Issuer:       "https://accounts.google.com/o/oauth2/v2",
 		TokenURL:     "https://oauth2.googleapis.com/token",
