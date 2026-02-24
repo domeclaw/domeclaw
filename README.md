@@ -72,3 +72,34 @@ DomeClaw now supports **EVM-compatible blockchains** with built-in wallet manage
 - `gas_token_name`: Token name/symbol
 
 ---
+
+## 🔥 Hotwallet Mode (AI-Powered Wallet)
+
+DomeClaw includes an **optional hotwallet mode** that allows the AI agent to execute blockchain transactions directly without manual user intervention.
+
+### **Features:**
+- **Natural Language Queries**: Ask "What's my balance?" instead of typing commands
+- **AI-Executed Transfers**: Say "Send 0.01 CLAW to 0xABC..." and AI handles it
+- **Smart Contract Interaction**: Query or write to contracts via conversation
+- **Auto PIN Reading**: PIN stored in `~/.domeclaw/workspace/wallet/pin.json`
+
+### **AI Wallet Tools:**
+| Tool | Description | Example Query |
+|------|-------------|---------------|
+| `query_wallet_balance` | AI checks balance directly | "เรามี balance เท่าไหร่" |
+| `wallet_auto_transfer` | AI executes transfers | "โอน 0.01 CLAW ให้ 0xABC..." |
+| `query_contract_call` | AI reads contract data | "เช็ค balanceOf ที่อยู่นี้" |
+| `execute_contract_write` | AI writes to contracts | "approve ให้ 0xDEF..." |
+
+### **⚠️ Security Warning:**
+
+> **HOTWALLET MODE PRIORITIZES CONVENIENCE OVER SECURITY**
+> 
+> - PIN is stored in **plaintext** at `~/.domeclaw/workspace/wallet/pin.json`
+> - AI has direct access to wallet keystore and can sign transactions
+> - Suitable for **testnet/development ONLY**
+> - **NOT RECOMMENDED** for mainnet or wallets holding significant funds
+> 
+> Use at your own risk. For production use, disable wallet or use manual PIN entry only.
+
+---
