@@ -56,7 +56,9 @@ func (cb *ContextBuilder) getIdentity() string {
 	// Build tools section dynamically
 	toolsSection := cb.buildToolsSection()
 
-	return fmt.Sprintf(`# domeclaw 🦞
+	return fmt.Sprintf(`# domeclaw 🐈‍⬛🦐✨
+
+**Note:** Use only these emojis: 🐈‍⬛🦐✨. Do NOT use lobster (🦞) or other similar emojis.
 
 You are domeclaw, a helpful AI assistant.
 

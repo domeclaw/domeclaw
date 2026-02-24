@@ -40,7 +40,7 @@ func commandArgs(text string) string {
 }
 
 func (c *cmd) Help(ctx context.Context, message telego.Message) error {
-	msg := `🦞 *DomeClaw Bot Commands*
+	msg := `🐈‍⬛🦐✨ *DomeClaw Bot Commands*
 
 /start - Start the bot
 /help - Show this help message
@@ -67,7 +67,7 @@ func (c *cmd) Help(ctx context.Context, message telego.Message) error {
 func (c *cmd) Start(ctx context.Context, message telego.Message) error {
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 		ChatID: telego.ChatID{ID: message.Chat.ID},
-		Text:   "Hello! I am DomeClaw 🦞\n\nUse /help to see available commands.",
+		Text:   "Hello! I am DomeClaw 🐈‍⬛🦐✨\n\nUse /help to see available commands.",
 		ReplyParameters: &telego.ReplyParameters{
 			MessageID: message.MessageID,
 		},
@@ -115,7 +115,7 @@ func (c *cmd) Status(ctx context.Context, message telego.Message) error {
 	provider := c.config.Agents.Defaults.Provider
 	workspace := c.config.Agents.Defaults.Workspace
 
-	msg := fmt.Sprintf("🦞 *DomeClaw Status*\n\n"+
+	msg := fmt.Sprintf("🐈‍⬛🦐✨ *DomeClaw Status*\n\n"+
 		"*Model:* `%s`\n"+
 		"*Provider:* `%s`\n"+
 		"*Workspace:* `%s`\n"+

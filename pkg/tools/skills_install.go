@@ -44,7 +44,7 @@ func (t *InstallSkillTool) Name() string {
 }
 
 func (t *InstallSkillTool) Description() string {
-	return "Install a skill from a registry by slug OR from a direct URL (GitHub, GitLab, ZIP file). For registry: use slug+registry. For URL: use source='https://...' with registry='url'."
+	return "Install a skill from a direct URL to a SKILL.md file. Use source='https://example.com/skill.md' with registry='url'. Only .md files are supported."
 }
 
 func (t *InstallSkillTool) Parameters() map[string]any {
@@ -193,6 +193,7 @@ type originMeta struct {
 	Slug             string `json:"slug"`
 	InstalledVersion string `json:"installed_version"`
 	InstalledAt      int64  `json:"installed_at"`
+	SourceURL        string `json:"source_url,omitempty"`
 }
 
 func writeOriginMeta(targetDir, registryName, slug, version string) error {
@@ -254,24 +255,59 @@ func (t *InstallSkillTool) installFromURL(ctx context.Context, sourceURL, versio
 			"slug": slug,
 		})
 
-	// Download the file
-	tempFile := filepath.Join(skillsDir, fmt.Sprintf("%s_temp.zip", slug))
+	// Only support Markdown files
+	if !strings.HasSuffix(strings.ToLower(sourceURL), ".md") {
+		return ErrorResult("only Markdown files (.md) are supported. Please provide a URL ending with .md")
+	}
+
+	// Install from Markdown file
+	return t.installFromMarkdown(ctx, sourceURL, slug, skillsDir)
+}
+
+// installFromMarkdown downloads a single SKILL.md file and creates a minimal skill structure
+func (t *InstallSkillTool) installFromMarkdown(ctx context.Context, sourceURL, slug, skillsDir string) *ToolResult {
+	targetDir := filepath.Join(skillsDir, slug)
+
+	logger.InfoCF("tool", "Installing skill from Markdown file",
+		map[string]any{
+			"tool": "install_skill",
+			"url":  sourceURL,
+			"slug": slug,
+		})
+
+	// Download the Markdown file
+	tempFile := filepath.Join(skillsDir, fmt.Sprintf("%s_temp.md", slug))
 	if err := downloadFile(ctx, sourceURL, tempFile); err != nil {
 		os.RemoveAll(tempFile)
-		return ErrorResult(fmt.Sprintf("failed to download from URL: %v", err))
+		return ErrorResult(fmt.Sprintf("failed to download Markdown file: %v", err))
 	}
 	defer os.Remove(tempFile)
 
-	// Extract the archive
-	if err := extractArchive(tempFile, targetDir); err != nil {
-		os.RemoveAll(targetDir)
-		return ErrorResult(fmt.Sprintf("failed to extract archive: %v", err))
+	// Create skill directory
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
+		return ErrorResult(fmt.Sprintf("failed to create skill directory: %v", err))
 	}
 
-	// Validate skill structure
-	if err := validateSkillStructure(targetDir); err != nil {
+	// Read the downloaded file to check if it's a valid SKILL.md
+	content, err := os.ReadFile(tempFile)
+	if err != nil {
 		os.RemoveAll(targetDir)
-		return ErrorResult(fmt.Sprintf("invalid skill structure: %v", err))
+		return ErrorResult(fmt.Sprintf("failed to read downloaded file: %v", err))
+	}
+
+	fileContent := string(content)
+
+	// Check if it looks like a SKILL.md file (should have frontmatter)
+	if !strings.Contains(fileContent, "---") {
+		os.RemoveAll(targetDir)
+		return ErrorResult("downloaded file doesn't appear to be a valid SKILL.md (missing frontmatter '---')")
+	}
+
+	// Copy to SKILL.md in target directory
+	skillMdPath := filepath.Join(targetDir, "SKILL.md")
+	if err := os.WriteFile(skillMdPath, content, 0o644); err != nil {
+		os.RemoveAll(targetDir)
+		return ErrorResult(fmt.Sprintf("failed to save SKILL.md: %v", err))
 	}
 
 	// Write origin metadata
@@ -279,8 +315,9 @@ func (t *InstallSkillTool) installFromURL(ctx context.Context, sourceURL, versio
 		Version:          1,
 		Registry:         "url",
 		Slug:             slug,
-		InstalledVersion: version,
+		InstalledVersion: "direct-md",
 		InstalledAt:      time.Now().UnixMilli(),
+		SourceURL:        sourceURL,
 	}
 
 	data, err := json.MarshalIndent(meta, "", "  ")
@@ -300,7 +337,8 @@ func (t *InstallSkillTool) installFromURL(ctx context.Context, sourceURL, versio
 		}
 	}
 
-	output := fmt.Sprintf("Successfully installed skill %q from URL.\nLocation: %s\n", slug, targetDir)
+	output := fmt.Sprintf("Successfully installed skill %q from Markdown file.\nLocation: %s\n", slug, targetDir)
+	output += fmt.Sprintf("Source: %s\n", sourceURL)
 	output += "\nThe skill is now available and can be loaded in the current session."
 
 	return SilentResult(output)
