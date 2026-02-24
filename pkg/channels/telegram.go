@@ -148,11 +148,17 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 			_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 				ChatID: telego.ChatID{ID: message.Chat.ID},
 				Text: "🦐 **Wallet Commands**\n\n" +
-					"`/wallet create [PIN]` - Create wallet with 4-digit PIN\n" +
-					"`/wallet info` - View wallet information\n" +
-					"`/wallet unlock [PIN]` - Unlock wallet for transactions\n" +
+					"`/wallet create [PIN]` - Create wallet\n" +
+					"`/wallet info` - View wallet info\n" +
+					"`/wallet unlock [PIN]` - Unlock wallet\n" +
 					"`/wallet lock` - Lock wallet\n" +
-					"`/wallet balance` - Check balance",
+					"`/wallet balance [token]` - Check balance\n" +
+					"`/wallet transfer <to> <amt> <pin>` - Send CLAW\n" +
+					"`/wallet transfertoken <token> <to> <amt> <pin>` - Send ERC20\n" +
+					"`/wallet abilist` - List ABIs\n" +
+					"`/wallet abiupload <name>` - Upload ABI (reply to JSON)\n" +
+					"`/wallet call <contract> <abi> <method> [args]` - Read contract\n" +
+					"`/wallet write <c> <abi> <m> <val> <pin> [args]` - Write contract",
 				ParseMode: "Markdown",
 			})
 			return err
@@ -210,19 +216,47 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 			})
 			return sendErr
 		case "balance":
-			balance, err := c.walletService.GetBalance()
-			if err != nil {
-				_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
-					ChatID: telego.ChatID{ID: message.Chat.ID},
-					Text:   fmt.Sprintf("❌ Failed to get balance: %v", err),
-				})
-				return sendErr
+			tokenAddress := ""
+			if len(parts) >= 3 {
+				tokenAddress = parts[2]
 			}
-			_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+			return c.walletCommands.Balance(ctx, message, tokenAddress)
+		case "transfer":
+			// transfer <to_address> <amount> <pin>
+			return c.walletCommands.Transfer(ctx, message, parts[2:])
+		case "transfertoken":
+			// transfertoken <token_address> <to_address> <amount> <pin>
+			return c.walletCommands.TransferToken(ctx, message, parts[2:])
+		case "abilist":
+			return c.walletCommands.ListABIs(ctx, message)
+		case "abiupload":
+			// abiupload <name> - requires document reply
+			name := ""
+			if len(parts) >= 3 {
+				name = parts[2]
+			}
+			if message.ReplyToMessage != nil && message.ReplyToMessage.Document != nil {
+				// Download the file
+				docPath := c.downloadFile(ctx, message.ReplyToMessage.Document.FileID, ".json")
+				if docPath != "" {
+					data, err := os.ReadFile(docPath)
+					if err == nil {
+						return c.walletCommands.UploadABI(ctx, message, name, string(data))
+					}
+				}
+			}
+			_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 				ChatID: telego.ChatID{ID: message.Chat.ID},
-				Text:   fmt.Sprintf("💰 Wallet Balance: %s ETH", balance),
+				Text: "❌ Please reply to a JSON file with `/wallet abiupload <name>`",
+				ParseMode: "Markdown",
 			})
-			return sendErr
+			return err
+		case "call":
+			// call <contract_address> <abi_name> <method> [args...]
+			return c.walletCommands.CallContract(ctx, message, parts[2:])
+		case "write":
+			// write <contract_address> <abi_name> <method> <value> <pin> [args...]
+			return c.walletCommands.WriteContract(ctx, message, parts[2:])
 		default:
 			_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
 				ChatID: telego.ChatID{ID: message.Chat.ID},

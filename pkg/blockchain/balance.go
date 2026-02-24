@@ -55,6 +55,52 @@ func (c *Client) GetTokenDecimals(ctx context.Context, chainID int64, tokenAddre
 	return decimals, nil
 }
 
+// GetTokenSymbol gets the symbol of an ERC20 token
+func (c *Client) GetTokenSymbol(ctx context.Context, chainID int64, tokenAddress common.Address) (string, error) {
+	client, ok := c.GetClient(chainID)
+	if !ok {
+		return "", fmt.Errorf("chain %d not found", chainID)
+	}
+
+	// symbol() function signature: 0x95d89b41
+	symbolSig := []byte{0x95, 0xd8, 0x9b, 0x41}
+
+	// Use direct eth_call
+	var resultHex string
+	err := client.Client().Call(&resultHex, "eth_call", map[string]interface{}{
+		"to":   tokenAddress.Hex(),
+		"data": common.Bytes2Hex(symbolSig),
+	}, "latest")
+
+	if err != nil || len(resultHex) < 2 {
+		return "", fmt.Errorf("eth_call symbol failed: %w", err)
+	}
+
+	// Parse result - decode string from ABI encoded response
+	result := common.FromHex(resultHex)
+	if len(result) < 64 {
+		return "", fmt.Errorf("invalid symbol result length: %d", len(result))
+	}
+
+	// First 32 bytes: offset to string data (should be 0x20 = 32)
+	// Second 32 bytes: length of string
+	// Remaining bytes: string data (padded to 32 bytes)
+
+	// Read string length from second word
+	length := new(big.Int).SetBytes(result[32:64]).Int64()
+	if length < 0 || length > 100 { // Sanity check
+		return "", fmt.Errorf("invalid symbol length: %d", length)
+	}
+
+	if len(result) < int(64+length) {
+		return "", fmt.Errorf("symbol data truncated")
+	}
+
+	// Extract string data
+	symbol := string(result[64 : 64+length])
+	return symbol, nil
+}
+
 // GetERC20Balance gets ERC20 token balance for an address
 func (c *Client) GetERC20Balance(ctx context.Context, chainID int64, tokenAddress, walletAddress common.Address) (*big.Int, error) {
 	client, ok := c.GetClient(chainID)

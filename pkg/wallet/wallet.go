@@ -150,13 +150,23 @@ func (ws *WalletService) GetAddress() (common.Address, error) {
 func (ws *WalletService) Unlock(pin string) error {
 	accounts := ws.keystore.Accounts()
 	if len(accounts) == 0 {
+		logger.ErrorCF("wallet", "Unlock failed: no accounts", nil)
 		return ErrWalletNotCreated
 	}
 
+	logger.InfoCF("wallet", "Attempting to unlock wallet", map[string]any{
+		"address": accounts[0].Address.Hex(),
+		"pin_len": len(pin),
+	})
+
 	if err := ws.keystore.Unlock(accounts[0], pin); err != nil {
-		return ErrInvalidPIN
+		logger.ErrorCF("wallet", "Unlock failed", map[string]any{
+			"error": err.Error(),
+		})
+		return fmt.Errorf("%w: %v", ErrInvalidPIN, err)
 	}
 
+	logger.InfoCF("wallet", "Wallet unlocked successfully", nil)
 	return nil
 }
 
@@ -209,7 +219,91 @@ func (ws *WalletService) GetBalance() (string, error) {
 	return balance.FormattedBalance(), nil
 }
 
-// Transfer sends tokens
+// TokenBalanceInfo holds token balance information
+ type TokenBalanceInfo struct {
+	Balance  string
+	Symbol   string
+	Decimals int32
+	Address  string
+}
+
+// GetTokenBalance returns ERC20 token balance with symbol and decimals
+func (ws *WalletService) GetTokenBalance(tokenAddress string) (*TokenBalanceInfo, error) {
+	if ws.blockchainClient == nil {
+		return nil, fmt.Errorf("blockchain client not initialized")
+	}
+
+	if ws.chainConfig == nil {
+		return nil, fmt.Errorf("chain config not set")
+	}
+
+	walletAddress, err := ws.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+
+	tokenAddr := common.HexToAddress(tokenAddress)
+
+	logger.InfoCF("wallet", "Getting token balance", map[string]any{
+		"wallet": walletAddress.Hex(),
+		"token":  tokenAddress,
+		"chain":  ws.chainConfig.Name,
+	})
+
+	// Get token decimals
+	decimals, err := ws.blockchainClient.GetTokenDecimals(context.Background(), ws.chainConfig.ChainID, tokenAddr)
+	if err != nil {
+		logger.WarnCF("wallet", "Failed to get token decimals, using default", map[string]any{
+			"token": tokenAddress,
+			"error": err.Error(),
+		})
+		decimals = 18
+	}
+
+	// Get token symbol
+	symbol, err := ws.blockchainClient.GetTokenSymbol(context.Background(), ws.chainConfig.ChainID, tokenAddr)
+	if err != nil {
+		logger.WarnCF("wallet", "Failed to get token symbol", map[string]any{
+			"token": tokenAddress,
+			"error": err.Error(),
+		})
+		symbol = "???"
+	}
+
+	// Get token balance
+	balance, err := ws.blockchainClient.GetERC20Balance(context.Background(), ws.chainConfig.ChainID, tokenAddr, walletAddress)
+	if err != nil {
+		logger.ErrorCF("wallet", "Failed to get token balance", map[string]any{
+			"wallet": walletAddress.Hex(),
+			"token":  tokenAddress,
+			"error":  err.Error(),
+		})
+		return nil, err
+	}
+
+	// Format balance with 4 decimal places
+	balanceFloat := new(big.Float).SetInt(balance)
+	divisor := new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil))
+	balanceFloat.Quo(balanceFloat, divisor)
+
+	// Format to 4 decimal places
+	formatted := balanceFloat.Text('f', 4)
+
+	logger.InfoCF("wallet", "Token balance retrieved", map[string]any{
+		"balance":  formatted,
+		"symbol":   symbol,
+		"decimals": decimals,
+	})
+
+	return &TokenBalanceInfo{
+		Balance:  formatted,
+		Symbol:   symbol,
+		Decimals: decimals,
+		Address:  tokenAddress,
+	}, nil
+}
+
+// Transfer sends tokens (uses chain's default token)
 func (ws *WalletService) Transfer(to common.Address, amount *big.Int, pin string) (common.Hash, error) {
 	if ws.chainConfig == nil {
 		return common.Hash{}, fmt.Errorf("blockchain not configured")
@@ -251,6 +345,38 @@ func (ws *WalletService) Transfer(to common.Address, amount *big.Int, pin string
 			signer,
 		)
 	}
+}
+
+// TransferToken sends ERC20 tokens to an address
+func (ws *WalletService) TransferToken(tokenAddress common.Address, to common.Address, amount *big.Int, pin string) (common.Hash, error) {
+	if ws.chainConfig == nil {
+		return common.Hash{}, fmt.Errorf("blockchain not configured")
+	}
+
+	address, err := ws.GetAddress()
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Unlock wallet
+	if err := ws.Unlock(pin); err != nil {
+		return common.Hash{}, err
+	}
+	defer ws.Lock()
+
+	// Create signer function
+	signer := ws.createSigner(address)
+
+	// Transfer ERC20 tokens
+	return ws.transferService.TransferERC20(
+		context.Background(),
+		ws.chainConfig.ChainID,
+		address,
+		tokenAddress,
+		to,
+		amount,
+		signer,
+	)
 }
 
 // CallContract calls a read-only contract function

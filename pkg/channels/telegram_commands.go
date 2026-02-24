@@ -48,6 +48,13 @@ func (c *cmd) Help(ctx context.Context, message telego.Message) error {
 /status - Show bot status and configuration
 /wallet create [PIN] - Create Ethereum wallet
 /wallet info - View wallet info
+/wallet balance [token] - Check token balance (default: CLAW)
+/wallet transfer <to> <amount> <pin> - Send CLAW tokens
+/wallet transfertoken <token> <to> <amount> <pin> - Send ERC20 tokens
+/wallet abilist - List uploaded ABIs
+/wallet abiupload <name> - Upload ABI (reply to JSON file)
+/wallet call <contract> <abi> <method> [args] - Call contract (read)
+/wallet write <c> <abi> <m> <val> <pin> [args] - Write to contract
 /show [model|channel] - Show specific configuration
 /list [models|channels] - List available options
 
@@ -55,6 +62,10 @@ func (c *cmd) Help(ctx context.Context, message telego.Message) error {
 /model - See which AI model is being used
 /wallet create 1234 - Create wallet with PIN 1234
 /wallet info - View wallet address and balance
+/wallet balance - Check CLAW token balance
+/wallet transfer 0xABC... 100 1234 - Send 100 CLAW tokens
+/wallet call 0xContract erc20 balanceOf 0xWallet - Read contract
+/wallet write 0xContract erc20 transfer 0 1234 0xTo 100 - Write contract
 /show model - Same as /model
 /list models - See all configured models`
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
