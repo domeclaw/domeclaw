@@ -24,7 +24,7 @@ var (
 	goVersion string
 )
 
-const logo = "🦞"
+const logo = "🐈‍⬛🧡✨" // Black cat with orange heart and sparkles
 
 // formatVersion returns the version string with optional git commit
 func formatVersion() string {
