@@ -1,5 +1,5 @@
 ---
-name: wallet
+name: dc-hotwallet
 description: "Telegram Wallet Commands for DomeClaw - EVM Wallet & Blockchain Integration on ClawSwift chain."
 homepage: https://github.com/domeclaw/domeclaw
 metadata: {"nanobot":{"emoji":"🦐","requires":{"tools":["wallet_auto_transfer","query_wallet_balance","query_contract_call","execute_contract_write"]}},"category":"blockchain","platform":"telegram","chain":"clawswift","chain_id":7441}
