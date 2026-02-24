@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 PicoClaw contributors
+Copyright (c) 2026 DomeClaw contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +22,5 @@ SOFTWARE.
 
 ---
 
-PicoClaw is heavily inspired by and based on [nanobot](https://github.com/HKUDS/nanobot) by HKUDS.
+DomeClaw is heavily inspired by and based on [PicoClaw](https://github.com/sipeed/picoclaw) by Sipeed, which is itself based on [nanobot](https://github.com/HKUDS/nanobot) by HKUDS.
+DomeClaw is the official continuation and rebrand of PicoClaw: https://github.com/domeclaw/domeclaw
