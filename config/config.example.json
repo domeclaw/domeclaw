@@ -81,5 +81,20 @@
   "devices": {
     "enabled": false,
     "monitor_usb": false
+  },
+  "wallet": {
+    "enabled": true,
+    "chains": [
+      {
+        "name": "ClawSwift",
+        "chain_id": 7441,
+        "rpc": "https://exp.clawswift.net/rpc",
+        "explorer": "https://exp.clawswift.net",
+        "currency": "CLAW",
+        "is_native": false,
+        "gas_token": "0x20c0000000000000000000000000000000000000",
+        "gas_token_name": "CLAW"
+      }
+    ]
   }
 }

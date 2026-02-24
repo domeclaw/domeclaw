@@ -21,17 +21,20 @@ import (
 	"github.com/sipeed/domeclaw/pkg/logger"
 	"github.com/sipeed/domeclaw/pkg/utils"
 	"github.com/sipeed/domeclaw/pkg/voice"
+	"github.com/sipeed/domeclaw/pkg/wallet"
 )
 
 type TelegramChannel struct {
 	*BaseChannel
-	bot          *telego.Bot
-	commands     TelegramCommander
-	config       *config.Config
-	chatIDs      map[string]int64
-	transcriber  *voice.GroqTranscriber
-	placeholders sync.Map // chatID -> messageID
-	stopThinking sync.Map // chatID -> thinkingCancel
+	bot            *telego.Bot
+	commands       TelegramCommander
+	walletCommands WalletCommander
+	config         *config.Config
+	chatIDs        map[string]int64
+	transcriber    *voice.GroqTranscriber
+	placeholders   sync.Map // chatID -> messageID
+	stopThinking   sync.Map // chatID -> thinkingCancel
+	walletService  *wallet.WalletService
 }
 
 type thinkingCancel struct {
@@ -74,15 +77,20 @@ func NewTelegramChannel(cfg *config.Config, bus *bus.MessageBus) (*TelegramChann
 
 	base := NewBaseChannel("telegram", telegramCfg, bus, telegramCfg.AllowFrom)
 
+	// Initialize wallet service with config
+	walletService := wallet.NewWalletService(cfg.WorkspacePath(), &cfg.Wallet)
+
 	return &TelegramChannel{
-		BaseChannel:  base,
-		commands:     NewTelegramCommands(bot, cfg),
-		bot:          bot,
-		config:       cfg,
-		chatIDs:      make(map[string]int64),
-		transcriber:  nil,
-		placeholders: sync.Map{},
-		stopThinking: sync.Map{},
+		BaseChannel:    base,
+		commands:       NewTelegramCommands(bot, cfg),
+		walletCommands: NewWalletCommands(walletService, bot),
+		bot:            bot,
+		config:         cfg,
+		chatIDs:        make(map[string]int64),
+		transcriber:    nil,
+		placeholders:   sync.Map{},
+		stopThinking:   sync.Map{},
+		walletService:  walletService,
 	}, nil
 }
 
@@ -129,6 +137,100 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
 		return c.commands.List(ctx, message)
 	}, th.CommandEqual("list"))
+
+	// Wallet commands - single handler for all wallet subcommands
+	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		text := message.Text
+		parts := strings.Fields(text)
+
+		// /wallet without subcommand - show help
+		if len(parts) == 1 {
+			_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: message.Chat.ID},
+				Text: "🦐 **Wallet Commands**\n\n" +
+					"`/wallet create [PIN]` - Create wallet with 4-digit PIN\n" +
+					"`/wallet info` - View wallet information\n" +
+					"`/wallet unlock [PIN]` - Unlock wallet for transactions\n" +
+					"`/wallet lock` - Lock wallet\n" +
+					"`/wallet balance` - Check balance",
+				ParseMode: "Markdown",
+			})
+			return err
+		}
+
+		subcommand := parts[1]
+
+		switch subcommand {
+		case "create":
+			pin := ""
+			if len(parts) >= 3 {
+				pin = parts[2]
+			}
+			return c.walletCommands.Create(ctx, message, pin)
+		case "info":
+			return c.walletCommands.Info(ctx, message)
+		case "unlock":
+			pin := ""
+			if len(parts) >= 3 {
+				pin = parts[2]
+			}
+			if pin == "" {
+				_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: message.Chat.ID},
+					Text:   "🔐 Please provide your PIN.\n\nUsage: `/wallet unlock 1234`",
+				})
+				return err
+			}
+			// Unlock wallet
+			err := c.walletService.Unlock(pin)
+			if err != nil {
+				_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: message.Chat.ID},
+					Text:   fmt.Sprintf("❌ Failed to unlock: %v", err),
+				})
+				return sendErr
+			}
+			_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: message.Chat.ID},
+				Text:   "✅ Wallet unlocked successfully!\n\nYou can now perform transactions.",
+			})
+			return sendErr
+		case "lock":
+			err := c.walletService.Lock()
+			if err != nil {
+				_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: message.Chat.ID},
+					Text:   fmt.Sprintf("❌ Failed to lock: %v", err),
+				})
+				return sendErr
+			}
+			_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: message.Chat.ID},
+				Text:   "🔒 Wallet locked successfully!",
+			})
+			return sendErr
+		case "balance":
+			balance, err := c.walletService.GetBalance()
+			if err != nil {
+				_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+					ChatID: telego.ChatID{ID: message.Chat.ID},
+					Text:   fmt.Sprintf("❌ Failed to get balance: %v", err),
+				})
+				return sendErr
+			}
+			_, sendErr := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: message.Chat.ID},
+				Text:   fmt.Sprintf("💰 Wallet Balance: %s ETH", balance),
+			})
+			return sendErr
+		default:
+			_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: message.Chat.ID},
+				Text:   fmt.Sprintf("❌ Unknown wallet command: %s\n\nUse /wallet for available commands.", subcommand),
+			})
+			return err
+		}
+	}, th.CommandEqual("wallet"))
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
 		return c.handleMessage(ctx, &message)

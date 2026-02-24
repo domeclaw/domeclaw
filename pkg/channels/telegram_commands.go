@@ -46,11 +46,15 @@ func (c *cmd) Help(ctx context.Context, message telego.Message) error {
 /help - Show this help message
 /model - Show current model info
 /status - Show bot status and configuration
+/wallet create [PIN] - Create Ethereum wallet
+/wallet info - View wallet info
 /show [model|channel] - Show specific configuration
 /list [models|channels] - List available options
 
 *Examples:*
 /model - See which AI model is being used
+/wallet create 1234 - Create wallet with PIN 1234
+/wallet info - View wallet address and balance
 /show model - Same as /model
 /list models - See all configured models`
 	_, err := c.bot.SendMessage(ctx, &telego.SendMessageParams{

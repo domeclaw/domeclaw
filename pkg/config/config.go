@@ -57,6 +57,7 @@ type Config struct {
 	Tools     ToolsConfig     `json:"tools"`
 	Heartbeat HeartbeatConfig `json:"heartbeat"`
 	Devices   DevicesConfig   `json:"devices"`
+	Wallet    WalletConfig    `json:"wallet,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling for Config
@@ -663,4 +664,41 @@ func (c *Config) ValidateModelList() error {
 		}
 	}
 	return nil
+}
+
+// WalletConfig manages wallet and blockchain settings
+type WalletConfig struct {
+	Enabled bool       `json:"enabled"`
+	Chains  []EVMChain `json:"chains,omitempty"`
+}
+
+// EVMChain represents an EVM-compatible blockchain configuration
+type EVMChain struct {
+	Name         string `json:"name"`
+	ChainID      int64  `json:"chain_id"`
+	RPC          string `json:"rpc"`
+	Explorer     string `json:"explorer"`
+	Currency     string `json:"currency"`
+	IsNative     bool   `json:"is_native"`
+	GasToken     string `json:"gas_token,omitempty"`      // ERC20 address if is_native=false
+	GasTokenName string `json:"gas_token_name,omitempty"` // Token name/symbol
+}
+
+// DefaultWalletConfig returns the default wallet configuration with ClawSwift chain
+func DefaultWalletConfig() WalletConfig {
+	return WalletConfig{
+		Enabled: true,
+		Chains: []EVMChain{
+			{
+				Name:         "ClawSwift",
+				ChainID:      7441,
+				RPC:          "https://exp.clawswift.net/rpc",
+				Explorer:     "https://exp.clawswift.net",
+				Currency:     "CLAW",
+				IsNative:     false,
+				GasToken:     "0x20c0000000000000000000000000000000000000",
+				GasTokenName: "CLAW",
+			},
+		},
+	}
 }
