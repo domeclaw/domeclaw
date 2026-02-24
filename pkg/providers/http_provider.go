@@ -1,15 +1,15 @@
-// PicoClaw - Ultra-lightweight personal AI agent
+// DomeClaw - Ultra-lightweight personal AI agent
 // Inspired by and based on nanobot: https://github.com/HKUDS/nanobot
 // License: MIT
 //
-// Copyright (c) 2026 PicoClaw contributors
+// Copyright (c) 2026 DomeClaw contributors
 
 package providers
 
 import (
 	"context"
 
-	"github.com/sipeed/picoclaw/pkg/providers/openai_compat"
+	"github.com/sipeed/domeclaw/pkg/providers/openai_compat"
 )
 
 type HTTPProvider struct {
@@ -25,6 +25,12 @@ func NewHTTPProvider(apiKey, apiBase, proxy string) *HTTPProvider {
 func NewHTTPProviderWithMaxTokensField(apiKey, apiBase, proxy, maxTokensField string) *HTTPProvider {
 	return &HTTPProvider{
 		delegate: openai_compat.NewProviderWithMaxTokensField(apiKey, apiBase, proxy, maxTokensField),
+	}
+}
+
+func NewHTTPProviderWithUserAgent(apiKey, apiBase, proxy, maxTokensField, userAgent string) *HTTPProvider {
+	return &HTTPProvider{
+		delegate: openai_compat.NewProviderWithUserAgent(apiKey, apiBase, proxy, maxTokensField, userAgent),
 	}
 }
 

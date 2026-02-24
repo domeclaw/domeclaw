@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sipeed/picoclaw/pkg/auth"
-	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/sipeed/domeclaw/pkg/auth"
+	"github.com/sipeed/domeclaw/pkg/config"
 )
 
 const defaultAnthropicAPIBase = "https://api.anthropic.com/v1"
@@ -172,6 +172,15 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 					sel.model = "deepseek-chat"
 				}
 			}
+		case "kimi_code", "kimi-code":
+			if cfg.Providers.KimiCode.APIKey != "" {
+				sel.apiKey = cfg.Providers.KimiCode.APIKey
+				sel.apiBase = cfg.Providers.KimiCode.APIBase
+				sel.proxy = cfg.Providers.KimiCode.Proxy
+				if sel.apiBase == "" {
+					sel.apiBase = "https://api.kimi.com/coding/v1"
+				}
+			}
 		case "mistral":
 			if cfg.Providers.Mistral.APIKey != "" {
 				sel.apiKey = cfg.Providers.Mistral.APIKey
@@ -196,6 +205,13 @@ func resolveProviderSelection(cfg *config.Config) (providerSelection, error) {
 	// Fallback: infer provider from model and configured keys.
 	if sel.apiKey == "" && sel.apiBase == "" {
 		switch {
+		case (strings.Contains(lowerModel, "kimi-code") || strings.HasPrefix(model, "kimi-code/") || strings.HasPrefix(model, "kimi_code/")) && cfg.Providers.KimiCode.APIKey != "":
+			sel.apiKey = cfg.Providers.KimiCode.APIKey
+			sel.apiBase = cfg.Providers.KimiCode.APIBase
+			sel.proxy = cfg.Providers.KimiCode.Proxy
+			if sel.apiBase == "" {
+				sel.apiBase = "https://api.kimi.com/coding/v1"
+			}
 		case (strings.Contains(lowerModel, "kimi") || strings.Contains(lowerModel, "moonshot") || strings.HasPrefix(model, "moonshot/")) && cfg.Providers.Moonshot.APIKey != "":
 			sel.apiKey = cfg.Providers.Moonshot.APIKey
 			sel.apiBase = cfg.Providers.Moonshot.APIBase

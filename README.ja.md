@@ -1,7 +1,7 @@
 <div align="center">
-<img src="assets/logo.jpg" alt="PicoClaw" width="512">
+<img src="assets/logo.jpg" alt="DomeClaw" width="512">
 
-<h1>PicoClaw: Go で書かれた超効率 AI アシスタント</h1>
+<h1>DomeClaw: Go で書かれた超効率 AI アシスタント</h1>
 
 <h3>$10 ハードウェア · 10MB RAM · 1秒起動 · 行くぜ、シャコ！</h3>
 <h3></h3>
@@ -19,7 +19,7 @@
 
 ---
 
-🦐 PicoClaw は [nanobot](https://github.com/HKUDS/nanobot) にインスパイアされた超軽量パーソナル AI アシスタントです。Go でゼロからリファクタリングされ、AI エージェント自身がアーキテクチャの移行とコード最適化を推進するセルフブートストラッピングプロセスで構築されました。
+🦐 DomeClaw は [nanobot](https://github.com/HKUDS/nanobot) にインスパイアされた超軽量パーソナル AI アシスタントです。Go でゼロからリファクタリングされ、AI エージェント自身がアーキテクチャの移行とコード最適化を推進するセルフブートストラッピングプロセスで構築されました。
 
 ⚡️ $10 のハードウェアで 10MB 未満の RAM で動作：OpenClaw より 99% 少ないメモリ、Mac mini より 98% 安い！
 
@@ -27,7 +27,7 @@
   <tr align="center">
     <td align="center" valign="top">
       <p align="center">
-        <img src="assets/picoclaw_mem.gif" width="360" height="240">
+        <img src="assets/domeclaw_mem.gif" width="360" height="240">
       </p>
     </td>
     <td align="center" valign="top">
@@ -39,7 +39,7 @@
 </table>
 
 ## 📢 ニュース
-2026-02-09 🎉 PicoClaw リリース！$10 ハードウェアで 10MB 未満の RAM で動く AI エージェントを 1 日で構築。🦐 行くぜ、シャコ！
+2026-02-09 🎉 DomeClaw リリース！$10 ハードウェアで 10MB 未満の RAM で動く AI エージェントを 1 日で構築。🦐 行くぜ、シャコ！
 
 ## ✨ 特徴
 
@@ -53,13 +53,13 @@
 
 🤖 **AI ブートストラップ**: 自律的な Go ネイティブ実装 — コアの 95% が AI 生成、人間によるレビュー付き。
 
-|  | OpenClaw  | NanoBot | **PicoClaw** |
+|  | OpenClaw  | NanoBot | **DomeClaw** |
 | --- | --- | --- |--- |
 | **言語** | TypeScript | Python | **Go** |
 | **RAM** | >1GB |>100MB| **< 10MB** |
 | **起動時間**</br>(0.8GHz コア) | >500秒 | >30秒 |  **<1秒** |
 | **コスト** | Mac Mini 599$ | 大半の Linux SBC </br>~50$ |**あらゆる Linux ボード**</br>**最安 10$** |
-<img src="assets/compare.jpg" alt="PicoClaw" width="512">
+<img src="assets/compare.jpg" alt="DomeClaw" width="512">
 
 
 ## 🦾 デモンストレーション
@@ -71,9 +71,9 @@
     <th><p align="center">🔎 Web 検索＆学習</p></th>
   </tr>
   <tr>
-    <td align="center"><p align="center"><img src="assets/picoclaw_code.gif" width="240" height="180"></p></td>
-    <td align="center"><p align="center"><img src="assets/picoclaw_memory.gif" width="240" height="180"></p></td>
-    <td align="center"><p align="center"><img src="assets/picoclaw_search.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/domeclaw_code.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/domeclaw_memory.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/domeclaw_search.gif" width="240" height="180"></p></td>
   </tr>
   <tr>
     <td align="center">開発 · デプロイ · スケール</td>
@@ -83,7 +83,7 @@
 </table>
 
 ### 🐜 革新的な省フットプリントデプロイ
-PicoClaw はほぼすべての Linux デバイスにデプロイできます！
+DomeClaw はほぼすべての Linux デバイスにデプロイできます！
 
 - $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html) E(Ethernet) または W(WiFi6) バージョン、最小ホームアシスタントに
 - $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html) または $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) サーバー自動メンテナンスに
@@ -97,14 +97,14 @@ https://private-user-images.githubusercontent.com/83055338/547056448-e7b031ff-d6
 
 ### コンパイル済みバイナリでインストール
 
-[リリースページ](https://github.com/sipeed/picoclaw/releases) からお使いのプラットフォーム用のファームウェアをダウンロードしてください。
+[リリースページ](https://github.com/sipeed/domeclaw/releases) からお使いのプラットフォーム用のファームウェアをダウンロードしてください。
 
 ### ソースからインストール（最新機能、開発向け推奨）
 
 ```bash
-git clone https://github.com/sipeed/picoclaw.git
+git clone https://github.com/sipeed/domeclaw.git
 
-cd picoclaw
+cd domeclaw
 make deps
 
 # ビルド（インストール不要）
@@ -119,12 +119,12 @@ make install
 
 ## 🐳 Docker Compose
 
-Docker Compose を使えば、ローカルにインストールせずに PicoClaw を実行できます。
+Docker Compose を使えば、ローカルにインストールせずに DomeClaw を実行できます。
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/sipeed/picoclaw.git
-cd picoclaw
+git clone https://github.com/sipeed/domeclaw.git
+cd domeclaw
 
 # 2. API キーを設定
 cp config/config.example.json config/config.json
@@ -138,7 +138,7 @@ docker compose --profile gateway up -d
 
 
 # 4. ログ確認
-docker compose logs -f picoclaw-gateway
+docker compose logs -f domeclaw-gateway
 
 # 5. 停止
 docker compose --profile gateway down
@@ -148,10 +148,10 @@ docker compose --profile gateway down
 
 ```bash
 # 質問を投げる
-docker compose run --rm picoclaw-agent -m "What is 2+2?"
+docker compose run --rm domeclaw-agent -m "What is 2+2?"
 
 # インタラクティブモード
-docker compose run --rm picoclaw-agent
+docker compose run --rm domeclaw-agent
 ```
 
 ### リビルド
@@ -164,17 +164,17 @@ docker compose --profile gateway up -d
 ### 🚀 クイックスタート（ネイティブ）
 
 > [!TIP]
-> `~/.picoclaw/config.json` に API キーを設定してください。
+> `~/.domeclaw/config.json` に API キーを設定してください。
 > API キーの取得先: [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)
 > Web 検索は **任意** です - 無料の [Tavily API](https://tavily.com) (月 1000 クエリ無料) または [Brave Search API](https://brave.com/search/api) (月 2000 クエリ無料)
 
 **1. 初期化**
 
 ```bash
-picoclaw onboard
+domeclaw onboard
 ```
 
-**2. 設定** (`~/.picoclaw/config.json`)
+**2. 設定** (`~/.domeclaw/config.json`)
 
 ```json
 {
@@ -231,7 +231,7 @@ picoclaw onboard
 **4. チャット**
 
 ```bash
-picoclaw agent -m "What is 2+2?"
+domeclaw agent -m "What is 2+2?"
 ```
 
 これだけです！2 分で AI アシスタントが動きます。
@@ -240,7 +240,7 @@ picoclaw agent -m "What is 2+2?"
 
 ## 💬 チャットアプリ
 
-Telegram、Discord、QQ、DingTalk、LINE、WeCom で PicoClaw と会話できます
+Telegram、Discord、QQ、DingTalk、LINE、WeCom で DomeClaw と会話できます
 
 | チャネル | セットアップ |
 |---------|------------|
@@ -279,7 +279,7 @@ Telegram、Discord、QQ、DingTalk、LINE、WeCom で PicoClaw と会話でき�
 **3. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 </details>
 
@@ -323,7 +323,7 @@ picoclaw gateway
 **6. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 
 </details>
@@ -356,7 +356,7 @@ picoclaw gateway
 **3. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 
 </details>
@@ -390,7 +390,7 @@ picoclaw gateway
 **3. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 
 </details>
@@ -436,19 +436,19 @@ LINE Developers Console で Webhook URL を `https://あなたのドメイン/we
 **4. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 
 > グループチャットでは @メンション時のみ応答します。返信は元メッセージを引用する形式です。
 
-> **Docker Compose**: `picoclaw-gateway` サービスに `ports: ["18791:18791"]` を追加して Webhook ポートを公開してください。
+> **Docker Compose**: `domeclaw-gateway` サービスに `ports: ["18791:18791"]` を追加して Webhook ポートを公開してください。
 
 </details>
 
 <details>
 <summary><b>WeCom (企業微信)</b></summary>
 
-PicoClaw は2種類の WeCom 統合をサポートしています：
+DomeClaw は2種類の WeCom 統合をサポートしています：
 
 **オプション1: WeCom Bot (智能ロボット)** - 簡単な設定、グループチャット対応
 **オプション2: WeCom App (自作アプリ)** - より多機能、アクティブメッセージング対応
@@ -519,7 +519,7 @@ PicoClaw は2種類の WeCom 統合をサポートしています：
 **4. 起動**
 
 ```bash
-picoclaw gateway
+domeclaw gateway
 ```
 
 > **注意**: WeCom App は Webhook コールバック用にポート 18792 を開放する必要があります。本番環境では HTTPS 用のリバースプロキシを使用してください。
@@ -528,14 +528,14 @@ picoclaw gateway
 
 ## ⚙️ 設定
 
-設定ファイル: `~/.picoclaw/config.json`
+設定ファイル: `~/.domeclaw/config.json`
 
 ### ワークスペース構成
 
-PicoClaw は設定されたワークスペース（デフォルト: `~/.picoclaw/workspace`）にデータを保存します：
+DomeClaw は設定されたワークスペース（デフォルト: `~/.domeclaw/workspace`）にデータを保存します：
 
 ```
-~/.picoclaw/workspace/
+~/.domeclaw/workspace/
 ├── sessions/          # 会話セッションと履歴
 ├── memory/            # 長期メモリ（MEMORY.md）
 ├── state/             # 永続状態（最後のチャネルなど）
@@ -551,7 +551,7 @@ PicoClaw は設定されたワークスペース（デフォルト: `~/.picoclaw
 
 ### 🔒 セキュリティサンドボックス
 
-PicoClaw はデフォルトでサンドボックス環境で実行されます。エージェントは設定されたワークスペース内のファイルにのみアクセスし、コマンドを実行できます。
+DomeClaw はデフォルトでサンドボックス環境で実行されます。エージェントは設定されたワークスペース内のファイルにのみアクセスし、コマンドを実行できます。
 
 #### デフォルト設定
 
@@ -559,7 +559,7 @@ PicoClaw はデフォルトでサンドボックス環境で実行されます�
 {
   "agents": {
     "defaults": {
-      "workspace": "~/.picoclaw/workspace",
+      "workspace": "~/.domeclaw/workspace",
       "restrict_to_workspace": true
     }
   }
@@ -568,7 +568,7 @@ PicoClaw はデフォルトでサンドボックス環境で実行されます�
 
 | オプション | デフォルト | 説明 |
 |-----------|-----------|------|
-| `workspace` | `~/.picoclaw/workspace` | エージェントの作業ディレクトリ |
+| `workspace` | `~/.domeclaw/workspace` | エージェントの作業ディレクトリ |
 | `restrict_to_workspace` | `true` | ファイル/コマンドアクセスをワークスペースに制限 |
 
 #### 保護対象ツール
@@ -643,7 +643,7 @@ export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 
 ### ハートビート（定期タスク）
 
-PicoClaw は自動的に定期タスクを実行できます。ワークスペースに `HEARTBEAT.md` ファイルを作成します：
+DomeClaw は自動的に定期タスクを実行できます。ワークスペースに `HEARTBEAT.md` ファイルを作成します：
 
 ```markdown
 # 定期タスク
@@ -762,7 +762,7 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
 3.  **実行**
 
     ```bash
-    picoclaw agent -m "Hello"
+    domeclaw agent -m "Hello"
     ```
 </details>
 
@@ -828,7 +828,7 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
 
 ### モデル設定 (model_list)
 
-> **新機能！** PicoClaw は現在 **モデル中心** の設定アプローチを採用しています。`ベンダー/モデル` 形式（例: `zhipu/glm-4.7`）を指定するだけで、新しいプロバイダーを追加できます—**コードの変更は一切不要！**
+> **新機能！** DomeClaw は現在 **モデル中心** の設定アプローチを採用しています。`ベンダー/モデル` 形式（例: `zhipu/glm-4.7`）を指定するだけで、新しいプロバイダーを追加できます—**コードの変更は一切不要！**
 
 この設計は、柔軟なプロバイダー選択による **マルチエージェントサポート** も可能にします：
 
@@ -916,11 +916,11 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
   "auth_method": "oauth"
 }
 ```
-> OAuth認証を設定するには、`picoclaw auth login --provider anthropic` を実行してください。
+> OAuth認証を設定するには、`domeclaw auth login --provider anthropic` を実行してください。
 
 #### ロードバランシング
 
-同じモデル名で複数のエンドポイントを設定すると、PicoClaw が自動的にラウンドロビンで分散します：
+同じモデル名で複数のエンドポイントを設定すると、DomeClaw が自動的にラウンドロビンで分散します：
 
 ```json
 {
@@ -987,11 +987,11 @@ HEARTBEAT_OK 応答         ユーザーが直接結果を受け取る
 
 | コマンド | 説明 |
 |---------|------|
-| `picoclaw onboard` | 設定＆ワークスペースの初期化 |
-| `picoclaw agent -m "..."` | エージェントとチャット |
-| `picoclaw agent` | インタラクティブチャットモード |
-| `picoclaw gateway` | ゲートウェイを起動 |
-| `picoclaw status` | ステータスを表示 |
+| `domeclaw onboard` | 設定＆ワークスペースの初期化 |
+| `domeclaw agent -m "..."` | エージェントとチャット |
+| `domeclaw agent` | インタラクティブチャットモード |
+| `domeclaw gateway` | ゲートウェイを起動 |
+| `domeclaw status` | ステータスを表示 |
 
 ## 🤝 コントリビュート＆ロードマップ
 
@@ -999,18 +999,18 @@ PR 歓迎！コードベースは意図的に小さく読みやすくしてい�
 
 Discord: https://discord.gg/V4sAZ9XWpN
 
-<img src="assets/wechat.png" alt="PicoClaw" width="512">
+<img src="assets/wechat.png" alt="DomeClaw" width="512">
 
 
 ## 🐛 トラブルシューティング
 
 ### Web 検索で「API 設定の問題」と表示される
 
-検索 API キーをまだ設定していない場合、これは正常です。PicoClaw は手動検索用の便利なリンクを提供します。
+検索 API キーをまだ設定していない場合、これは正常です。DomeClaw は手動検索用の便利なリンクを提供します。
 
 Web 検索を有効にするには：
 1. [https://tavily.com](https://tavily.com) (月 1000 クエリ無料) または [https://brave.com/search/api](https://brave.com/search/api) で無料の API キーを取得（月 2000 クエリ無料）
-2. `~/.picoclaw/config.json` に追加：
+2. `~/.domeclaw/config.json` に追加：
    ```json
    {
      "tools": {
@@ -1035,7 +1035,7 @@ Web 検索を有効にするには：
 
 ### Telegram Bot で「Conflict: terminated by other getUpdates」と表示される
 
-別のインスタンスが実行中の場合に発生します。`picoclaw gateway` が 1 つだけ実行されていることを確認してください。
+別のインスタンスが実行中の場合に発生します。`domeclaw gateway` が 1 つだけ実行されていることを確認してください。
 
 ---
 

@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/providers"
-	"github.com/sipeed/picoclaw/pkg/routing"
-	"github.com/sipeed/picoclaw/pkg/session"
-	"github.com/sipeed/picoclaw/pkg/tools"
+	"github.com/sipeed/domeclaw/pkg/config"
+	"github.com/sipeed/domeclaw/pkg/providers"
+	"github.com/sipeed/domeclaw/pkg/routing"
+	"github.com/sipeed/domeclaw/pkg/session"
+	"github.com/sipeed/domeclaw/pkg/tools"
 )
 
 // AgentInstance represents a fully configured agent with its own workspace,
@@ -125,7 +125,7 @@ func resolveAgentWorkspace(agentCfg *config.AgentConfig, defaults *config.AgentD
 	}
 	home, _ := os.UserHomeDir()
 	id := routing.NormalizeAgentID(agentCfg.ID)
-	return filepath.Join(home, ".picoclaw", "workspace-"+id)
+	return filepath.Join(home, ".domeclaw", "workspace-"+id)
 }
 
 // resolveAgentModel resolves the primary model for an agent.

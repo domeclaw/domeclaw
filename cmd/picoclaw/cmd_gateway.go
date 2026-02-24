@@ -1,4 +1,4 @@
-// PicoClaw - Ultra-lightweight personal AI agent
+// DomeClaw - Ultra-lightweight personal AI agent
 // License: MIT
 
 package main
@@ -13,19 +13,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/agent"
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/channels"
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/cron"
-	"github.com/sipeed/picoclaw/pkg/devices"
-	"github.com/sipeed/picoclaw/pkg/health"
-	"github.com/sipeed/picoclaw/pkg/heartbeat"
-	"github.com/sipeed/picoclaw/pkg/logger"
-	"github.com/sipeed/picoclaw/pkg/providers"
-	"github.com/sipeed/picoclaw/pkg/state"
-	"github.com/sipeed/picoclaw/pkg/tools"
-	"github.com/sipeed/picoclaw/pkg/voice"
+	"github.com/sipeed/domeclaw/pkg/agent"
+	"github.com/sipeed/domeclaw/pkg/bus"
+	"github.com/sipeed/domeclaw/pkg/channels"
+	"github.com/sipeed/domeclaw/pkg/config"
+	"github.com/sipeed/domeclaw/pkg/cron"
+	"github.com/sipeed/domeclaw/pkg/devices"
+	"github.com/sipeed/domeclaw/pkg/health"
+	"github.com/sipeed/domeclaw/pkg/heartbeat"
+	"github.com/sipeed/domeclaw/pkg/logger"
+	"github.com/sipeed/domeclaw/pkg/providers"
+	"github.com/sipeed/domeclaw/pkg/state"
+	"github.com/sipeed/domeclaw/pkg/tools"
+	"github.com/sipeed/domeclaw/pkg/voice"
 )
 
 func gatewayCmd() {

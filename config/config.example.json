@@ -3,7 +3,11 @@
     "defaults": {
       "workspace": "~/.picoclaw/workspace",
       "restrict_to_workspace": true,
-      "model": "gpt4",
+      "model": "high-availability-model",
+      "model_fallbacks": [
+        "deepseek",
+        "groq/llama-3-70b"
+      ],
       "max_tokens": 8192,
       "temperature": 0.7,
       "max_tool_iterations": 20
@@ -31,6 +35,29 @@
       "model_name": "deepseek",
       "model": "deepseek/deepseek-chat",
       "api_key": "sk-your-deepseek-key"
+    },
+    {
+      "model_name": "kimi-code",
+      "model": "kimi-code/kimi-coding",
+      "api_key": "sk-your-kimi-code-key",
+      "api_base": "https://api.kimi.com/coding/v1"
+    },
+    {
+      "model_name": "high-availability-model",
+      "model": "kimi-code/kimi-coding",
+      "api_key": "sk-kimi-key",
+      "api_base": "https://api.kimi.com/coding/v1"
+    },
+    {
+      "model_name": "high-availability-model",
+      "model": "qwen/qwen-max",
+      "api_key": "sk-qwen-key",
+      "api_base": "https://dashscope.aliyuncs.com/api/v1"
+    },
+    {
+      "model_name": "high-availability-model",
+      "model": "deepseek/deepseek-chat",
+      "api_key": "sk-deepseek-key"
     },
     {
       "model_name": "loadbalanced-gpt4",
@@ -181,9 +208,13 @@
       "api_key": "sk-xxx",
       "api_base": ""
     },
+    "kimi_code": {
+      "api_key": "sk-your-kimi-code-key",
+      "api_base": "https://api.kimi.com/coding/v1"
+    },
     "qwen": {
       "api_key": "sk-xxx",
-      "api_base": ""
+      "api_base": "https://dashscope.aliyuncs.com/api/v1"
     },
     "ollama": {
       "api_key": "",

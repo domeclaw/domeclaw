@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/providers/protocoltypes"
+	"github.com/sipeed/domeclaw/pkg/providers/protocoltypes"
 )
 
 type (
@@ -32,6 +32,7 @@ type Provider struct {
 	apiBase        string
 	maxTokensField string // Field name for max tokens (e.g., "max_completion_tokens" for o1/glm models)
 	httpClient     *http.Client
+	userAgent      string // Custom User-Agent header
 }
 
 func NewProvider(apiKey, apiBase, proxy string) *Provider {
@@ -39,6 +40,10 @@ func NewProvider(apiKey, apiBase, proxy string) *Provider {
 }
 
 func NewProviderWithMaxTokensField(apiKey, apiBase, proxy, maxTokensField string) *Provider {
+	return NewProviderWithUserAgent(apiKey, apiBase, proxy, maxTokensField, "")
+}
+
+func NewProviderWithUserAgent(apiKey, apiBase, proxy, maxTokensField, userAgent string) *Provider {
 	client := &http.Client{
 		Timeout: 120 * time.Second,
 	}
@@ -59,6 +64,7 @@ func NewProviderWithMaxTokensField(apiKey, apiBase, proxy, maxTokensField string
 		apiBase:        strings.TrimRight(apiBase, "/"),
 		maxTokensField: maxTokensField,
 		httpClient:     client,
+		userAgent:      userAgent,
 	}
 }
 
@@ -124,6 +130,9 @@ func (p *Provider) Chat(
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
 		req.Header.Set("Authorization", "Bearer "+p.apiKey)
+	}
+	if p.userAgent != "" {
+		req.Header.Set("User-Agent", p.userAgent)
 	}
 
 	resp, err := p.httpClient.Do(req)

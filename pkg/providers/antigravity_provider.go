@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/auth"
-	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/sipeed/domeclaw/pkg/auth"
+	"github.com/sipeed/domeclaw/pkg/logger"
 )
 
 const (
@@ -625,7 +625,7 @@ func createAntigravityTokenSource() func() (string, string, error) {
 		}
 		if cred == nil {
 			return "", "", fmt.Errorf(
-				"no credentials for google-antigravity. Run: picoclaw auth login --provider google-antigravity",
+				"no credentials for google-antigravity. Run: domeclaw auth login --provider google-antigravity",
 			)
 		}
 
@@ -648,7 +648,7 @@ func createAntigravityTokenSource() func() (string, string, error) {
 
 		if cred.IsExpired() {
 			return "", "", fmt.Errorf(
-				"antigravity credentials expired. Run: picoclaw auth login --provider google-antigravity",
+				"antigravity credentials expired. Run: domeclaw auth login --provider google-antigravity",
 			)
 		}
 

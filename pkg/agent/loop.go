@@ -1,8 +1,8 @@
-// PicoClaw - Ultra-lightweight personal AI agent
+// DomeClaw - Ultra-lightweight personal AI agent
 // Inspired by and based on nanobot: https://github.com/HKUDS/nanobot
 // License: MIT
 //
-// Copyright (c) 2026 PicoClaw contributors
+// Copyright (c) 2026 DomeClaw contributors
 
 package agent
 
@@ -16,17 +16,17 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/channels"
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/constants"
-	"github.com/sipeed/picoclaw/pkg/logger"
-	"github.com/sipeed/picoclaw/pkg/providers"
-	"github.com/sipeed/picoclaw/pkg/routing"
-	"github.com/sipeed/picoclaw/pkg/skills"
-	"github.com/sipeed/picoclaw/pkg/state"
-	"github.com/sipeed/picoclaw/pkg/tools"
-	"github.com/sipeed/picoclaw/pkg/utils"
+	"github.com/sipeed/domeclaw/pkg/bus"
+	"github.com/sipeed/domeclaw/pkg/channels"
+	"github.com/sipeed/domeclaw/pkg/config"
+	"github.com/sipeed/domeclaw/pkg/constants"
+	"github.com/sipeed/domeclaw/pkg/logger"
+	"github.com/sipeed/domeclaw/pkg/providers"
+	"github.com/sipeed/domeclaw/pkg/routing"
+	"github.com/sipeed/domeclaw/pkg/skills"
+	"github.com/sipeed/domeclaw/pkg/state"
+	"github.com/sipeed/domeclaw/pkg/tools"
+	"github.com/sipeed/domeclaw/pkg/utils"
 )
 
 type AgentLoop struct {
@@ -585,12 +585,52 @@ func (al *AgentLoop) runLLMIteration(
 		}
 
 		if err != nil {
+			// Check if this is a tool call format error
+			errMsg := err.Error()
+			if strings.Contains(errMsg, "toolcalls") && strings.Contains(errMsg, "toolcallid") {
+				// Extract missing tool call IDs
+				missingIDs := extractMissingToolCallIDs(errMsg)
+
+				logger.WarnCF("agent", "Tool call format error detected, attempting recovery",
+					map[string]any{
+						"agent_id":      agent.ID,
+						"iteration":     iteration,
+						"missing_count": len(missingIDs),
+						"missing_ids":   strings.Join(missingIDs, ", "),
+					})
+
+				// Try to recover by adding dummy tool responses
+				if len(missingIDs) > 0 {
+					recoverySuccess := al.recoverFromToolCallError(ctx, agent, messages, missingIDs, opts)
+					if recoverySuccess {
+						logger.InfoCF("agent", "Tool call error recovery successful",
+							map[string]any{
+								"agent_id":  agent.ID,
+								"iteration": iteration,
+							})
+						// Retry LLM call with fixed messages
+						continue
+					}
+				}
+			}
+
 			logger.ErrorCF("agent", "LLM call failed",
 				map[string]any{
 					"agent_id":  agent.ID,
 					"iteration": iteration,
 					"error":     err.Error(),
 				})
+
+			// Send user-friendly error message
+			userMessage := formatUserFriendlyError(err)
+			if opts.SendResponse && !constants.IsInternalChannel(opts.Channel) {
+				al.bus.PublishOutbound(bus.OutboundMessage{
+					Channel: opts.Channel,
+					ChatID:  opts.ChatID,
+					Content: userMessage,
+				})
+			}
+
 			return "", iteration, fmt.Errorf("LLM call failed after retries: %w", err)
 		}
 
@@ -708,9 +748,15 @@ func (al *AgentLoop) runLLMIteration(
 			}
 
 			// Determine content for LLM based on tool result
+			// Always provide a response, even if empty, to satisfy LLM's requirement
 			contentForLLM := toolResult.ForLLM
-			if contentForLLM == "" && toolResult.Err != nil {
-				contentForLLM = toolResult.Err.Error()
+			if contentForLLM == "" {
+				if toolResult.Err != nil {
+					contentForLLM = fmt.Sprintf("Error executing tool: %v", toolResult.Err)
+				} else {
+					// Empty result is still a valid result
+					contentForLLM = "Tool executed successfully (no output)"
+				}
 			}
 
 			toolResultMsg := providers.Message{
@@ -722,6 +768,14 @@ func (al *AgentLoop) runLLMIteration(
 
 			// Save tool result message to session
 			agent.Sessions.AddFullMessage(opts.SessionKey, toolResultMsg)
+
+			logger.DebugCF("agent", "Tool execution completed",
+				map[string]any{
+					"tool":         tc.Name,
+					"tool_call_id": tc.ID,
+					"has_error":    toolResult.Err != nil,
+					"content_len":  len(contentForLLM),
+				})
 		}
 	}
 
@@ -1148,4 +1202,121 @@ func extractParentPeer(msg bus.InboundMessage) *routing.RoutePeer {
 		return nil
 	}
 	return &routing.RoutePeer{Kind: parentKind, ID: parentID}
+}
+
+// extractMissingToolCallIDs parses error message to find missing tool call IDs
+func extractMissingToolCallIDs(errMsg string) []string {
+	// Pattern: "toolcallids did not have response messages: exec:2, exec:3"
+	startIdx := strings.Index(errMsg, "toolcallids did not have response messages:")
+	if startIdx == -1 {
+		return nil
+	}
+
+	// Extract the part after the colon
+	rest := errMsg[startIdx+len("toolcallids did not have response messages:"):]
+	rest = strings.TrimSpace(rest)
+
+	// Split by comma and clean up
+	parts := strings.Split(rest, ",")
+	ids := make([]string, 0, len(parts))
+	for _, part := range parts {
+		id := strings.TrimSpace(part)
+		if id != "" {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
+}
+
+// recoverFromToolCallError attempts to recover from tool call format errors
+func (al *AgentLoop) recoverFromToolCallError(
+	ctx context.Context,
+	agent *AgentInstance,
+	messages []providers.Message,
+	missingIDs []string,
+	opts processOptions,
+) bool {
+	logger.InfoCF("agent", "Attempting tool call error recovery",
+		map[string]any{
+			"missing_ids": strings.Join(missingIDs, ", "),
+		})
+
+	// Add dummy tool responses for each missing ID
+	for _, toolCallID := range missingIDs {
+		toolMsg := providers.Message{
+			Role:       "tool",
+			Content:    "Tool execution was interrupted. Please try again.",
+			ToolCallID: toolCallID,
+		}
+		messages = append(messages, toolMsg)
+
+		// Save to session for consistency
+		agent.Sessions.AddFullMessage(opts.SessionKey, toolMsg)
+	}
+
+	logger.InfoCF("agent", "Added dummy tool responses for recovery",
+		map[string]any{
+			"count": len(missingIDs),
+		})
+
+	return true
+}
+
+// formatUserFriendlyError converts technical errors to user-friendly messages
+func formatUserFriendlyError(err error) string {
+	errMsg := err.Error()
+
+	// Tool call format errors
+	if strings.Contains(errMsg, "toolcalls") && strings.Contains(errMsg, "toolcallid") {
+		missingIDs := extractMissingToolCallIDs(errMsg)
+		if len(missingIDs) > 0 {
+			return fmt.Sprintf(
+				"⚠️ **เกิดข้อผิดพลาดในการประมวลผลคำสั่ง**\n\n"+
+					"ระบบพยายามดำเนินการบางอย่างแต่ไม่สำเร็จ %d คำสั่ง\n"+
+					"ระบบได้พยายามแก้ไขอัตโนมัติแล้ว กรุณาลองใหม่อีกครั้ง\n\n"+
+					"หากปัญหายังคงเกิดขึ้น กรุณาลอง:\n"+
+					"• เริ่มการสนทนาใหม่\n"+
+					"• ลดความซับซ้อนของคำสั่ง\n"+
+					"• ตรวจสอบว่า tools ที่ใช้สามารถทำงานได้",
+				len(missingIDs),
+			)
+		}
+	}
+
+	// Context window errors
+	if strings.Contains(errMsg, "context") || strings.Contains(errMsg, "token") {
+		return "⚠️ **การสนทนายาวเกินไป**\n\n" +
+			"ระบบได้ทำการสรุปการสนทนาก่อนหน้าแล้ว\n" +
+			"กรุณาลองส่งข้อความอีกครั้ง"
+	}
+
+	// API errors
+	if strings.Contains(errMsg, "API request failed") {
+		if strings.Contains(errMsg, "400") {
+			return "⚠️ **เกิดข้อผิดพลาดจาก API**\n\n" +
+				"รูปแบบคำขอไม่ถูกต้อง ระบบได้พยายามแก้ไขแล้ว\n" +
+				"กรุณาลองใหม่อีกครั้ง"
+		}
+		if strings.Contains(errMsg, "401") {
+			return "⚠️ **ปัญหาการยืนยันตัวตน**\n\n" +
+				"API Key อาจไม่ถูกต้องหรือหมดอายุ\n" +
+				"กรุณาตรวจสอบการตั้งค่า API Key"
+		}
+		if strings.Contains(errMsg, "429") || strings.Contains(errMsg, "rate limit") {
+			return "⚠️ **ใช้งานบ่อยเกินไป**\n\n" +
+				"ระบบถูกใช้งานบ่อยเกินไปในขณะนี้\n" +
+				"กรุณารอสักครู่แล้วลองใหม่อีกครั้ง"
+		}
+		if strings.Contains(errMsg, "500") || strings.Contains(errMsg, "503") {
+			return "⚠️ **บริการชั่วคราวไม่พร้อมใช้งาน**\n\n" +
+				"เซิร์ฟเวอร์ของผู้ให้บริการมีปัญหาชั่วคราว\n" +
+				"กรุณาลองใหม่อีกครั้งในอีกสักครู่"
+		}
+	}
+
+	// Default error message
+	return "⚠️ **เกิดข้อผิดพลาดที่ไม่คาดคิด**\n\n" +
+		"ระบบไม่สามารถดำเนินการได้\n" +
+		"กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ"
 }

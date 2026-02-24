@@ -24,8 +24,8 @@ MaixCam 是专用于连接矽速科技 MaixCAM 与 MaixCAM2 AI 摄像设备的�
 
 ## 使用场景
 
-MaixCam 通道使 PicoClaw 能够作为边缘设备的 AI 后端运行：
+MaixCam 通道使 DomeClaw 能够作为边缘设备的 AI 后端运行：
 
-- **智能监控** ：MaixCAM 发送图像帧，PicoClaw 通过视觉模型进行分析
-- **物联网控制** ：设备发送传感器数据，PicoClaw 协调响应
-- **离线AI** ：在本地网络部署 PicoClaw 实现低延迟推理
+- **智能监控** ：MaixCAM 发送图像帧，DomeClaw 通过视觉模型进行分析
+- **物联网控制** ：设备发送传感器数据，DomeClaw 协调响应
+- **离线AI** ：在本地网络部署 DomeClaw 实现低延迟推理
