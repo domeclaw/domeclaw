@@ -1,20 +1,92 @@
-name: build
+name: Build Release
 
 on:
+  # Build เฉพาะตอน push tags (v1.0.0, v2.0.0, etc.)
   push:
-    branches: [ "main" ]
+    tags: [ 'v*' ]
+  # หรือกดปุ่ม Run workflow เองบน GitHub
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+            suffix: linux-amd64
+          - goos: linux
+            goarch: arm64
+            suffix: linux-arm64
+          - goos: linux
+            goarch: arm
+            goarm: 7
+            suffix: linux-armv7
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            suffix: darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            suffix: darwin-arm64
+          # Windows
+          - goos: windows
+            goarch: amd64
+            suffix: windows-amd64
+            extension: .exe
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
 
-      - name: Build
-        run: make build-all
+    - name: Build
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        GOARM: ${{ matrix.goarm }}
+      run: |
+        go build -ldflags "-s -w -X main.version=${{ github.ref_name }} -X main.gitCommit=${{ github.sha }}" \
+          -o domeclaw-${{ matrix.suffix }}${{ matrix.extension }} ./cmd/domeclaw
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: domeclaw-${{ matrix.suffix }}
+        path: domeclaw-${{ matrix.suffix }}${{ matrix.extension }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        pattern: domeclaw-*
+
+    - name: Create checksums
+      run: |
+        cd artifacts
+        for dir in domeclaw-*; do
+          mv "$dir"/domeclaw* ./
+          rmdir "$dir"
+        done
+        sha256sum domeclaw-* > checksums.txt
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/domeclaw-*
+          artifacts/checksums.txt
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
