@@ -21,7 +21,7 @@ func min(a, b int) int {
 }
 
 // setupGatewayHTTP creates an HTTP server for the gateway API endpoints
-func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *agent.AgentLoop) *http.Server {
+func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *agent.AgentLoop, port int) *http.Server {
 	mux := http.NewServeMux()
 
 	// Health endpoints (keep existing ones)
@@ -51,8 +51,10 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 		}
 
 		var req struct {
-			Message string `json:"message"`
-			ChatID  string `json:"chat_id"`
+			Message  string            `json:"message"`
+			ChatID   string            `json:"chat_id"`
+			Channel  string            `json:"channel,omitempty"`
+			Metadata map[string]string `json:"metadata,omitempty"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -72,12 +74,19 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 			req.ChatID = "curl_user"
 		}
 
+		// Use default channel if not provided
+		channel := req.Channel
+		if channel == "" {
+			channel = "telegram" // Default to telegram
+		}
+
 		// Process message with agent
+		sessionKey := fmt.Sprintf("agent:curl:%s", req.ChatID)
 		response, err := agentLoop.ProcessDirectWithChannel(
 			context.Background(),
 			req.Message,
-			fmt.Sprintf("agent:curl:%s", req.ChatID),
-			"curl",
+			sessionKey,
+			channel,
 			req.ChatID,
 		)
 
@@ -94,7 +103,8 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 		})
 
 		logger.InfoCF("gateway", "Chat request processed", map[string]any{
-			"chat_id": req.ChatID,
+			"channel":  channel,
+			"chat_id":  req.ChatID,
 			"response_preview": response[:min(len(response), 50)],
 		})
 	})
@@ -155,7 +165,8 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 		})
 	})
 
-	addr := fmt.Sprintf("%s:%d", cfg.Gateway.Host, cfg.Gateway.Port)
+	// Use provided port instead of cfg.Gateway.Port
+	addr := fmt.Sprintf("%s:%d", cfg.Gateway.Host, port)
 	server := &http.Server{
 		Addr:         addr,
 		Handler:      mux,

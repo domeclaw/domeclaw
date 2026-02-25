@@ -331,15 +331,88 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 			"matched_by":  route.MatchedBy,
 		})
 
-	return al.runAgentLoop(ctx, agent, processOptions{
+	// Check if message has target channel in metadata (e.g., from webhook)
+	targetChannel := msg.Metadata["target_channel"]
+	targetChatID := msg.Metadata["target_chat_id"]
+
+	// Use target channel for response if specified
+	responseChannel := msg.Channel
+	responseChatID := msg.ChatID
+
+	if targetChannel != "" {
+		responseChannel = targetChannel
+		responseChatID = targetChatID
+		// Don't use SendResponse for webhook channel
+		// processOutboundResponse will handle publishing to target channel instead
+		if msg.Channel == "webhook" {
+			// Agent will publish via processOutboundResponse after processing
+			// Set sendResponse to false to avoid duplicate messages
+		}
+	}
+
+	response, err := al.runAgentLoop(ctx, agent, processOptions{
 		SessionKey:      sessionKey,
-		Channel:         msg.Channel,
-		ChatID:          msg.ChatID,
+		Channel:         responseChannel,
+		ChatID:          responseChatID,
 		UserMessage:     msg.Content,
 		DefaultResponse: "I've completed processing but have no response to give.",
 		EnableSummary:   true,
-		SendResponse:    false,
+		SendResponse:    msg.Channel != "webhook" || targetChannel == "",
 	})
+	if err != nil {
+		return "", err
+	}
+
+	// If webhook received message with target, publish response to target channel
+	if msg.Channel == "webhook" && targetChannel != "" && response != "" {
+		al.processOutboundResponse(ctx, msg, response)
+		// Note: response already published via processOutboundResponse
+		// Don't send again via runAgentLoop's SendResponse
+	}
+
+	return response, nil
+}
+
+// processOutboundResponse handles forwarding responses to target channels (e.g., from webhook)
+// This is used to avoid infinite loop when webhook receives a message with target info
+func (al *AgentLoop) processOutboundResponse(ctx context.Context, msg bus.InboundMessage, response string) {
+	targetChannel := msg.Metadata["target_channel"]
+	targetChatID := msg.Metadata["target_chat_id"]
+
+	logger.DebugCF("agent", "processOutboundResponse called",
+		map[string]any{
+			"target_channel": targetChannel,
+			"target_chat_id": targetChatID,
+			"response_len":   len(response),
+		})
+
+	if targetChannel != "" && response != "" {
+		// Publish directly to the target channel via bus
+		outboundMsg := bus.OutboundMessage{
+			Channel: targetChannel,
+			ChatID:  targetChatID,
+			Content: response,
+		}
+		al.bus.PublishOutbound(outboundMsg)
+
+		logger.InfoCF("agent", "Forwarded response to target channel",
+			map[string]any{
+				"target_channel": targetChannel,
+				"target_chat_id": targetChatID,
+				"content_len":    len(response),
+			})
+		logger.DebugCF("agent", "Publish outbound message to bus",
+			map[string]any{
+				"channel": targetChannel,
+				"chat_id": targetChatID,
+			})
+	} else {
+		logger.WarnCF("agent", "processOutboundResponse skipped",
+			map[string]any{
+				"target_channel_empty": targetChannel == "",
+				"response_empty":       response == "",
+			})
+	}
 }
 
 func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMessage) (string, error) {

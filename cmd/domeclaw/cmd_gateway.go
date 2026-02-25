@@ -204,14 +204,15 @@ func gatewayCmd() {
 	}()
 	fmt.Printf("✓ Health endpoints available at http://%s:%d/health and /ready\n", cfg.Gateway.Host, cfg.Gateway.Port)
 
-	// Start Gateway HTTP API server
-	gatewayHTTP := setupGatewayHTTP(cfg, msgBus, agentLoop)
+	// Use a different port for the gateway HTTP API server to avoid port conflict
+	gatewayHTTPPort := cfg.Gateway.Port + 1
+	gatewayHTTP := setupGatewayHTTP(cfg, msgBus, agentLoop, gatewayHTTPPort)
 	go func() {
 		if err := gatewayHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.ErrorCF("gateway", "Gateway HTTP server error", map[string]any{"error": err.Error()})
 		}
 	}()
-	fmt.Printf("✓ Gateway HTTP API available at http://%s:%d/chat and /webhook\n", cfg.Gateway.Host, cfg.Gateway.Port)
+	fmt.Printf("✓ Gateway HTTP API available at http://%s:%d/chat and /webhook\n", cfg.Gateway.Host, gatewayHTTPPort)
 
 	go agentLoop.Run(ctx)
 

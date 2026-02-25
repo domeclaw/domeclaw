@@ -172,6 +172,17 @@ func (c *WebhookChannel) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		payload.ChatID = "webhook_chat"
 	}
 
+	// Store target info in metadata for routing
+	if payload.Metadata == nil {
+		payload.Metadata = make(map[string]string)
+	}
+	if payload.Target.Channel != "" {
+		payload.Metadata["target_channel"] = payload.Target.Channel
+	}
+	if payload.Target.ChatID != "" {
+		payload.Metadata["target_chat_id"] = payload.Target.ChatID
+	}
+
 	// Publish message to bus
 	c.HandleMessage(payload.SenderID, payload.ChatID, payload.Message, nil, payload.Metadata)
 
@@ -215,12 +226,34 @@ func (c *WebhookChannel) Stop(ctx context.Context) error {
 	return nil
 }
 
-// Send is not implemented for webhook channel (it's inbound only).
+// Send forwards messages to the configured webhook channel.
+// When target_channel and target_chat_id are set, it will publish to that channel.
 func (c *WebhookChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
-	// Webhook channel doesn't send messages, it only receives them
-	logger.DebugCF("webhook", "Ignoring outbound message (webhook is inbound only)", map[string]any{
+	logger.DebugCF("webhook", "Received outbound message", map[string]any{
 		"channel": msg.Channel,
 		"chat_id": msg.ChatID,
+		"content": msg.Content,
+	})
+
+	// If this is the webhook channel itself, don't publish to avoid infinite loop
+	// The message is already being processed through the manager's dispatchOutbound
+	// This can happen when agent publishes to webhook channel directly (e.g., via response)
+	if msg.Channel == "webhook" {
+		logger.DebugCF("webhook", "Skipping outbound message to avoid infinite loop", map[string]any{
+			"channel": msg.Channel,
+			"chat_id": msg.ChatID,
+		})
+		return nil
+	}
+
+	// Publish outbound message to bus so the channel manager can route it
+	// This allows other channels (telegram, etc.) to receive the message
+	c.bus.PublishOutbound(msg)
+
+	logger.InfoCF("webhook", "Message forwarded to outbound dispatcher", map[string]any{
+		"channel": msg.Channel,
+		"chat_id": msg.ChatID,
+		"content_len": len(msg.Content),
 	})
 	return nil
 }
