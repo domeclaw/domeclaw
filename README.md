@@ -43,21 +43,19 @@ All channels support an `allow_from` configuration to restrict who can send mess
         "987654321|alice",     // Compound format: id|username
         "group_id|groupname"   // Group chat access
       ]
-    },
-    "discord": {
-      "enabled": true,
-      "token": "YOUR_DISCORD_BOT_TOKEN",
-      "allow_from": ["123456789", "987654321"]
     }
   }
 }
 ```
 
-**How it works:**
-- If `allow_from` is empty (`[]`) or not set → **ANYONE** can message the bot (⚠️ insecure!)
+**How it works (strict mode by default):**
+- If `allow_from` is empty (`[]`) → **DENY ALL** messages (secure by default)
 - If `allow_from` contains IDs → only those users/chats can interact
+- If `allow_from` contains `"*"` → **ALLOW ALL** (open to anyone)
 - Supports Telegram username (`@username`) or user ID (numeric)
 - Compound format `id|username` for precise matching
+
+> ⚠️ **Important:** DomeClaw uses **strict mode by default** - if you don't configure `allow_from` or leave it empty, no one can send messages to your bot. To allow everyone, explicitly set `"allow_from": ["*"]`.
 
 ### **Channel Security Tips:**
 

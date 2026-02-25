@@ -43,8 +43,9 @@ func (c *BaseChannel) IsRunning() bool {
 }
 
 func (c *BaseChannel) IsAllowed(senderID string) bool {
+	// Strict mode: if allowList is empty, deny all
 	if len(c.allowList) == 0 {
-		return true
+		return false
 	}
 
 	// Extract parts from compound senderID like "123456|username"
