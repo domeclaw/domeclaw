@@ -1,0 +1,45 @@
+services:
+  # ─────────────────────────────────────────────
+  # DomeClaw Agent (one-shot query)
+  #   docker compose --profile agent run --rm domeclaw-agent -m "Hello"
+  # ─────────────────────────────────────────────
+  domeclaw-agent:
+    image: ghcr.io/domeclaw/domeclaw:latest
+    container_name: domeclaw-agent
+    profiles:
+      - agent
+    # Uncomment to access host network; leave commented unless needed.
+    #extra_hosts:
+    #  - "host.docker.internal:host-gateway"
+    volumes:
+      - ./config/config.json:/home/domeclaw/.domeclaw/config.json:ro
+      - ./domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
+      - ./skills:/home/domeclaw/.domeclaw/workspace/skills:ro
+    entrypoint: ["domeclaw", "agent"]
+    stdin_open: true
+    tty: true
+
+  # ─────────────────────────────────────────────
+  # DomeClaw Gateway (Long-running Bot)
+  #   docker compose --profile gateway up -d domeclaw-gateway
+  # ─────────────────────────────────────────────
+  domeclaw-gateway:
+    image: ghcr.io/domeclaw/domeclaw:latest
+    container_name: domeclaw-gateway
+    restart: unless-stopped
+    profiles:
+      - gateway
+    # Uncomment to access host network; leave commented unless needed.
+    #extra_hosts:
+    #  - "host.docker.internal:host-gateway"
+    volumes:
+      # Configuration file
+      - ./config/config.json:/home/domeclaw/.domeclaw/config.json:ro
+      # Persistent workspace (sessions, memory, logs)
+      - domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
+      # Builtin skills (read-only)
+      - ./skills:/home/domeclaw/.domeclaw/workspace/skills:ro
+    command: ["gateway"]
+
+volumes:
+  domeclaw-workspace:
