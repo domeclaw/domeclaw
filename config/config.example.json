@@ -46,6 +46,12 @@
     "whatsapp": {
       "enabled": false,
       "bridge_url": ""
+    },
+    "webhook": {
+      "enabled": false,
+      "token": "YOUR_WEBHOOK_TOKEN",
+      "host": "0.0.0.0",
+      "port": 18795
     }
   },
   "gateway": {

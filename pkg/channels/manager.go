@@ -202,6 +202,19 @@ func (m *Manager) initChannels() error {
 		}
 	}
 
+	if m.config.Channels.Webhook.Enabled && m.config.Channels.Webhook.Token != "" {
+		logger.DebugC("channels", "Attempting to initialize Webhook channel")
+		webhook, err := NewWebhookChannel(m.config.Channels.Webhook, m.bus)
+		if err != nil {
+			logger.ErrorCF("channels", "Failed to initialize Webhook channel", map[string]any{
+				"error": err.Error(),
+			})
+		} else {
+			m.channels["webhook"] = webhook
+			logger.InfoC("channels", "Webhook channel enabled successfully")
+		}
+	}
+
 	logger.InfoCF("channels", "Channel initialization completed", map[string]any{
 		"enabled_channels": len(m.channels),
 	})

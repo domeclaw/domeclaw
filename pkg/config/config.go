@@ -194,6 +194,15 @@ type ChannelsConfig struct {
 	OneBot   OneBotConfig   `json:"onebot"`
 	WeCom    WeComConfig    `json:"wecom"`
 	WeComApp WeComAppConfig `json:"wecom_app"`
+	Webhook  WebhookConfig  `json:"webhook"`
+}
+
+type WebhookConfig struct {
+	Enabled   bool                `json:"enabled"    env:"DOMECLAW_CHANNELS_WEBHOOK_ENABLED"`
+	Token     string              `json:"token"      env:"DOMECLAW_CHANNELS_WEBHOOK_TOKEN"`
+	Host      string              `json:"host"       env:"DOMECLAW_CHANNELS_WEBHOOK_HOST"`
+	Port      int                 `json:"port"       env:"DOMECLAW_CHANNELS_WEBHOOK_PORT"`
+	AllowFrom FlexibleStringSlice `json:"allow_from" env:"DOMECLAW_CHANNELS_WEBHOOK_ALLOW_FROM"`
 }
 
 type WhatsAppConfig struct {

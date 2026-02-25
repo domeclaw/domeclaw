@@ -101,3 +101,24 @@ func (c *BaseChannel) HandleMessage(senderID, chatID, content string, media []st
 func (c *BaseChannel) setRunning(running bool) {
 	c.running = running
 }
+
+func (c *BaseChannel) Platform() string {
+	return c.name
+}
+
+// Send is a no-op for BaseChannel - should be implemented by concrete channels
+func (c *BaseChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
+	return nil
+}
+
+// Start and Stop are no-ops for BaseChannel - should be implemented by concrete channels
+func (c *BaseChannel) Start(ctx context.Context) error {
+	return nil
+}
+
+func (c *BaseChannel) Stop(ctx context.Context) error {
+	return nil
+}
+
+// Interface guard - ensure BaseChannel implements Channel
+var _ Channel = (*BaseChannel)(nil)
