@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,252 +14,255 @@ import (
 	"github.com/sipeed/domeclaw/pkg/logger"
 )
 
-// WebhookConfig holds configuration for the webhook channel.
-type WebhookConfig struct {
-	Enabled bool   `json:"enabled"`
-	Token   string `json:"token"`
-	Host    string `json:"host"`
-	Port    int    `json:"port"`
-}
-
-// DefaultWebhookConfig returns the default webhook configuration.
-func DefaultWebhookConfig() WebhookConfig {
-	return WebhookConfig{
-		Enabled: false,
-		Token:   "",
-		Host:    "localhost",
-		Port:    18795,
-	}
-}
-
-// WebhookChannel implements the Channel interface for receiving messages via HTTP webhook.
+// WebhookChannel handles incoming webhooks via HTTP POST
 type WebhookChannel struct {
 	*BaseChannel
-	config     config.WebhookConfig
-	httpServer *http.Server
-	serverMu   sync.Mutex
-	running    bool
-	runningMu  sync.RWMutex
+	config    *config.WebhookConfig
+	bus       *bus.MessageBus
+	server    *http.Server
+	running   bool
+	manager   *Manager
+	mu        sync.RWMutex
 }
 
-// NewWebhookChannel creates a new webhook channel instance.
-func NewWebhookChannel(cfg config.WebhookConfig, messageBus *bus.MessageBus) (*WebhookChannel, error) {
-	if cfg.Token == "" {
-		return nil, fmt.Errorf("webhook token is required")
-	}
+// WebhookRequest represents the incoming webhook payload
+type WebhookRequest struct {
+	Message   string            `json:"message"`
+	ChatID    string            `json:"chat_id"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+	AuthToken string            `json:"auth_token,omitempty"`
+}
 
-	// Convert FlexibleStringSlice to []string
-	allowList := []string(cfg.AllowFrom)
+// WebhookResponse represents the response to the webhook caller
+type WebhookResponse struct {
+	Status    string `json:"status"`
+	MessageID string `json:"message_id,omitempty"`
+	Error     string `json:"error,omitempty"`
+}
 
-	base := NewBaseChannel("webhook", cfg, messageBus, allowList)
-
+// NewWebhookChannel creates a new webhook channel
+func NewWebhookChannel(cfg *config.WebhookConfig, bus *bus.MessageBus) *WebhookChannel {
 	return &WebhookChannel{
-		BaseChannel: base,
+		BaseChannel: NewBaseChannel("webhook", cfg, bus, nil),
 		config:      cfg,
-	}, nil
+		bus:         bus,
+		running:     false,
+		manager:     nil, // Will be set later if needed
+	}
 }
 
-// Start launches the HTTP webhook server.
+// SetManager sets the channel manager for outbound sending
+func (c *WebhookChannel) SetManager(m *Manager) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.manager = m
+	logger.InfoC("webhook", "Channel manager attached to webhook")
+}
+
+// Start starts the webhook server
 func (c *WebhookChannel) Start(ctx context.Context) error {
-	logger.InfoC("webhook", "Starting webhook channel")
+	if !c.config.Enabled {
+		logger.InfoC("webhook", "Webhook channel disabled, skipping start")
+		return nil
+	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc(c.config.Path, c.handleWebhook)
 
-	// Health check endpoint
-	mux.HandleFunc("/health/webhook", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "ok",
-			"channel": "webhook",
-		})
-	})
-
-	// Receive webhook endpoint
-	mux.HandleFunc("/webhook", c.handleWebhook)
-
-	addr := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
-	c.serverMu.Lock()
-	c.httpServer = &http.Server{
-		Addr:    addr,
+	c.server = &http.Server{
+		Addr:    fmt.Sprintf("%s:%d", c.config.Host, c.config.Port),
 		Handler: mux,
 	}
-	c.serverMu.Unlock()
 
-	go func() {
-		logger.InfoCF("webhook", "Webhook server listening", map[string]any{
-			"addr": addr,
+	c.running = true
+ logger.InfoCF("webhook", "Webhook server started",
+		map[string]any{
+			"address": c.server.Addr,
+			"path":    c.config.Path,
 		})
-		if err := c.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.ErrorCF("webhook", "Webhook server error", map[string]any{
-				"error": err.Error(),
-			})
+
+	// Start server in goroutine
+	go func() {
+		if err := c.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.ErrorCF("webhook", "Webhook server error", map[string]any{"error": err.Error()})
 		}
 	}()
 
-	c.runningMu.Lock()
-	c.running = true
-	c.runningMu.Unlock()
-
-	logger.InfoC("webhook", "Webhook channel started")
 	return nil
 }
 
-// handleWebhook handles incoming webhook requests.
+//Stop stops the webhook server
+func (c *WebhookChannel) Stop(ctx context.Context) error {
+	c.running = false
+	if c.server != nil {
+		if err := c.server.Shutdown(ctx); err != nil {
+			logger.ErrorCF("webhook", "Webhook server shutdown error", map[string]any{"error": err.Error()})
+			return err
+		}
+	}
+	logger.InfoC("webhook", "Webhook server stopped")
+	return nil
+}
+
+// Send sends a message via the webhook (not typically used for inbound)
+func (c *WebhookChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
+	return fmt.Errorf("webhook channel is inbound-only")
+}
+
+// IsRunning returns whether the webhook server is running
+func (c *WebhookChannel) IsRunning() bool {
+	return c.running
+}
+
+// IsAllowed checks if the incoming request is allowed (token-based)
+func (c *WebhookChannel) IsAllowed(senderID string) bool {
+	// For webhooks, we use token validation instead of allowlist
+	// The auth token is validated in the handler
+	return true
+}
+
+// handleWebhook handles incoming webhook requests
 func (c *WebhookChannel) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Authenticate with token
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		token = r.URL.Query().Get("token")
-	}
-
-	if !strings.HasPrefix(token, "Bearer ") {
-		token = "Bearer " + token
-	}
-
-	if !c.verifyToken(token) {
-		logger.WarnC("webhook", "Unauthorized webhook request")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		logger.ErrorCF("webhook", "Failed to read request body", map[string]any{
-			"error": err.Error(),
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(WebhookResponse{
+			Status: "error",
+			Error:  "Method not allowed",
 		})
-		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	var payload struct {
-		Message  string            `json:"message"`
-		SenderID string            `json:"sender_id"`
-		ChatID   string            `json:"chat_id"`
-		Metadata map[string]string `json:"metadata,omitempty"`
-		Target   struct {
-			Channel string `json:"channel"`
-			ChatID  string `json:"chat_id"`
-		} `json:"target,omitempty"`
+	// Check authentication
+	authToken := r.Header.Get("Authorization")
+	if c.config.AuthToken != "" {
+		// Expect "Bearer <token>" format
+		expected := "Bearer " + c.config.AuthToken
+		if authToken != expected {
+			logger.WarnC("webhook", "Invalid or missing authorization token")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(WebhookResponse{
+				Status: "error",
+				Error:  "Invalid or missing authorization token",
+			})
+			return
+		}
 	}
 
-	if err := json.Unmarshal(body, &payload); err != nil {
-		logger.ErrorCF("webhook", "Failed to parse webhook payload", map[string]any{
-			"error": err.Error(),
+	// Parse request body
+	var req WebhookRequest
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&req); err != nil {
+		logger.ErrorCF("webhook", "Failed to parse request body", map[string]any{"error": err.Error()})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(WebhookResponse{
+			Status: "error",
+			Error:  "Invalid JSON payload",
 		})
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	// Validate required fields
-	if payload.Message == "" {
-		logger.ErrorC("webhook", "Message is required")
-		http.Error(w, "Message is required", http.StatusBadRequest)
+	if strings.TrimSpace(req.Message) == "" {
+		logger.WarnC("webhook", "Empty message in webhook request")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(WebhookResponse{
+			Status: "error",
+			Error:  "Message is required",
+		})
 		return
 	}
 
-	// Use default values if not provided
-	if payload.SenderID == "" {
-		payload.SenderID = "webhook_user"
-	}
-	if payload.ChatID == "" {
-		payload.ChatID = "webhook_chat"
-	}
-
-	// Store target info in metadata for routing
-	if payload.Metadata == nil {
-		payload.Metadata = make(map[string]string)
-	}
-	if payload.Target.Channel != "" {
-		payload.Metadata["target_channel"] = payload.Target.Channel
-	}
-	if payload.Target.ChatID != "" {
-		payload.Metadata["target_chat_id"] = payload.Target.ChatID
+	if strings.TrimSpace(req.ChatID) == "" {
+		logger.WarnC("webhook", "Empty chat_id in webhook request")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(WebhookResponse{
+			Status: "error",
+			Error:  "chat_id is required",
+		})
+		return
 	}
 
-	// Publish message to bus
-	c.HandleMessage(payload.SenderID, payload.ChatID, payload.Message, nil, payload.Metadata)
-
-	// Return success response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "message received",
-	})
-}
-
-// verifyToken validates the authentication token.
-func (c *WebhookChannel) verifyToken(token string) bool {
-	if c.config.Token == "" {
-		return true // No token required
-	}
-	return token == "Bearer "+c.config.Token
-}
-
-// Stop gracefully shuts down the HTTP server.
-func (c *WebhookChannel) Stop(ctx context.Context) error {
-	logger.InfoC("webhook", "Stopping webhook channel")
-
-	c.serverMu.Lock()
-	if c.httpServer != nil {
-		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		if err := c.httpServer.Shutdown(shutdownCtx); err != nil {
-			logger.ErrorCF("webhook", "Webhook server shutdown error", map[string]any{
-				"error": err.Error(),
-			})
+	// Determine target channel from metadata or default to configured channel
+	targetChannel := "telegram" // Default to telegram
+	if req.Metadata != nil {
+		if ch, ok := req.Metadata["target_channel"]; ok && ch != "" {
+			targetChannel = ch
 		}
 	}
-	c.serverMu.Unlock()
 
-	c.runningMu.Lock()
-	c.running = false
-	c.runningMu.Unlock()
-
-	logger.InfoC("webhook", "Webhook channel stopped")
-	return nil
-}
-
-// Send forwards messages to the configured webhook channel.
-// When target_channel and target_chat_id are set, it will publish to that channel.
-func (c *WebhookChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
-	logger.DebugCF("webhook", "Received outbound message", map[string]any{
-		"channel": msg.Channel,
-		"chat_id": msg.ChatID,
-		"content": msg.Content,
-	})
-
-	// If this is the webhook channel itself, don't publish to avoid infinite loop
-	// The message is already being processed through the manager's dispatchOutbound
-	// This can happen when agent publishes to webhook channel directly (e.g., via response)
-	if msg.Channel == "webhook" {
-		logger.DebugCF("webhook", "Skipping outbound message to avoid infinite loop", map[string]any{
-			"channel": msg.Channel,
-			"chat_id": msg.ChatID,
+	// Validate target channel is enabled
+	if !c.isChannelEnabled(targetChannel) {
+		logger.ErrorCF("webhook", "Target channel not enabled", map[string]any{"channel": targetChannel})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(WebhookResponse{
+			Status: "error",
+			Error:  fmt.Sprintf("Target channel '%s' is not enabled", targetChannel),
 		})
-		return nil
+		return
 	}
 
-	// Publish outbound message to bus so the channel manager can route it
-	// This allows other channels (telegram, etc.) to receive the message
-	c.bus.PublishOutbound(msg)
+	// Generate a message ID
+	messageID := fmt.Sprintf("webhook-%d", time.Now().UnixNano())
 
-	logger.InfoCF("webhook", "Message forwarded to outbound dispatcher", map[string]any{
-		"channel": msg.Channel,
-		"chat_id": msg.ChatID,
-		"content_len": len(msg.Content),
+	// Create metadata with target channel info
+	metadata := make(map[string]string)
+	for k, v := range req.Metadata {
+		metadata[k] = v
+	}
+	metadata["webhook_source"] = "true"
+
+	// Publish to inbound message bus
+	// Use the target channel as the channel so it gets routed correctly
+	msg := bus.InboundMessage{
+		Channel:    targetChannel, // Use the target channel for proper routing
+		SenderID:   fmt.Sprintf("webhook|%s", req.ChatID),
+		ChatID:     req.ChatID,
+		Content:    req.Message,
+		Metadata:   metadata,
+		SessionKey: "",
+	}
+
+	c.bus.PublishInbound(msg)
+
+	logger.InfoCF("webhook", "Webhook message processed",
+		map[string]any{
+			"chat_id":        req.ChatID,
+			"target_channel": targetChannel,
+			"message_len":    len(req.Message),
+		})
+
+	// Send response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(WebhookResponse{
+		Status:    "success",
+		MessageID: messageID,
 	})
-	return nil
 }
 
-// IsRunning returns whether the channel is currently running.
-func (c *WebhookChannel) IsRunning() bool {
-	c.runningMu.RLock()
-	defer c.runningMu.RUnlock()
-	return c.running
+// isChannelEnabled checks if a channel is enabled in the manager
+func (c *WebhookChannel) isChannelEnabled(channelName string) bool {
+	// This is a simplified check - in practice, you'd need access to the manager
+	// For now, we'll allow known channels
+	knownChannels := map[string]bool{
+		"telegram":  true,
+		"discord":   true,
+		"whatsapp":  true,
+		"feishu":    true,
+		"dingtalk":  true,
+		"slack":     true,
+		"line":      true,
+		"qq":        true,
+		"wecom":     true,
+		"wecom_app": true,
+		"onebot":    true,
+		"maixcam":   true,
+	}
+	return knownChannels[strings.ToLower(channelName)]
 }

@@ -292,11 +292,6 @@ func (c *TelegramChannel) Stop(ctx context.Context) error {
 }
 
 func (c *TelegramChannel) Send(ctx context.Context, msg bus.OutboundMessage) error {
-	logger.DebugCF("telegram", "Sending message", map[string]any{
-		"chat_id": msg.ChatID,
-		"content_len": len(msg.Content),
-	})
-	
 	if !c.IsRunning() {
 		return fmt.Errorf("telegram bot not running")
 	}

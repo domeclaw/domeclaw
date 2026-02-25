@@ -298,6 +298,11 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		return al.processSystemMessage(ctx, msg)
 	}
 
+	// Check for commands
+	if response, handled := al.handleCommand(ctx, msg); handled {
+		return response, nil
+	}
+
 	// Route to determine agent and session key
 	route := al.registry.ResolveRoute(routing.RouteInput{
 		Channel:    msg.Channel,
@@ -326,93 +331,15 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 			"matched_by":  route.MatchedBy,
 		})
 
-	// Check for agent commands (like /clear, /reset, /show, etc.)
-	if response, handled := al.handleCommand(ctx, msg, agent, sessionKey); handled {
-		return response, nil
-	}
-
-	// Check if message has target channel in metadata (e.g., from webhook)
-	targetChannel := msg.Metadata["target_channel"]
-	targetChatID := msg.Metadata["target_chat_id"]
-
-	// Use target channel for response if specified
-	responseChannel := msg.Channel
-	responseChatID := msg.ChatID
-
-	if targetChannel != "" {
-		responseChannel = targetChannel
-		responseChatID = targetChatID
-		// Don't use SendResponse for webhook channel
-		// processOutboundResponse will handle publishing to target channel instead
-		if msg.Channel == "webhook" {
-			// Agent will publish via processOutboundResponse after processing
-			// Set sendResponse to false to avoid duplicate messages
-		}
-	}
-
-	response, err := al.runAgentLoop(ctx, agent, processOptions{
+	return al.runAgentLoop(ctx, agent, processOptions{
 		SessionKey:      sessionKey,
-		Channel:         responseChannel,
-		ChatID:          responseChatID,
+		Channel:         msg.Channel,
+		ChatID:          msg.ChatID,
 		UserMessage:     msg.Content,
 		DefaultResponse: "I've completed processing but have no response to give.",
 		EnableSummary:   true,
-		SendResponse:    msg.Channel != "webhook" || targetChannel == "",
+		SendResponse:    false,
 	})
-	if err != nil {
-		return "", err
-	}
-
-	// If webhook received message with target, publish response to target channel
-	if msg.Channel == "webhook" && targetChannel != "" && response != "" {
-		al.processOutboundResponse(ctx, msg, response)
-		// Note: response already published via processOutboundResponse
-		// Don't send again via runAgentLoop's SendResponse
-	}
-
-	return response, nil
-}
-
-// processOutboundResponse handles forwarding responses to target channels (e.g., from webhook)
-// This is used to avoid infinite loop when webhook receives a message with target info
-func (al *AgentLoop) processOutboundResponse(ctx context.Context, msg bus.InboundMessage, response string) {
-	targetChannel := msg.Metadata["target_channel"]
-	targetChatID := msg.Metadata["target_chat_id"]
-
-	logger.DebugCF("agent", "processOutboundResponse called",
-		map[string]any{
-			"target_channel": targetChannel,
-			"target_chat_id": targetChatID,
-			"response_len":   len(response),
-		})
-
-	if targetChannel != "" && response != "" {
-		// Publish directly to the target channel via bus
-		outboundMsg := bus.OutboundMessage{
-			Channel: targetChannel,
-			ChatID:  targetChatID,
-			Content: response,
-		}
-		al.bus.PublishOutbound(outboundMsg)
-
-		logger.InfoCF("agent", "Forwarded response to target channel",
-			map[string]any{
-				"target_channel": targetChannel,
-				"target_chat_id": targetChatID,
-				"content_len":    len(response),
-			})
-		logger.DebugCF("agent", "Publish outbound message to bus",
-			map[string]any{
-				"channel": targetChannel,
-				"chat_id": targetChatID,
-			})
-	} else {
-		logger.WarnCF("agent", "processOutboundResponse skipped",
-			map[string]any{
-				"target_channel_empty": targetChannel == "",
-				"response_empty":       response == "",
-			})
-	}
 }
 
 func (al *AgentLoop) processSystemMessage(ctx context.Context, msg bus.InboundMessage) (string, error) {
@@ -1168,7 +1095,7 @@ func (al *AgentLoop) estimateTokens(messages []providers.Message) int {
 	return totalChars * 2 / 5
 }
 
-func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage, agent *AgentInstance, sessionKey string) (string, bool) {
+func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage) (string, bool) {
 	content := strings.TrimSpace(msg.Content)
 	if !strings.HasPrefix(content, "/") {
 		return "", false
@@ -1202,27 +1129,6 @@ func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage, 
 		default:
 			return fmt.Sprintf("Unknown show target: %s", args[0]), true
 		}
-
-	case "/clear":
-		if sessionKey == "" {
-			return "No session to clear. Please use this command after starting a conversation.", true
-		}
-		agent.Sessions.SetHistory(sessionKey, []providers.Message{})
-		agent.Sessions.SetSummary(sessionKey, "")
-		agent.Sessions.Save(sessionKey)
-		return "✅ Session cleared! Your conversation history has been reset.", true
-
-	case "/reset":
-		if sessionKey == "" {
-			return "No session to reset. Please use this command after starting a conversation.", true
-		}
-		// Delete the session file and create a new one
-		session := agent.Sessions.GetOrCreate(sessionKey)
-		session.Messages = []providers.Message{}
-		session.Summary = ""
-		session.Updated = time.Now()
-		agent.Sessions.Save(sessionKey)
-		return "🔄 Session reset! A new conversation has started.", true
 
 	case "/list":
 		if len(args) < 1 {

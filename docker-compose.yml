@@ -15,7 +15,7 @@ services:
     #  - "host.docker.internal:host-gateway"
     volumes:
       - ./config/config.json:/home/domeclaw/.domeclaw/config.json:ro
-      - ./domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
+      - domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
     entrypoint: ["domeclaw", "agent"]
     stdin_open: true
     tty: true
@@ -42,3 +42,5 @@ services:
       - domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
     command: ["gateway"]
 
+volumes:
+  domeclaw-workspace:
