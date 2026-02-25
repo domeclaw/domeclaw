@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/sipeed/domeclaw/pkg/agent"
@@ -18,6 +19,15 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// verifyGatewayToken verifies the authentication token for gateway endpoints.
+func verifyGatewayToken(token string, cfg *config.Config) bool {
+	// Check against webhook token if configured
+	if cfg.Channels.Webhook.Token != "" {
+		return token == "Bearer "+cfg.Channels.Webhook.Token
+	}
+	return true // No token required
 }
 
 // setupGatewayHTTP creates an HTTP server for the gateway API endpoints
@@ -47,6 +57,22 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 	mux.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Authenticate with token
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			token = r.URL.Query().Get("token")
+		}
+
+		if !strings.HasPrefix(token, "Bearer ") {
+			token = "Bearer " + token
+		}
+
+		if !verifyGatewayToken(token, cfg) {
+			logger.WarnC("gateway", "Unauthorized gateway request")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
@@ -113,6 +139,22 @@ func setupGatewayHTTP(cfg *config.Config, msgBus *bus.MessageBus, agentLoop *age
 	mux.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Authenticate with token
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			token = r.URL.Query().Get("token")
+		}
+
+		if !strings.HasPrefix(token, "Bearer ") {
+			token = "Bearer " + token
+		}
+
+		if !verifyGatewayToken(token, cfg) {
+			logger.WarnC("gateway", "Unauthorized gateway request")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 

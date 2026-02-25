@@ -106,12 +106,175 @@ DomeClaw includes an **optional hotwallet mode** that allows the AI agent to exe
 ### **⚠️ Security Warning:**
 
 > **HOTWALLET MODE PRIORITIZES CONVENIENCE OVER SECURITY**
-> 
+>
 > - PIN is stored in **plaintext** at `~/.domeclaw/workspace/wallet/pin.json`
 > - AI has direct access to wallet keystore and can sign transactions
 > - Suitable for **testnet/development ONLY**
 > - **NOT RECOMMENDED** for mainnet or wallets holding significant funds
-> 
+>
 > Use at your own risk. For production use, disable wallet or use manual PIN entry only.
+
+---
+
+## 🌐 Gateway HTTP API
+
+DomeClaw provides a **Gateway HTTP API** for programmatic access to the agent and channels.
+
+### **Configuration**
+
+In `~/.domeclaw/config.json`:
+
+```json
+{
+  "gateway": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "http_api_port": 8081
+  },
+  "channels": {
+    "webhook": {
+      "enabled": true,
+      "token": "YOUR_WEBHOOK_TOKEN",
+      "host": "0.0.0.0",
+      "port": 18795
+    }
+  }
+}
+```
+
+**Gateway Configuration:**
+- `host`: Gateway server host (default: "0.0.0.0")
+- `port`: Gateway server port (default: 8080) - used for health checks and other internal services
+- `http_api_port`: **HTTP API port for `/chat` and `/webhook` endpoints** (default: port + 1 if not set)
+
+**Webhook Channel Configuration:**
+- `enabled`: Enable/disable webhook channel
+- `token`: Authentication token for `/chat` and `/webhook` endpoints
+- `host`: Webhook server host (default: "localhost")
+- `port`: Webhook server port (default: 18795) - for receiving external webhooks
+
+**Note:**
+- Gateway `port` (8080) is for health/status endpoints
+- HTTP API endpoints (`/chat`, `/webhook`) run on `http_api_port` (8081 by default)
+- Webhook `port` (18795) is for external webhook services (LINE, Discord, etc.)
+
+### **Available Endpoints**
+
+#### **1. POST /chat - Direct Agent Interaction**
+
+Process a message directly through the AI agent and get the response.
+
+**Endpoint:** `http://localhost:8081/chat` (Gateway port + 1)
+
+**Authentication:** Requires `Authorization: Bearer YOUR_WEBHOOK_TOKEN` header or `?token=YOUR_WEBHOOK_TOKEN` query parameter
+
+**Request:**
+```bash
+curl -X POST http://localhost:8081/chat \
+  -H "Authorization: Bearer YOUR_WEBHOOK_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hello!",
+    "chat_id": "user123",
+    "channel": "telegram"
+  }'
+```
+
+**Response:**
+```json
+{
+  "response": "Hello! How can I help you today?"
+}
+```
+
+**Parameters:**
+- `message` (required): The message content
+- `chat_id`: Target chat ID (default: "curl_user")
+- `channel`: Target channel - `telegram`, `discord`, `webhook`, etc. (default: "telegram")
+
+**Example - Query Balance:**
+```bash
+curl -X POST http://localhost:8081/chat \
+  -H "Authorization: Bearer test_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What is my balance?",
+    "chat_id": "188576201",
+    "channel": "telegram"
+  }'
+```
+
+#### **2. POST /webhook - Queue-Based Processing**
+
+Send a message to be processed by the agent via message queue. Useful for integrating with external webhook services.
+
+**Endpoint:** `http://localhost:8081/webhook`
+
+**Authentication:** Same as `/chat`
+
+**Request with Target Channel:**
+```bash
+curl -X POST http://localhost:8081/webhook \
+  -H "Authorization: Bearer YOUR_WEBHOOK_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": ">balance เหลือเท่าไหร่",
+    "chat_id": "188576201",
+    "metadata": {
+      "target_channel": "telegram",
+      "target_chat_id": "188576201"
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "status": "message queued"
+}
+```
+
+**Parameters:**
+- `message` (required): The message content
+- `sender_id`: Sender identifier (default: "webhook")
+- `chat_id`: Chat ID
+- `event`: Event type (optional)
+- `metadata`: Additional data (optional)
+  - `target_channel`: Route response to this channel (e.g., "telegram")
+  - `target_chat_id`: Send response to this chat ID
+
+**Example - Webhook Integration:**
+```bash
+# From external service (e.g., LINE, Discord)
+curl -X POST http://localhost:8081/webhook \
+  -H "Authorization: Bearer test_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Check wallet info",
+    "sender_id": "discord_user_123",
+    "chat_id": "188576201",
+    "metadata": {
+      "target_channel": "telegram",
+      "target_chat_id": "188576201"
+    }
+  }'
+```
+
+### **Channel Ports Comparison**
+
+| Port | Purpose | Protocol | Example Use Case |
+|------|---------|----------|------------------|
+| 8081 | Gateway HTTP API | REST API | Direct agent interaction via `/chat`, `/webhook` |
+| 18795 | Webhook Channel | Webhook receiver | External services (LINE, Discord) sending messages to DomeClaw |
+
+### **Health Check Endpoints**
+
+```bash
+# Gateway health
+curl http://localhost:8081/health
+
+# Ready status
+curl http://localhost:8081/ready
+```
 
 ---

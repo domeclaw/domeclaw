@@ -423,8 +423,9 @@ func (c *ModelConfig) Validate() error {
 }
 
 type GatewayConfig struct {
-	Host string `json:"host" env:"DOMECLAW_GATEWAY_HOST"`
-	Port int    `json:"port" env:"DOMECLAW_GATEWAY_PORT"`
+	Host       string `json:"host" env:"DOMECLAW_GATEWAY_HOST"`
+	Port       int    `json:"port" env:"DOMECLAW_GATEWAY_PORT"`
+	HTTPAPIPort int   `json:"http_api_port" env:"DOMECLAW_GATEWAY_HTTP_API_PORT"`
 }
 
 type BraveConfig struct {

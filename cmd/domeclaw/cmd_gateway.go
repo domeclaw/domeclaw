@@ -204,8 +204,11 @@ func gatewayCmd() {
 	}()
 	fmt.Printf("✓ Health endpoints available at http://%s:%d/health and /ready\n", cfg.Gateway.Host, cfg.Gateway.Port)
 
-	// Use a different port for the gateway HTTP API server to avoid port conflict
-	gatewayHTTPPort := cfg.Gateway.Port + 1
+	// Use configured HTTP API port, or default to gateway port + 1 if not set
+	gatewayHTTPPort := cfg.Gateway.HTTPAPIPort
+	if gatewayHTTPPort == 0 {
+		gatewayHTTPPort = cfg.Gateway.Port + 1
+	}
 	gatewayHTTP := setupGatewayHTTP(cfg, msgBus, agentLoop, gatewayHTTPPort)
 	go func() {
 		if err := gatewayHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
