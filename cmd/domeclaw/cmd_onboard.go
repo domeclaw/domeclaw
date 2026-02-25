@@ -20,31 +20,63 @@ var embeddedFiles embed.FS
 func onboard() {
 	configPath := getConfigPath()
 
+	// Check if config already exists
 	if _, err := os.Stat(configPath); err == nil {
 		fmt.Printf("Config already exists at %s\n", configPath)
-		fmt.Print("Overwrite? (y/n): ")
-		var response string
-		fmt.Scanln(&response)
-		if response != "y" {
-			fmt.Println("Aborted.")
-			return
+		fmt.Println("Use existing config. Run 'domeclaw onboard' again with 'y' to overwrite.")
+		fmt.Println("")
+		// Load existing config to get workspace path
+		cfg, err := config.LoadConfig(configPath)
+		if err != nil {
+			fmt.Printf("Warning: Could not load config: %v\n", err)
+			cfg = config.DefaultConfig()
+		}
+		workspace := cfg.WorkspacePath()
+		createWorkspaceTemplates(workspace)
+	} else {
+		// Read config.example.json from the project's config folder
+		exampleConfigPath := "config/config.example.json"
+		exampleData, err := os.ReadFile(exampleConfigPath)
+		if err != nil {
+			fmt.Printf("Warning: Could not read %s: %v\n", exampleConfigPath, err)
+			fmt.Println("Using default config instead...")
+			cfg := config.DefaultConfig()
+			if err := config.SaveConfig(configPath, cfg); err != nil {
+				fmt.Printf("Error saving config: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Created config at %s\n", configPath)
+			workspace := cfg.WorkspacePath()
+			createWorkspaceTemplates(workspace)
+		} else {
+			// Copy config.example.json to config.json
+			if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
+				fmt.Printf("Error creating config directory: %v\n", err)
+				os.Exit(1)
+			}
+			if err := os.WriteFile(configPath, exampleData, 0o600); err != nil {
+				fmt.Printf("Error saving config: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Copied config.example.json to %s\n", configPath)
+
+			// Load config to get workspace path
+			cfg, err := config.LoadConfig(configPath)
+			if err != nil {
+				fmt.Printf("Warning: Could not load config: %v\n", err)
+				cfg = config.DefaultConfig()
+			}
+			workspace := cfg.WorkspacePath()
+			createWorkspaceTemplates(workspace)
 		}
 	}
-
-	cfg := config.DefaultConfig()
-	if err := config.SaveConfig(configPath, cfg); err != nil {
-		fmt.Printf("Error saving config: %v\n", err)
-		os.Exit(1)
-	}
-
-	workspace := cfg.WorkspacePath()
-	createWorkspaceTemplates(workspace)
 
 	fmt.Printf("%s domeclaw is ready!\n", logo)
 	fmt.Println("\nNext steps:")
 	fmt.Println("  1. Add your API key to", configPath)
 	fmt.Println("")
 	fmt.Println("     Recommended:")
+	fmt.Println("     - Qwen: https://qwen.ai/")
 	fmt.Println("     - OpenRouter: https://openrouter.ai/keys (access 100+ models)")
 	fmt.Println("     - Ollama:     https://ollama.com (local, free)")
 	fmt.Println("")

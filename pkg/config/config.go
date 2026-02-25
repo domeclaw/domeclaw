@@ -304,7 +304,7 @@ type WebhookConfig struct {
 	Host      string              `json:"host"             env:"DOMECLAW_CHANNELS_WEBHOOK_HOST"`
 	Port      int                 `json:"port"             env:"DOMECLAW_CHANNELS_WEBHOOK_PORT"`
 	Path      string              `json:"path"             env:"DOMECLAW_CHANNELS_WEBHOOK_PATH"`
-	AuthToken string              `json:"auth_token"       env:"DOMECLAW_CHANNELS_WEBHOOK_AUTH_TOKEN"`
+	Token     string              `json:"token"            env:"DOMECLAW_CHANNELS_WEBHOOK_TOKEN"`
 	AllowFrom FlexibleStringSlice `json:"allow_from"       env:"DOMECLAW_CHANNELS_WEBHOOK_ALLOW_FROM"`
 }
 

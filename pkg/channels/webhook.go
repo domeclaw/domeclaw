@@ -135,9 +135,9 @@ func (c *WebhookChannel) handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	// Check authentication
 	authToken := r.Header.Get("Authorization")
-	if c.config.AuthToken != "" {
+	if c.config.Token != "" {
 		// Expect "Bearer <token>" format
-		expected := "Bearer " + c.config.AuthToken
+		expected := "Bearer " + c.config.Token
 		if authToken != expected {
 			logger.WarnC("webhook", "Invalid or missing authorization token")
 			w.Header().Set("Content-Type", "application/json")

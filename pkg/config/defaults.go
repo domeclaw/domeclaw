@@ -118,7 +118,7 @@ func DefaultConfig() *Config {
 				Host:      "0.0.0.0",
 				Port:      18794,
 				Path:      "/webhook",
-				AuthToken: "",
+				Token:     "",
 				AllowFrom: FlexibleStringSlice{},
 			},
 		},

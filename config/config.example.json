@@ -28,29 +28,41 @@
   "channels": {
     "telegram": {
       "enabled": false,
-      "token": "YOUR_TELEGRAM_BOT_TOKEN"
+      "token": "YOUR_TELEGRAM_BOT_TOKEN",
+      "allow_from": []
     },
     "discord": {
       "enabled": false,
-      "token": ""
+      "token": "",
+      "allow_from": []
     },
     "feishu": {
       "enabled": false,
       "app_id": "",
-      "app_secret": ""
+      "app_secret": "",
+      "allow_from": []
     },
     "slack": {
       "enabled": false,
-      "token": ""
+      "token": "",
+      "allow_from": []
     },
     "whatsapp": {
       "enabled": false,
-      "bridge_url": ""
+      "bridge_url": "",
+      "allow_from": []
+    },
+    "webhook": {
+      "enabled": false,
+      "token": "YOUR_WEBHOOK_TOKEN",
+      "host": "0.0.0.0",
+      "port": 18795
     }
   },
   "gateway": {
     "host": "0.0.0.0",
-    "port": 8080
+    "port": 8080,
+    "http_api_port": 8081
   },
   "tools": {
     "web": {
