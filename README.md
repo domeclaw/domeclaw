@@ -8,6 +8,14 @@
 
 ⚡️ Runs on $10 hardware with <10MB RAM: That's 99% less memory than OpenClaw and 98% cheaper than a Mac mini!
 
+---
+
+⚠️ **PRE-RELEASE SOFTWARE - USE AT YOUR OWN RISK**
+
+> DomeClaw is currently in active development and **has not been officially released yet**. The project is not recommended for production use. Features may be incomplete, unstable, or subject to breaking changes without notice. **You assume all risks and responsibilities** when using this software.
+
+---
+
 **📦 Project Info:**
 - **Source Code:** https://github.com/domeclaw/domeclaw
 - **Issues:** https://github.com/domeclaw/domeclaw/issues
