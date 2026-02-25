@@ -202,6 +202,23 @@ func (m *Manager) initChannels() error {
 		}
 	}
 
+	logger.DebugCF("channels", "Checking webhook channel config", map[string]any{
+		"enabled":  m.config.Channels.Webhook.Enabled,
+		"host":     m.config.Channels.Webhook.Host,
+		"port":     m.config.Channels.Webhook.Port,
+		"path":     m.config.Channels.Webhook.Path,
+		"auth_set": m.config.Channels.Webhook.AuthToken != "",
+	})
+
+	if m.config.Channels.Webhook.Enabled {
+		logger.DebugC("channels", "Attempting to initialize Webhook channel")
+		webhook := NewWebhookChannel(&m.config.Channels.Webhook, m.bus)
+		m.channels["webhook"] = webhook
+		logger.InfoC("channels", "Webhook channel enabled successfully")
+	} else {
+		logger.DebugC("channels", "Webhook channel is not enabled")
+	}
+
 	logger.InfoCF("channels", "Channel initialization completed", map[string]any{
 		"enabled_channels": len(m.channels),
 	})

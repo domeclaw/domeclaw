@@ -121,6 +121,15 @@ func gatewayCmd() {
 	// Inject channel manager into agent loop for command handling
 	agentLoop.SetChannelManager(channelManager)
 
+	// Set manager on webhook channel for outbound sending
+	webhookChannel, webhookExists := channelManager.GetChannel("webhook")
+	if webhookExists {
+		if wh, ok := webhookChannel.(*channels.WebhookChannel); ok {
+			wh.SetManager(channelManager)
+			logger.InfoC("webhook", "Webhook channel manager attached")
+		}
+	}
+
 	var transcriber *voice.GroqTranscriber
 	groqAPIKey := cfg.Providers.Groq.APIKey
 	if groqAPIKey == "" {

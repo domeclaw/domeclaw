@@ -194,6 +194,7 @@ type ChannelsConfig struct {
 	OneBot   OneBotConfig   `json:"onebot"`
 	WeCom    WeComConfig    `json:"wecom"`
 	WeComApp WeComAppConfig `json:"wecom_app"`
+	Webhook  WebhookConfig  `json:"webhook"`
 }
 
 type WhatsAppConfig struct {
@@ -296,6 +297,15 @@ type WeComAppConfig struct {
 	WebhookPath    string              `json:"webhook_path"     env:"DOMECLAW_CHANNELS_WECOM_APP_WEBHOOK_PATH"`
 	AllowFrom      FlexibleStringSlice `json:"allow_from"       env:"DOMECLAW_CHANNELS_WECOM_APP_ALLOW_FROM"`
 	ReplyTimeout   int                 `json:"reply_timeout"    env:"DOMECLAW_CHANNELS_WECOM_APP_REPLY_TIMEOUT"`
+}
+
+type WebhookConfig struct {
+	Enabled   bool                `json:"enabled"          env:"DOMECLAW_CHANNELS_WEBHOOK_ENABLED"`
+	Host      string              `json:"host"             env:"DOMECLAW_CHANNELS_WEBHOOK_HOST"`
+	Port      int                 `json:"port"             env:"DOMECLAW_CHANNELS_WEBHOOK_PORT"`
+	Path      string              `json:"path"             env:"DOMECLAW_CHANNELS_WEBHOOK_PATH"`
+	AuthToken string              `json:"auth_token"       env:"DOMECLAW_CHANNELS_WEBHOOK_AUTH_TOKEN"`
+	AllowFrom FlexibleStringSlice `json:"allow_from"       env:"DOMECLAW_CHANNELS_WEBHOOK_ALLOW_FROM"`
 }
 
 type HeartbeatConfig struct {

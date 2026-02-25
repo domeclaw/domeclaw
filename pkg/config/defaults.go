@@ -113,6 +113,14 @@ func DefaultConfig() *Config {
 				AllowFrom:      FlexibleStringSlice{},
 				ReplyTimeout:   5,
 			},
+			Webhook: WebhookConfig{
+				Enabled:   false,
+				Host:      "0.0.0.0",
+				Port:      18794,
+				Path:      "/webhook",
+				AuthToken: "",
+				AllowFrom: FlexibleStringSlice{},
+			},
 		},
 		Providers: ProvidersConfig{
 			OpenAI: OpenAIProviderConfig{WebSearch: true},
