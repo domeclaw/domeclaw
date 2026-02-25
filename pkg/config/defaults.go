@@ -118,7 +118,7 @@ func DefaultConfig() *Config {
 				Host:      "0.0.0.0",
 				Port:      18794,
 				Path:      "/webhook",
-				AuthToken: "",
+				Token:     "",
 				AllowFrom: FlexibleStringSlice{},
 			},
 		},
@@ -327,6 +327,21 @@ func DefaultConfig() *Config {
 		Devices: DevicesConfig{
 			Enabled:    false,
 			MonitorUSB: true,
+		},
+		Wallet: WalletConfig{
+			Enabled: true,
+			Chains: []EVMChain{
+				{
+					Name:         "ClawSwift",
+					ChainID:      7441,
+					RPC:          "https://exp.clawswift.net/rpc",
+					Explorer:     "https://exp.clawswift.net",
+					Currency:     "CLAW",
+					IsNative:     false,
+					GasToken:     "0x20c0000000000000000000000000000000000000",
+					GasTokenName: "CLAW",
+				},
+			},
 		},
 	}
 }

@@ -207,7 +207,7 @@ func (m *Manager) initChannels() error {
 		"host":     m.config.Channels.Webhook.Host,
 		"port":     m.config.Channels.Webhook.Port,
 		"path":     m.config.Channels.Webhook.Path,
-		"auth_set": m.config.Channels.Webhook.AuthToken != "",
+		"auth_set": m.config.Channels.Webhook.Token != "",
 	})
 
 	if m.config.Channels.Webhook.Enabled {
