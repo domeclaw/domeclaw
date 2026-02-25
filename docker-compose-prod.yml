@@ -36,10 +36,8 @@ services:
       # Configuration file
       - ./config/config.json:/home/domeclaw/.domeclaw/config.json:ro
       # Persistent workspace (sessions, memory, logs)
-      - domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
+      - ./domeclaw-workspace:/home/domeclaw/.domeclaw/workspace
       # Builtin skills (read-only)
       - ./skills:/home/domeclaw/.domeclaw/workspace/skills:ro
     command: ["gateway"]
 
-volumes:
-  domeclaw-workspace:
