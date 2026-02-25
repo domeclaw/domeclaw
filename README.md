@@ -23,6 +23,61 @@
 
 ---
 
+## 🔒 Security & Access Control
+
+DomeClaw includes **allow-list based access control** for all messaging channels to ensure only authorized users can interact with your AI agent.
+
+### **Channel Access Control**
+
+All channels support an `allow_from` configuration to restrict who can send messages:
+
+```json
+{
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "token": "YOUR_TELEGRAM_BOT_TOKEN",
+      "allow_from": [
+        "123456789",           // User ID (numeric)
+        "@username",           // Telegram username
+        "987654321|alice",     // Compound format: id|username
+        "group_id|groupname"   // Group chat access
+      ]
+    },
+    "discord": {
+      "enabled": true,
+      "token": "YOUR_DISCORD_BOT_TOKEN",
+      "allow_from": ["123456789", "987654321"]
+    }
+  }
+}
+```
+
+**How it works:**
+- If `allow_from` is empty (`[]`) or not set → **ANYONE** can message the bot (⚠️ insecure!)
+- If `allow_from` contains IDs → only those users/chats can interact
+- Supports Telegram username (`@username`) or user ID (numeric)
+- Compound format `id|username` for precise matching
+
+### **Channel Security Tips:**
+
+| Channel | Recommendation |
+|---------|----------------|
+| **Telegram** | Always set `allow_from` with your user ID(s) |
+| **Discord** | Restrict to specific guild members via allow list |
+| **Webhook** | Use `webhook.token` + `allow_from` for multiple layers |
+| **Feishu/Slack** | Configure `allow_from` for team members only |
+
+### **Finding Your Telegram User ID:**
+
+1. Start a DM with @userinfobot
+2. Send `/info` command
+3. Note your user ID (numeric)
+
+Or use `domeclaw agent -m "/show channel"` to see your current channel context.
+
+---
+
 ## 🆕 New Features: EVM Wallet & Blockchain Support
 
 DomeClaw now supports **EVM-compatible blockchains** with built-in wallet management!
