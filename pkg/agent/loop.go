@@ -298,11 +298,6 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		return al.processSystemMessage(ctx, msg)
 	}
 
-	// Check for commands
-	if response, handled := al.handleCommand(ctx, msg); handled {
-		return response, nil
-	}
-
 	// Route to determine agent and session key
 	route := al.registry.ResolveRoute(routing.RouteInput{
 		Channel:    msg.Channel,
@@ -330,6 +325,11 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 			"session_key": sessionKey,
 			"matched_by":  route.MatchedBy,
 		})
+
+	// Check for agent commands (like /clear, /reset, /show, etc.)
+	if response, handled := al.handleCommand(ctx, msg, agent, sessionKey); handled {
+		return response, nil
+	}
 
 	// Check if message has target channel in metadata (e.g., from webhook)
 	targetChannel := msg.Metadata["target_channel"]
@@ -1168,7 +1168,7 @@ func (al *AgentLoop) estimateTokens(messages []providers.Message) int {
 	return totalChars * 2 / 5
 }
 
-func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage) (string, bool) {
+func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage, agent *AgentInstance, sessionKey string) (string, bool) {
 	content := strings.TrimSpace(msg.Content)
 	if !strings.HasPrefix(content, "/") {
 		return "", false
@@ -1202,6 +1202,27 @@ func (al *AgentLoop) handleCommand(ctx context.Context, msg bus.InboundMessage) 
 		default:
 			return fmt.Sprintf("Unknown show target: %s", args[0]), true
 		}
+
+	case "/clear":
+		if sessionKey == "" {
+			return "No session to clear. Please use this command after starting a conversation.", true
+		}
+		agent.Sessions.SetHistory(sessionKey, []providers.Message{})
+		agent.Sessions.SetSummary(sessionKey, "")
+		agent.Sessions.Save(sessionKey)
+		return "✅ Session cleared! Your conversation history has been reset.", true
+
+	case "/reset":
+		if sessionKey == "" {
+			return "No session to reset. Please use this command after starting a conversation.", true
+		}
+		// Delete the session file and create a new one
+		session := agent.Sessions.GetOrCreate(sessionKey)
+		session.Messages = []providers.Message{}
+		session.Summary = ""
+		session.Updated = time.Now()
+		agent.Sessions.Save(sessionKey)
+		return "🔄 Session reset! A new conversation has started.", true
 
 	case "/list":
 		if len(args) < 1 {
