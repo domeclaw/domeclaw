@@ -114,6 +114,14 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 	}
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing help command
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "Help command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
 		c.commands.Help(ctx, message)
 		return nil
 	}, th.CommandEqual("help"))
@@ -123,18 +131,50 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 	}, th.CommandEqual("start"))
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing model command
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "Model command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
 		return c.commands.Model(ctx, message)
 	}, th.CommandEqual("model"))
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing status command
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "Status command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
 		return c.commands.Status(ctx, message)
 	}, th.CommandEqual("status"))
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing show command
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "Show command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
 		return c.commands.Show(ctx, message)
 	}, th.CommandEqual("show"))
 
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing list command
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "List command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
 		return c.commands.List(ctx, message)
 	}, th.CommandEqual("list"))
 
