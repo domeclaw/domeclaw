@@ -1,2 +1,2 @@
 ## Qwen Added Memories
-- Git workflow: เมื่อใช้คำสั่ง git หากไม่ได้รับอนุญาตให้ push tag ให้ push ไปเฉยๆ โดยไม่ต้องสร้าง tag หรือ push tag ไปยัง remote เพราะการ push tag จะกระตุ้น GitHub Actions workflow ให้ run build/release อัตโนมัติ ทำให้เปลือง resources
+- Git workflow: When using git commands, if not authorized to push tags, just push normally without creating or pushing tags to the remote. This is because pushing tags triggers GitHub Actions workflows to automatically run build/release, which wastes resources.

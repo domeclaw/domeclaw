@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sipeed/domeclaw/pkg/config"
 	"github.com/sipeed/domeclaw/pkg/wallet"
 )
 
@@ -15,7 +16,22 @@ func main() {
 	fmt.Println("🧪 Testing Wallet Service...")
 	fmt.Printf("Workspace: %s\n\n", workspace)
 
-	ws := wallet.NewWalletService(workspace)
+	walletCfg := &config.WalletConfig{
+		Enabled: true,
+		Chains: []config.EVMChain{
+			{
+				Name:       "ClawSwift",
+				ChainID:    7441,
+				RPC:        "https://exp.clawswift.net/rpc",
+				Explorer:   "https://exp.clawswift.net",
+				Currency:   "CLAW",
+				IsNative:   false,
+				GasToken:   "0x20c0000000000000000000000000000000000000",
+				GasTokenName: "CLAW",
+			},
+		},
+	}
+	ws := wallet.NewWalletService(workspace, walletCfg)
 
 	// Test 1: Check if wallet exists
 	fmt.Println("Test 1: Check wallet exists")

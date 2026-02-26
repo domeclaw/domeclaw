@@ -140,6 +140,15 @@ func (c *TelegramChannel) Start(ctx context.Context) error {
 
 	// Wallet commands - single handler for all wallet subcommands
 	bh.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		// Check allowlist before processing wallet commands
+		user := message.From
+		if user == nil || !c.IsAllowed(fmt.Sprintf("%d", user.ID)) {
+			logger.DebugCF("telegram", "Wallet command rejected by allowlist", map[string]any{
+				"user_id": fmt.Sprintf("%d", user.ID),
+			})
+			return nil
+		}
+
 		text := message.Text
 		parts := strings.Fields(text)
 
