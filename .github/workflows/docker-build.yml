@@ -2,7 +2,6 @@ name: Docker Build
 
 on:
   push:
-    branches: [ "main", "domeclaw" ]
     tags: [ "v*" ]
 
 env:
@@ -36,7 +35,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=,suffix=,format=short

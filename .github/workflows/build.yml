@@ -2,9 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ "main", "domeclaw" ]
-  pull_request:
-    branches: [ "main", "domeclaw" ]
+    tags: [ "v*" ]
 
 jobs:
   build:
@@ -20,3 +18,9 @@ jobs:
 
       - name: Build
         run: make build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeclaw-${{ github.ref_name }}
+          path: build/picoclaw
