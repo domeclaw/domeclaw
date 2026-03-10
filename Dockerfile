@@ -14,8 +14,13 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source and build
+# Copy source
 COPY . .
+
+# Generate embedded files (workspace for onboard command)
+RUN go generate ./...
+
+# Build
 RUN go build -ldflags="-s -w" -o picoclaw ./cmd/picoclaw
 
 # ============================================================
