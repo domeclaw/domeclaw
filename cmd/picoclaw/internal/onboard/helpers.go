@@ -43,7 +43,12 @@ func onboard() {
 	fmt.Println("")
 	fmt.Println("     See README.md for 17+ supported providers.")
 	fmt.Println("")
-	fmt.Println("  2. Chat: picoclaw agent -m \"Hello!\"")
+	fmt.Println("  2. Enable wallet (optional):")
+	fmt.Println("     - Set 'wallet.enabled': true in config")
+	fmt.Println("     - Add Infura/Alchemy RPC endpoints for chains")
+	fmt.Println("     - Use: /wallet create [password] via Telegram")
+	fmt.Println("")
+	fmt.Println("  3. Chat: picoclaw agent -m \"Hello!\"")
 }
 
 func createWorkspaceTemplates(workspace string) {

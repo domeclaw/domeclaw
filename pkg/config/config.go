@@ -58,6 +58,7 @@ type Config struct {
 	Tools     ToolsConfig     `json:"tools"`
 	Heartbeat HeartbeatConfig `json:"heartbeat"`
 	Devices   DevicesConfig   `json:"devices"`
+	Wallet    WalletConfig    `json:"wallet,omitempty"`
 }
 
 // MarshalJSON implements custom JSON marshaling for Config
@@ -978,4 +979,72 @@ func (t *ToolsConfig) IsToolEnabled(name string) bool {
 	default:
 		return true
 	}
+}
+
+// WalletConfig represents wallet configuration
+type WalletConfig struct {
+	Enabled bool          `json:"enabled" env:"PICOCLAW_WALLET_ENABLED"`
+	Chains  []ChainConfig `json:"chains"`
+}
+
+// Validate checks if the wallet configuration is valid
+func (c *WalletConfig) Validate() error {
+	if !c.Enabled {
+		return nil // Skip validation if wallet is disabled
+	}
+
+	if len(c.Chains) == 0 {
+		return fmt.Errorf("at least one chain must be configured")
+	}
+
+	for i, chain := range c.Chains {
+		if err := chain.Validate(); err != nil {
+			return fmt.Errorf("chain %d (%s): %w", i, chain.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// ChainConfig represents configuration for a blockchain network
+type ChainConfig struct {
+	Name         string `json:"name"`
+	ChainID      int    `json:"chain_id"`
+	RPC          string `json:"rpc"`
+	Explorer     string `json:"explorer"`
+	Currency     string `json:"currency"`
+	IsNative     bool   `json:"is_native"`
+	GasToken     string `json:"gas_token,omitempty"`
+	GasTokenName string `json:"gas_token_name,omitempty"`
+	Decimal      int    `json:"decimal"`
+}
+
+// Validate checks if the chain configuration is valid
+func (c *ChainConfig) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("chain name is required")
+	}
+
+	if c.ChainID <= 0 {
+		return fmt.Errorf("chain_id must be positive")
+	}
+
+	if c.RPC == "" {
+		return fmt.Errorf("rpc endpoint is required")
+	}
+
+	if c.Currency == "" {
+		return fmt.Errorf("currency symbol is required")
+	}
+
+	if c.Decimal < 0 {
+		return fmt.Errorf("decimal must be non-negative")
+	}
+
+	// For non-native chains, gas token is required
+	if !c.IsNative && c.GasToken == "" {
+		return fmt.Errorf("gas_token is required for non-native chains")
+	}
+
+	return nil
 }

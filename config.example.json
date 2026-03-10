@@ -1,0 +1,39 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "./workspace"
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "token": "YOUR_TELEGRAM_BOT_TOKEN",
+      "allow_from": ["user123", "admin456"]
+    }
+  },
+  "wallet": {
+    "enabled": true,
+    "chains": [
+      {
+        "name": "Ethereum",
+        "chain_id": 1,
+        "rpc": "https://mainnet.infura.io/v3/YOUR_PROJECT_ID",
+        "explorer": "https://etherscan.io",
+        "currency": "ETH",
+        "is_native": true,
+        "decimal": 18
+      },
+      {
+        "name": "ClawSwift",
+        "chain_id": 7441,
+        "rpc": "https://exp.clawswift.net/rpc",
+        "explorer": "https://exp.clawswift.net",
+        "currency": "CLAW",
+        "is_native": false,
+        "gas_token": "0x20c0000000000000000000000000000000000000",
+        "gas_token_name": "CLAW",
+        "decimal": 16
+      }
+    ]
+  }
+}

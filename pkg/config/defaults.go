@@ -179,6 +179,33 @@ func DefaultConfig() *Config {
 		Providers: ProvidersConfig{
 			OpenAI: OpenAIProviderConfig{WebSearch: true},
 		},
+		// Wallet configuration - Ethereum wallet functionality
+		// Enable by setting "enabled": true and adding your API keys
+		Wallet: WalletConfig{
+			Enabled: false, // Disabled by default to maintain backward compatibility
+			Chains: []ChainConfig{
+				{
+					Name:     "Ethereum",
+					ChainID:  1,
+					RPC:      "https://mainnet.infura.io/v3/YOUR_PROJECT_ID",
+					Explorer: "https://etherscan.io",
+					Currency: "ETH",
+					IsNative: true,
+					Decimal:  18,
+				},
+				{
+					Name:         "ClawSwift",
+					ChainID:      7441,
+					RPC:          "https://exp.clawswift.net/rpc",
+					Explorer:     "https://exp.clawswift.net",
+					Currency:     "CLAW",
+					IsNative:     false,
+					GasToken:     "0x20c0000000000000000000000000000000000000",
+					GasTokenName: "CLAW",
+					Decimal:      6,
+				},
+			},
+		},
 		ModelList: []ModelConfig{
 			// ============================================
 			// Add your API key to the model you want to use
