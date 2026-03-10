@@ -1,0 +1,31 @@
+# Docker Compose Override - Copy to docker-compose.override.yml and customize
+# This file is automatically merged with docker-compose.yml
+
+services:
+  picoclaw:
+    # Use pre-built image instead of building
+    # image: ghcr.io/domecclaw/picoclaw:latest
+    
+    environment:
+      # Enable debug mode for verbose logging
+      - DEBUG=1
+      
+      # Custom log level
+      - LOG_LEVEL=info
+    
+    # Custom port mappings
+    # ports:
+    #   - "0.0.0.0:18790:18790"  # Bind to all interfaces
+    #   - "127.0.0.1:18795:18795"  # Local only for webhook
+    
+    # Mount additional volumes
+    # volumes:
+    #   - /path/to/custom/agents:/home/picoclaw/.picoclaw/agents
+    
+    # Use external network
+    # networks:
+    #   - my-network
+
+# networks:
+#   my-network:
+#     external: true

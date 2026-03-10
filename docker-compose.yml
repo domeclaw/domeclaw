@@ -1,0 +1,46 @@
+# DomeClaw Docker Compose
+# PicoClaw with Wallet Tools and Webhook Channel
+#
+# Usage:
+#   docker compose up -d          # Start services
+#   docker compose down           # Stop services
+#   docker compose logs -f        # View logs
+#   docker compose exec picoclaw picoclaw wallet status
+#
+# Ports:
+#   - 18790: Gateway HTTP API
+#   - 18795: Webhook channel (optional)
+
+services:
+  picoclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: picoclaw
+    restart: unless-stopped
+    
+    ports:
+      # Gateway HTTP API
+      - "18790:18790"
+      # Webhook channel (optional - only needed if using webhook)
+      - "18795:18795"
+    
+    volumes:
+      # Persistent storage for config and wallets (root user)
+      - ./data:/root/.picoclaw
+    
+    environment:
+      # Optional: Set timezone
+      - TZ=UTC
+      # Optional: Enable debug logging
+      # - DEBUG=1
+    
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:18790/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Run as root (default)
+    # user: root
