@@ -7,6 +7,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            ext: ""
+          - os: linux
+            arch: arm64
+            ext: ""
+          - os: darwin
+            arch: arm64
+            ext: ""
+          - os: windows
+            arch: amd64
+            ext: ".exe"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -16,11 +32,49 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Build
-        run: make build
+      - name: Generate
+        run: go generate ./...
 
-      - name: Upload artifacts
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          output="domeclaw-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          go build -ldflags="-s -w" -o "build/${output}" ./cmd/picoclaw
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: domeclaw-${{ github.ref_name }}
-          path: build/picoclaw
+          name: domeclaw-${{ matrix.os }}-${{ matrix.arch }}
+          path: build/domeclaw-*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: domeclaw-*
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.ref_name }}"
+          
+          # Collect all binaries
+          mkdir -p release
+          for dir in artifacts/domeclaw-*; do
+            cp "$dir"/domeclaw-* release/
+          done
+          
+          # Create release with binaries
+          gh release create "$tag" \
+            --title "Release $tag" \
+            release/*
