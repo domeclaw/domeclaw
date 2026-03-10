@@ -1,8 +1,10 @@
-name: build
+name: Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "domeclaw" ]
+  pull_request:
+    branches: [ "main", "domeclaw" ]
 
 jobs:
   build:
@@ -17,4 +19,4 @@ jobs:
           go-version-file: go.mod
 
       - name: Build
-        run: make build-all
+        run: make build
