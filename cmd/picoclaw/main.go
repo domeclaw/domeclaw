@@ -1,8 +1,6 @@
-// PicoClaw - Ultra-lightweight personal AI agent
-// Inspired by and based on nanobot: https://github.com/HKUDS/nanobot
+// DomeClaw - Personal AI Assistant with Wallet & Webhook
+// Forked from PicoClaw: https://github.com/sipeed/picoclaw
 // License: MIT
-//
-// Copyright (c) 2026 PicoClaw contributors
 
 package main
 
@@ -28,12 +26,12 @@ import (
 )
 
 func NewPicoclawCommand() *cobra.Command {
-	short := fmt.Sprintf("%s picoclaw - Personal AI Assistant v%s\n\n", internal.Logo, config.GetVersion())
+	short := fmt.Sprintf("%s %s v%s\n\n", internal.Logo, config.AppNameDisplay, config.GetVersion())
 
 	cmd := &cobra.Command{
-		Use:     "picoclaw",
+		Use:     "domeclaw",
 		Short:   short,
-		Example: "picoclaw version",
+		Example: "domeclaw version",
 	}
 
 	cmd.AddCommand(
@@ -56,18 +54,22 @@ func NewPicoclawCommand() *cobra.Command {
 const (
 	colorBlue = "\033[1;38;2;62;93;185m"
 	colorRed  = "\033[1;38;2;213;70;70m"
-	banner    = "\r\n" +
-		colorBlue + "██████╗ ██╗ ██████╗ ██████╗ " + colorRed + " ██████╗██╗      █████╗ ██╗    ██╗\n" +
-		colorBlue + "██╔══██╗██║██╔════╝██╔═══██╗" + colorRed + "██╔════╝██║     ██╔══██╗██║    ██║\n" +
-		colorBlue + "██████╔╝██║██║     ██║   ██║" + colorRed + "██║     ██║     ███████║██║ █╗ ██║\n" +
-		colorBlue + "██╔═══╝ ██║██║     ██║   ██║" + colorRed + "██║     ██║     ██╔══██║██║███╗██║\n" +
-		colorBlue + "██║     ██║╚██████╗╚██████╔╝" + colorRed + "╚██████╗███████╗██║  ██║╚███╔███╔╝\n" +
-		colorBlue + "╚═╝     ╚═╝ ╚═════╝ ╚═════╝ " + colorRed + " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝\n " +
-		"\033[0m\r\n"
 )
 
+// getBanner returns the DomeClaw colored banner
+func getBanner() string {
+	return "\r\n" +
+		colorBlue + "██████╗  ██████╗ ███╗   ███╗███████╗ " + colorRed + "██████╗██╗      █████╗ ██╗    ██╗\n" +
+		colorBlue + "██╔══██╗██╔═══██╗████╗ ████║██╔════╝" + colorRed + "██╔════╝██║     ██╔══██╗██║    ██║\n" +
+		colorBlue + "██║  ██║██║   ██║██╔████╔██║█████╗  " + colorRed + "██║     ██║     ███████║██║ █╗ ██║\n" +
+		colorBlue + "██║  ██║██║   ██║██║╚██╔╝██║██╔══╝  " + colorRed + "██║     ██║     ██╔══██║██║███╗██║\n" +
+		colorBlue + "██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗" + colorRed + "╚██████╗███████╗██║  ██║╚███╔███╔╝\n" +
+		colorBlue + "╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝" + colorRed + " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝\n " +
+		"\033[0m\r\n"
+}
+
 func main() {
-	fmt.Printf("%s", banner)
+	fmt.Printf("%s", getBanner())
 	cmd := NewPicoclawCommand()
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
