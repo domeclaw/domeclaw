@@ -28,8 +28,12 @@ RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
 # ============================================================
 FROM alpine:3.19
 
+# Install packages and configure DNS
 RUN apk add --no-cache ca-certificates tzdata curl openssl && \
-    update-ca-certificates
+    update-ca-certificates && \
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 
 # Copy binary
 COPY --from=builder /build/domeclaw /usr/local/bin/domeclaw
