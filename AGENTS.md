@@ -108,6 +108,50 @@ The following commands are allowed in exec tool by default:
 - `curl` - HTTP requests
 - `cast` - Foundry Ethereum CLI
 
+## Rebrand Options
+
+The following branding files are prepared for easy rebrand:
+
+| File | Brand | Usage |
+|------|-------|-------|
+| `pkg/config/domeclaw_branding.go` | **DomeClaw** (current) | Default branding |
+| `pkg/config/mvpclaw_branding.go` | MVP Claw | Future option |
+| `pkg/config/jfinclaw_branding.go` | JFIN Claw | Future option |
+
+### How to Rebrand
+
+1. **Backup current branding:**
+   ```bash
+   cp pkg/config/domeclaw_branding.go pkg/config/domeclaw_branding.go.bak
+   ```
+
+2. **Replace with desired brand:**
+   ```bash
+   # For MVP Claw
+   cp pkg/config/mvpclaw_branding.go pkg/config/domeclaw_branding.go
+   
+   # For JFIN Claw
+   cp pkg/config/jfinclaw_branding.go pkg/config/domeclaw_branding.go
+   ```
+
+3. **Rebuild:**
+   ```bash
+   go build -o domeclaw ./cmd/picoclaw
+   ```
+
+4. **Verify:**
+   ```bash
+   ./domeclaw version
+   ```
+
+### Branding Components
+
+Each branding file contains:
+- `Banner` - ASCII art logo
+- `AppNameDisplay` - Display name
+- `AppShortDescription` - CLI short description
+- `AppLongDescription` - Detailed description
+
 ## Docker Usage
 
 ### Binary Name
