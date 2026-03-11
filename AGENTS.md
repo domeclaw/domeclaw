@@ -110,6 +110,19 @@ The following commands are allowed in exec tool by default:
 
 ## Docker Usage
 
+### Binary Name
+DomeClaw builds the binary as `domeclaw` (not `picoclaw`) to distinguish from upstream:
+
+```bash
+# Local build
+go build -o domeclaw ./cmd/picoclaw
+
+# Docker build
+Dockerfile builds as /usr/local/bin/domeclaw
+```
+
+### Docker Commands
+
 ```bash
 # Build
 docker build -t domeclaw .

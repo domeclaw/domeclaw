@@ -20,8 +20,8 @@ COPY . .
 # Generate embedded files (workspace for onboard command)
 RUN go generate ./...
 
-# Build
-RUN go build -ldflags="-s -w" -o picoclaw ./cmd/picoclaw
+# Build as domeclaw (DomeClaw-specific binary name)
+RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
 
 # ============================================================
 # Stage 2: Runtime (root user)
@@ -32,7 +32,7 @@ RUN apk add --no-cache ca-certificates tzdata curl openssl && \
     update-ca-certificates
 
 # Copy binary
-COPY --from=builder /build/picoclaw /usr/local/bin/picoclaw
+COPY --from=builder /build/domeclaw /usr/local/bin/domeclaw
 
 # Expose ports
 # 18790 - Gateway HTTP API
@@ -43,5 +43,5 @@ EXPOSE 18790 18795
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -q --spider http://localhost:18790/health || exit 1
 
-ENTRYPOINT ["picoclaw"]
+ENTRYPOINT ["domeclaw"]
 CMD ["gateway"]
