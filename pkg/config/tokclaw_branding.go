@@ -16,22 +16,22 @@ const (
    ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
-	// AppNameDisplay is the display name for the application
-	AppNameDisplay = "TOK Claw"
+	// TOKClawAppNameDisplay is the display name for the application
+	TOKClawAppNameDisplay = "TOK Claw"
 
-	// AppShortDescription is the short description shown in CLI
-	AppShortDescription = "TOK Claw - Personal AI Assistant with Wallet & Webhook"
+	// TOKClawAppShortDescription is the short description shown in CLI
+	TOKClawAppShortDescription = "TOK Claw - Personal AI Assistant with Wallet & Webhook"
 
-	// AppLongDescription is the detailed description
-	AppLongDescription = "TOK Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	// TOKClawAppLongDescription is the detailed description
+	TOKClawAppLongDescription = "TOK Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
 // GetBanner returns the TOK Claw banner with colors
-func GetBanner() string {
+func TOKClawGetBanner() string {
 	return TOKClawBanner
 }
 
 // GetAppName returns the application display name
-func GetAppName() string {
-	return AppNameDisplay
+func TOKClawGetAppName() string {
+	return TOKClawAppNameDisplay
 }

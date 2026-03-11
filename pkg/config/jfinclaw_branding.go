@@ -16,22 +16,22 @@ const (
  ╚════╝ ╚═╝     ╚═╝╚═╝  ╚═══╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
-	// AppNameDisplay is the display name for the application
-	AppNameDisplay = "JFIN Claw"
+	// JFINClawAppNameDisplay is the display name for the application
+	JFINClawAppNameDisplay = "JFIN Claw"
 
-	// AppShortDescription is the short description shown in CLI
-	AppShortDescription = "JFIN Claw - Personal AI Assistant with Wallet & Webhook"
+	// JFINClawAppShortDescription is the short description shown in CLI
+	JFINClawAppShortDescription = "JFIN Claw - Personal AI Assistant with Wallet & Webhook"
 
-	// AppLongDescription is the detailed description
-	AppLongDescription = "JFIN Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	// JFINClawAppLongDescription is the detailed description
+	JFINClawAppLongDescription = "JFIN Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
 // GetBanner returns the JFIN Claw banner with colors
-func GetBanner() string {
+func JFINClawGetBanner() string {
 	return JFINClawBanner
 }
 
 // GetAppName returns the application display name
-func GetAppName() string {
-	return AppNameDisplay
+func JFINClawGetAppName() string {
+	return JFINClawAppNameDisplay
 }

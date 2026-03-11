@@ -1,4 +1,4 @@
-// DomeClaw - Personal AI Assistant with Wallet & Webhook
+// TOK Claw - Personal AI Assistant with Wallet & Webhook
 // Forked from PicoClaw: https://github.com/sipeed/picoclaw
 // License: MIT
 
@@ -29,9 +29,9 @@ func NewPicoclawCommand() *cobra.Command {
 	short := fmt.Sprintf("%s %s v%s\n\n", internal.Logo, config.AppNameDisplay, config.GetVersion())
 
 	cmd := &cobra.Command{
-		Use:     "domeclaw",
+		Use:     "tokclaw",
 		Short:   short,
-		Example: "domeclaw version",
+		Example: "tokclaw version",
 	}
 
 	cmd.AddCommand(
@@ -56,15 +56,15 @@ const (
 	colorRed  = "\033[1;38;2;213;70;70m"
 )
 
-// getBanner returns the DomeClaw colored banner
+// getBanner returns the TOK Claw colored banner
 func getBanner() string {
 	return "\r\n" +
-		colorBlue + "██████╗  ██████╗ ███╗   ███╗███████╗ " + colorRed + "██████╗██╗      █████╗ ██╗    ██╗\n" +
-		colorBlue + "██╔══██╗██╔═══██╗████╗ ████║██╔════╝" + colorRed + "██╔════╝██║     ██╔══██╗██║    ██║\n" +
-		colorBlue + "██║  ██║██║   ██║██╔████╔██║█████╗  " + colorRed + "██║     ██║     ███████║██║ █╗ ██║\n" +
-		colorBlue + "██║  ██║██║   ██║██║╚██╔╝██║██╔══╝  " + colorRed + "██║     ██║     ██╔══██║██║███╗██║\n" +
-		colorBlue + "██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗" + colorRed + "╚██████╗███████╗██║  ██║╚███╔███╔╝\n" +
-		colorBlue + "╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝" + colorRed + " ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝\n " +
+		colorBlue + "████████╗ ██████╗ ██╗  ██╗     " + colorRed + "██████╗██╗      █████╗ ██╗    ██╗\n" +
+		colorBlue + "╚══██╔══╝██╔═══██╗██║ ██╔╝    " + colorRed + "██╔════╝██║     ██╔══██╗██║    ██║\n" +
+		colorBlue + "   ██║   ██║   ██║█████╔╝     " + colorRed + "██║     ██║     ███████║██║ █╗ ██║\n" +
+		colorBlue + "   ██║   ██║   ██║██╔═██╗     " + colorRed + "██║     ██║     ██╔══██║██║███╗██║\n" +
+		colorBlue + "   ██║   ╚██████╔╝██║  ██╗    " + colorRed + "╚██████╗███████╗██║  ██║╚███╔███╔╝\n" +
+		colorBlue + "   ╚═╝    ╚═════╝ ╚═╝  ╚═╝     " + colorRed + "╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝\n " +
 		"\033[0m\r\n"
 }
 

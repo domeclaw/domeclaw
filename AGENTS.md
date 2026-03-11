@@ -118,6 +118,7 @@ The following branding files are prepared for easy rebrand:
 | `pkg/config/mvpclaw_branding.go` | MVP Claw | Future option |
 | `pkg/config/jfinclaw_branding.go` | JFIN Claw | Future option |
 | `pkg/config/tokclaw_branding.go` | TOK Claw | Future option |
+| `pkg/config/jibclaw_branding.go` | JIB Claw | Future option |
 
 ### How to Rebrand
 

@@ -1,32 +1,31 @@
-// DomeClaw Branding Configuration
-// This file is DomeClaw-specific and should not conflict with upstream PicoClaw
-// It separates branding from config to minimize merge conflicts
+// TOK Claw Branding Configuration
+// Branch: tokclaw
 
 package config
 
 const (
-	// DomeClawBanner is the ASCII art banner for DomeClaw
-	// Using 8-char width for "DomeClaw" vs 7-char for "PicoClaw"
+	// DomeClawBanner is the ASCII art banner for TOK Claw
+	// T-O-K (3 characters) + CLAW (4 characters)
 	DomeClawBanner = `
-██████╗  ██████╗ ███╗   ███╗███████╗ ██████╗██╗      █████╗ ██╗    ██╗
-██╔══██╗██╔═══██╗████╗ ████║██╔════╝██╔════╝██║     ██╔══██╗██║    ██║
-██║  ██║██║   ██║██╔████╔██║█████╗  ██║     ██║     ███████║██║ █╗ ██║
-██║  ██║██║   ██║██║╚██╔╝██║██╔══╝  ██║     ██║     ██╔══██║██║███╗██║
-██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗╚██████╗███████╗██║  ██║╚███╔███╔╝
-╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+████████╗ ██████╗ ██╗  ██╗     ██████╗██╗      █████╗ ██╗    ██╗
+╚══██╔══╝██╔═══██╗██║ ██╔╝    ██╔════╝██║     ██╔══██╗██║    ██║
+   ██║   ██║   ██║█████╔╝     ██║     ██║     ███████║██║ █╗ ██║
+   ██║   ██║   ██║██╔═██╗     ██║     ██║     ██╔══██║██║███╗██║
+   ██║   ╚██████╔╝██║  ██╗    ╚██████╗███████╗██║  ██║╚███╔███╔╝
+   ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
 	// AppNameDisplay is the display name for the application
-	AppNameDisplay = "DomeClaw"
+	AppNameDisplay = "TOK Claw"
 
 	// AppShortDescription is the short description shown in CLI
-	AppShortDescription = "DomeClaw - Personal AI Assistant with Wallet & Webhook"
+	AppShortDescription = "TOK Claw - Personal AI Assistant with Wallet & Webhook"
 
 	// AppLongDescription is the detailed description
-	AppLongDescription = "DomeClaw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	AppLongDescription = "TOK Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
-// GetBanner returns the DomeClaw banner with colors
+// GetBanner returns the TOK Claw banner with colors
 func GetBanner() string {
 	return DomeClawBanner
 }

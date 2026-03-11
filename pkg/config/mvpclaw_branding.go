@@ -16,22 +16,22 @@ const (
 ╚═╝     ╚═╝  ╚═══╝  ╚═╝          ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
-	// AppNameDisplay is the display name for the application
-	AppNameDisplay = "MVP Claw"
+	// MVPClawAppNameDisplay is the display name for the application
+	MVPClawAppNameDisplay = "MVP Claw"
 
-	// AppShortDescription is the short description shown in CLI
-	AppShortDescription = "MVP Claw - Personal AI Assistant with Wallet & Webhook"
+	// MVPClawAppShortDescription is the short description shown in CLI
+	MVPClawAppShortDescription = "MVP Claw - Personal AI Assistant with Wallet & Webhook"
 
-	// AppLongDescription is the detailed description
-	AppLongDescription = "MVP Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	// MVPClawAppLongDescription is the detailed description
+	MVPClawAppLongDescription = "MVP Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
 // GetBanner returns the MVP Claw banner with colors
-func GetBanner() string {
+func MVPClawGetBanner() string {
 	return MVPClawBanner
 }
 
 // GetAppName returns the application display name
-func GetAppName() string {
-	return AppNameDisplay
+func MVPClawGetAppName() string {
+	return MVPClawAppNameDisplay
 }
