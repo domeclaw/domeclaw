@@ -27,7 +27,7 @@ func DefaultConfig() *Config {
 		Agents: AgentsConfig{
 			Defaults: AgentDefaults{
 				Workspace:                 workspacePath,
-				RestrictToWorkspace:       true,
+				RestrictToWorkspace:       false, // Allow exec tool to access paths outside workspace
 				Provider:                  "",
 				Model:                     "",
 				MaxTokens:                 32768,
