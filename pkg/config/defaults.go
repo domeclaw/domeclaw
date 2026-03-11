@@ -462,6 +462,11 @@ func DefaultConfig() *Config {
 				},
 				EnableDenyPatterns: true,
 				TimeoutSeconds:     60,
+				// Allow curl and cast commands for blockchain interactions
+				CustomAllowPatterns: []string{
+					`^curl\s+`,
+					`^cast\s+`,
+				},
 			},
 			Skills: SkillsToolsConfig{
 				ToolConfig: ToolConfig{
