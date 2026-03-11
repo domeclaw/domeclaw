@@ -28,7 +28,8 @@ RUN go build -ldflags="-s -w" -o picoclaw ./cmd/picoclaw
 # ============================================================
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates tzdata curl
+RUN apk add --no-cache ca-certificates tzdata curl openssl && \
+    update-ca-certificates
 
 # Copy binary
 COPY --from=builder /build/picoclaw /usr/local/bin/picoclaw
