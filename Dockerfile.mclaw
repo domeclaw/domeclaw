@@ -1,0 +1,82 @@
+# MClaw - Ultra-lightweight personal AI agent with Web Console
+# Multi-stage build with launcher support
+
+# ============================================================
+# Stage 1: Build Frontend
+# ============================================================
+FROM node:20-alpine AS frontend-builder
+
+RUN apk add --no-cache git
+
+WORKDIR /frontend
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY web/frontend/package.json web/frontend/pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install
+
+# Copy frontend source
+COPY web/frontend/ .
+
+# Build frontend
+RUN pnpm build:backend
+
+# ============================================================
+# Stage 2: Build Go Binaries
+# ============================================================
+FROM golang:1.25.7-alpine AS go-builder
+
+RUN apk add --no-cache git make build-base
+
+WORKDIR /build
+
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Copy built frontend from previous stage
+COPY --from=frontend-builder /frontend/dist ./web/backend/dist
+
+# Generate embedded files
+RUN go generate ./...
+
+# Build mclaw binary
+RUN go build -ldflags="-s -w" -o mclaw ./cmd/picoclaw
+
+# Build mclaw-launcher binary (includes web console)
+RUN go build -ldflags="-s -w" -o mclaw-launcher ./web/backend
+
+# ============================================================
+# Stage 3: Runtime
+# ============================================================
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata curl openssl && \
+    update-ca-certificates && \
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+
+# Copy binaries
+COPY --from=go-builder /build/mclaw /usr/local/bin/mclaw
+COPY --from=go-builder /build/mclaw-launcher /usr/local/bin/mclaw-launcher
+
+# Expose ports
+# 18790 - Gateway HTTP API
+# 18795 - Webhook channel
+# 18800 - Web Console (Launcher)
+EXPOSE 18790 18795 18800
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q --spider http://localhost:18790/health || exit 1
+
+ENTRYPOINT ["mclaw-launcher"]
+CMD ["-public", "-no-browser"]
