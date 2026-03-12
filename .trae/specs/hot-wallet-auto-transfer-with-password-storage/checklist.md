@@ -1,0 +1,9 @@
+- [x] การเก็บ password ลงใน pin.json ทำงานได้
+- [x] คำสั่ง transfer ไม่ต้องใส่ PIN และ from address
+- [x] คำสั่ง transfertoken ไม่ต้องใส่ PIN และ from address
+- [x] ระบบใช้ wallet อันเดียวเท่านั้น (ในคำสั่ง transfer และ transfertoken)
+- [x] `wallet create 1234` สร้าง pin.json ที่มี password 1234
+- [x] `transfer 0xA3570FCDA303F55e0978be450f87F885d80a3758 0.01` ใช้ PIN จาก pin.json (เตรียมพร้อม)
+- [x] `transfertoken 0xA3570FCDA303F55e0978be450f87F885d80a3758 0.01 0x20c0000000000000000000000000000000000000` ใช้ PIN จาก pin.json (เตรียมพร้อม)
+- [x] ระบบไม่ให้สร้าง wallet หลายอัน
+- [x] ทุกการโอนเงินทำงานโดยอัตโนมัติ

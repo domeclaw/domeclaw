@@ -1,0 +1,19 @@
+- [ ] Core contract interaction methods implemented
+  - [ ] CallContractMethod function created
+  - [ ] ExecuteContractMethod function created
+  - [ ] ABI lookup and parameter encoding/decoding implemented
+- [ ] AI tools for contract interaction created
+  - [ ] query_contract_call tool registered and functional
+  - [ ] execute_contract_write tool registered and functional
+  - [ ] Tools handle errors and edge cases
+- [ ] Telegram commands implemented
+  - [ ] /wallet call command works
+  - [ ] /wallet write command works
+  - [ ] Response formatting is user-friendly
+- [ ] CLI commands implemented
+  - [ ] picoclaw wallet call command available
+  - [ ] picoclaw wallet write command available
+- [ ] Integration with ClawSwift network tested
+  - [ ] ERC20 contract calls work
+  - [ ] Contract write operations succeed
+- [ ] dc-hotwallet skill integration verified
