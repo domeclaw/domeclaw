@@ -1,13 +1,13 @@
-// PicoClaw Web Console - Web-based chat and management interface
+// MClaw Web Console - Web-based chat and management interface
 //
-// Provides a web UI for chatting with PicoClaw via the Pico Channel WebSocket,
+// Provides a web UI for chatting with MClaw via the WebSocket,
 // with configuration management and gateway process control.
 //
 // Usage:
 //
-//	go build -o picoclaw-web ./web/backend/
-//	./picoclaw-web [config.json]
-//	./picoclaw-web -public config.json
+//	go build -o mclaw-launcher ./web/backend/
+//	./mclaw-launcher [config.json]
+//	./mclaw-launcher -public config.json
 
 package main
 
@@ -25,6 +25,7 @@ import (
 	"github.com/sipeed/picoclaw/web/backend/api"
 	"github.com/sipeed/picoclaw/web/backend/launcherconfig"
 	"github.com/sipeed/picoclaw/web/backend/middleware"
+	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/web/backend/utils"
 )
 
@@ -34,10 +35,10 @@ func main() {
 	noBrowser := flag.Bool("no-browser", false, "Do not auto-open browser on startup")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "PicoClaw Launcher - A web-based configuration editor\n\n")
+		fmt.Fprintf(os.Stderr, "MClaw Launcher - A web-based configuration editor\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] [config.json]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
-		fmt.Fprintf(os.Stderr, "  config.json    Path to the configuration file (default: ~/.picoclaw/config.json)\n\n")
+		fmt.Fprintf(os.Stderr, "  config.json    Path to the configuration file (default: ~/.mclaw/config.json)\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
@@ -133,7 +134,7 @@ func main() {
 	)
 
 	// Print startup banner
-	fmt.Print(utils.Banner)
+	fmt.Print(config.GetBanner())
 	fmt.Println()
 	fmt.Println("  Open the following URL in your browser:")
 	fmt.Println()
