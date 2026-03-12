@@ -6,7 +6,7 @@
 # ============================================================
 FROM node:20-alpine AS frontend-builder
 
-WORKDIR /frontend
+WORKDIR /build/web/frontend
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -20,7 +20,7 @@ RUN pnpm install
 # Copy frontend source
 COPY web/frontend/ .
 
-# Build frontend
+# Build frontend (outputs to ../backend/dist)
 RUN pnpm build:backend
 
 # ============================================================
@@ -40,7 +40,7 @@ RUN go mod download
 COPY . .
 
 # Copy built frontend from previous stage
-COPY --from=frontend-builder /frontend/dist ./web/backend/dist
+COPY --from=frontend-builder /build/web/backend/dist ./web/backend/dist
 
 # Generate embedded files
 RUN go generate ./...
