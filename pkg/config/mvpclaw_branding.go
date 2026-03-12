@@ -1,32 +1,31 @@
-// MVP Claw Branding Configuration
-// This file is for future rebrand to MVP Claw
+// M Claw Branding Configuration
+// This file is for future rebrand to M Claw
 // To use: Replace domeclaw_branding.go with this file content
 
 package config
 
 const (
-	// MVPClawBanner is the ASCII art banner for MVP Claw
-	// "MVP Claw" = 8 characters (same width as DomeClaw)
+	// MVPClawBanner is the ASCII art banner for M Claw
 	MVPClawBanner = `
-███╗   ███╗██╗   ██╗██████╗      ██████╗██╗      █████╗ ██╗    ██╗
-████╗ ████║██║   ██║██╔══██╗    ██╔════╝██║     ██╔══██╗██║    ██║
-██╔████╔██║██║   ██║██████╔╝    ██║     ██║     ███████║██║ █╗ ██║
-██║╚██╔╝██║╚██╗ ██╔╝██╔═══╝     ██║     ██║     ██╔══██║██║███╗██║
-██║ ╚═╝ ██║ ╚████╔╝ ██║         ╚██████╗███████╗██║  ██║╚███╔███╔╝
-╚═╝     ╚═╝  ╚═══╝  ╚═╝          ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+███╗   ███╗    ██████╗██╗      █████╗ ██╗    ██╗
+████╗ ████║   ██╔════╝██║     ██╔══██╗██║    ██║
+██╔████╔██║   ██║     ██║     ███████║██║ █╗ ██║
+██║╚██╔╝██║   ██║     ██║     ██╔══██║██║███╗██║
+██║ ╚═╝ ██║   ╚██████╗███████╗██║  ██║╚███╔███╔╝
+╚═╝     ╚═╝    ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
 	// MVPClawAppNameDisplay is the display name for the application
-	MVPClawAppNameDisplay = "MVP Claw"
+	MVPClawAppNameDisplay = "M Claw"
 
 	// MVPClawAppShortDescription is the short description shown in CLI
-	MVPClawAppShortDescription = "MVP Claw - Personal AI Assistant with Wallet & Webhook"
+	MVPClawAppShortDescription = "M Claw - Personal AI Assistant with Wallet & Webhook"
 
 	// MVPClawAppLongDescription is the detailed description
-	MVPClawAppLongDescription = "MVP Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	MVPClawAppLongDescription = "M Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
-// GetBanner returns the MVP Claw banner with colors
+// GetBanner returns the M Claw banner with colors
 func MVPClawGetBanner() string {
 	return MVPClawBanner
 }
