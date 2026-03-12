@@ -190,6 +190,73 @@ docker run -d \
    - Build and push Docker image to `ghcr.io/domeclaw/domeclaw`
    - Create GitHub release with artifacts
 
+## Multi-Repo Workflow
+
+This project maintains code in **one local directory** but can push to **multiple remote repositories**:
+
+| Remote | Repository | Branch | Purpose |
+|--------|------------|--------|---------|
+| `origin` | `domeclaw/domeclaw` | `domeclaw` | Main DomeClaw repo |
+| `mclaw` | `domeclaw/mclaw` | `main` | M Claw rebranded version |
+
+### Setup
+
+```bash
+# Add mclaw remote (if not already added)
+git remote add mclaw git@github.com:domeclaw/mclaw.git
+
+# Verify remotes
+git remote -v
+```
+
+### Workflow: Push to M Claw Repo
+
+Work in the same directory (`/Users/dome/project/domeclaw/domeclaw`), edit files, then push to `mclaw` repo:
+
+```bash
+# 1. Ensure you're on the correct branch
+git checkout mclaw
+
+# 2. Make your changes
+# Edit files...
+
+# 3. Commit changes
+git add -A
+git commit -m "feat: your changes"
+
+# 4. Push to mclaw repo (main branch)
+git push mclaw mclaw:main
+```
+
+### Pushing to Different Remotes
+
+```bash
+# Push to DomeClaw repo (origin)
+git push origin mclaw
+
+# Push to M Claw repo (mclaw) - main branch
+git push mclaw mclaw:main
+
+# Push current branch to mclaw as main
+git push mclaw HEAD:main
+```
+
+### Important Notes for M Claw Repo
+
+- **M Claw repo** uses `main` as default branch (not `mclaw`)
+- **No secrets** should be committed to M Claw repo (Google OAuth credentials moved to ENV vars)
+- **No non-English READMEs** in M Claw repo (removed: `README.zh.md`, `README.fr.md`, etc.)
+- **Rebranded** from `picoclaw` to `mclaw` in documentation
+
+### Force Push (Use with Caution)
+
+Only use when rewriting history (e.g., removing secrets):
+
+```bash
+# Force push to mclaw main
+git push mclaw mclaw:main --force
+```
+
 ## Important Notes
 
 - **Wallet Security**: PIN stored in plaintext - testnet only
