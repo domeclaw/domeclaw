@@ -6,8 +6,6 @@
 # ============================================================
 FROM node:20-alpine AS frontend-builder
 
-RUN apk add --no-cache git
-
 WORKDIR /frontend
 
 # Install pnpm
@@ -28,7 +26,7 @@ RUN pnpm build:backend
 # ============================================================
 # Stage 2: Build Go Binaries
 # ============================================================
-FROM golang:1.25.7-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
 
 RUN apk add --no-cache git make build-base
 
@@ -58,11 +56,7 @@ RUN go build -ldflags="-s -w" -o mclaw-launcher ./web/backend
 # ============================================================
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates tzdata curl openssl && \
-    update-ca-certificates && \
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
-    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+RUN apk add --no-cache ca-certificates tzdata curl
 
 # Copy binaries
 COPY --from=go-builder /build/mclaw /usr/local/bin/mclaw
