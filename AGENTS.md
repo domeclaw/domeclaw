@@ -119,6 +119,7 @@ The following branding files are prepared for easy rebrand:
 | `pkg/config/jfinclaw_branding.go` | JFIN Claw | Future option |
 | `pkg/config/tokclaw_branding.go` | TOK Claw | Future option |
 | `pkg/config/jibclaw_branding.go` | JIB Claw | Future option |
+| `pkg/config/inkclaw_branding.go` | INK Claw | Future option |
 
 ### How to Rebrand
 
