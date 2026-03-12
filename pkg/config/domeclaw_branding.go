@@ -1,31 +1,31 @@
-// TOK Claw Branding Configuration
-// Branch: tokclaw
+// DomeClaw Branding Configuration
+// This is the main branding file for DomeClaw
 
 package config
 
 const (
-	// DomeClawBanner is the ASCII art banner for TOK Claw
-	// T-O-K (3 characters) + CLAW (4 characters)
+	// DomeClawBanner is the ASCII art banner for DomeClaw
+	// DOME (4 characters) + CLAW (4 characters)
 	DomeClawBanner = `
-████████╗ ██████╗ ██╗  ██╗     ██████╗██╗      █████╗ ██╗    ██╗
-╚══██╔══╝██╔═══██╗██║ ██╔╝    ██╔════╝██║     ██╔══██╗██║    ██║
-   ██║   ██║   ██║█████╔╝     ██║     ██║     ███████║██║ █╗ ██║
-   ██║   ██║   ██║██╔═██╗     ██║     ██║     ██╔══██║██║███╗██║
-   ██║   ╚██████╔╝██║  ██╗    ╚██████╗███████╗██║  ██║╚███╔███╔╝
-   ╚═╝    ╚═════╝ ╚═╝  ╚═╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+██████╗  ██████╗ ███╗   ███╗███████╗     ██████╗██╗      █████╗ ██╗    ██╗
+██╔══██╗██╔═══██╗████╗ ████║██╔════╝    ██╔════╝██║     ██╔══██╗██║    ██║
+██║  ██║██║   ██║██╔████╔██║█████╗      ██║     ██║     ███████║██║ █╗ ██║
+██║  ██║██║   ██║██║╚██╔╝██║██╔══╝      ██║     ██║     ██╔══██║██║███╗██║
+██████╔╝╚██████╔╝██║ ╚═╝ ██║███████╗    ╚██████╗███████╗██║  ██║╚███╔███╔╝
+╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝     ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
 `
 
 	// AppNameDisplay is the display name for the application
-	AppNameDisplay = "TOK Claw"
+	AppNameDisplay = "DomeClaw"
 
 	// AppShortDescription is the short description shown in CLI
-	AppShortDescription = "TOK Claw - Personal AI Assistant with Wallet & Webhook"
+	AppShortDescription = "DomeClaw - Personal AI Assistant with Wallet & Webhook"
 
 	// AppLongDescription is the detailed description
-	AppLongDescription = "TOK Claw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
+	AppLongDescription = "DomeClaw is a fork of PicoClaw with Ethereum wallet integration and webhook channel support."
 )
 
-// GetBanner returns the TOK Claw banner with colors
+// GetBanner returns the DomeClaw banner with colors
 func GetBanner() string {
 	return DomeClawBanner
 }
