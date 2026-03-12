@@ -29,9 +29,9 @@ func NewPicoclawCommand() *cobra.Command {
 	short := fmt.Sprintf("%s %s v%s\n\n", internal.Logo, config.AppNameDisplay, config.GetVersion())
 
 	cmd := &cobra.Command{
-		Use:     "tokclaw",
+		Use:     "domeclaw",
 		Short:   short,
-		Example: "tokclaw version",
+		Example: "domeclaw version",
 	}
 
 	cmd.AddCommand(
@@ -56,15 +56,11 @@ const (
 	colorRed  = "\033[1;38;2;213;70;70m"
 )
 
-// getBanner returns the TOK Claw colored banner
+// getBanner returns the DomeClaw colored banner
 func getBanner() string {
+	banner := config.GetBanner()
 	return "\r\n" +
-		colorBlue + "████████╗ ██████╗ ██╗  ██╗     " + colorRed + "██████╗██╗      █████╗ ██╗    ██╗\n" +
-		colorBlue + "╚══██╔══╝██╔═══██╗██║ ██╔╝    " + colorRed + "██╔════╝██║     ██╔══██╗██║    ██║\n" +
-		colorBlue + "   ██║   ██║   ██║█████╔╝     " + colorRed + "██║     ██║     ███████║██║ █╗ ██║\n" +
-		colorBlue + "   ██║   ██║   ██║██╔═██╗     " + colorRed + "██║     ██║     ██╔══██║██║███╗██║\n" +
-		colorBlue + "   ██║   ╚██████╔╝██║  ██╗    " + colorRed + "╚██████╗███████╗██║  ██║╚███╔███╔╝\n" +
-		colorBlue + "   ╚═╝    ╚═════╝ ╚═╝  ╚═╝     " + colorRed + "╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝\n " +
+		colorBlue + banner +
 		"\033[0m\r\n"
 }
 

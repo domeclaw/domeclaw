@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="assets/logo.jpg" alt="PicoClaw" width="512">
+  <img src="assets/logo.jpg" alt="mclaw" width="512">
 
-  <h1>PicoClaw: Ultra-Efficient AI Assistant in Go</h1>
+  <h1>mclaw: Ultra-Efficient AI Assistant in Go</h1>
 
   <h3>$10 Hardware · 10MB RAM · 1s Boot · 皮皮虾，我们走！</h3>
 
@@ -10,7 +10,7 @@
     <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20MIPS%2C%20RISC--V-blue" alt="Hardware">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
     <br>
-    <a href="https://picoclaw.io"><img src="https://img.shields.io/badge/Website-picoclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
+    <a href="https://mclaw.io"><img src="https://img.shields.io/badge/Website-mclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
     <a href="https://x.com/SipeedIO"><img src="https://img.shields.io/badge/X_(Twitter)-SipeedIO-black?style=flat&logo=x&logoColor=white" alt="Twitter"></a>
     <br>
     <a href="./assets/wechat.png"><img src="https://img.shields.io/badge/WeChat-Group-41d56b?style=flat&logo=wechat&logoColor=white"></a>
@@ -23,7 +23,7 @@
 
 ---
 
-🦐 PicoClaw is an ultra-lightweight personal AI Assistant inspired by [nanobot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
+🦐 mclaw is an ultra-lightweight personal AI Assistant inspired by [nanobot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
 
 ⚡️ Runs on $10 hardware with <10MB RAM: That's 99% less memory than OpenClaw and 98% cheaper than a Mac mini!
 
@@ -31,7 +31,7 @@
   <tr align="center">
     <td align="center" valign="top">
       <p align="center">
-        <img src="assets/picoclaw_mem.gif" width="360" height="240">
+        <img src="assets/mclaw_mem.gif" width="360" height="240">
       </p>
     </td>
     <td align="center" valign="top">
@@ -45,21 +45,21 @@
 > [!CAUTION]
 > **🚨 SECURITY & OFFICIAL CHANNELS / 安全声明**
 >
-> * **NO CRYPTO:** PicoClaw has **NO** official token/coin. All claims on `pump.fun` or other trading platforms are **SCAMS**.
+> * **NO CRYPTO:** mclaw has **NO** official token/coin. All claims on `pump.fun` or other trading platforms are **SCAMS**.
 >
-> * **OFFICIAL DOMAIN:** The **ONLY** official website is **[picoclaw.io](https://picoclaw.io)**, and company website is **[sipeed.com](https://sipeed.com)**
+> * **OFFICIAL DOMAIN:** The **ONLY** official website is **[mclaw.io](https://mclaw.io)**, and company website is **[sipeed.com](https://sipeed.com)**
 > * **Warning:** Many `.ai/.org/.com/.net/...` domains are registered by third parties.
-> * **Warning:** picoclaw is in early development now and may have unresolved network security issues. Do not deploy to production environments before the v1.0 release.
-> * **Note:** picoclaw has recently merged a lot of PRs, which may result in a larger memory footprint (10–20MB) in the latest versions. We plan to prioritize resource optimization as soon as the current feature set reaches a stable state.
+> * **Warning:** mclaw is in early development now and may have unresolved network security issues. Do not deploy to production environments before the v1.0 release.
+> * **Note:** mclaw has recently merged a lot of PRs, which may result in a larger memory footprint (10–20MB) in the latest versions. We plan to prioritize resource optimization as soon as the current feature set reaches a stable state.
 
 ## 📢 News
 
-2026-02-16 🎉 PicoClaw hit 12K stars in one week! Thank you all for your support! PicoClaw is growing faster than we ever imagined. Given the high volume of PRs, we urgently need community maintainers. Our volunteer roles and roadmap are officially posted [here](ROADMAP.md) —we can’t wait to have you on board!
+2026-02-16 🎉 mclaw hit 12K stars in one week! Thank you all for your support! mclaw is growing faster than we ever imagined. Given the high volume of PRs, we urgently need community maintainers. Our volunteer roles and roadmap are officially posted [here](ROADMAP.md) —we can’t wait to have you on board!
 
-2026-02-13 🎉 PicoClaw hit 5000 stars in 4days! Thank you for the community! There are so many PRs & issues coming in (during Chinese New Year holidays), we are finalizing the Project Roadmap and setting up the Developer Group to accelerate PicoClaw's development.  
+2026-02-13 🎉 mclaw hit 5000 stars in 4days! Thank you for the community! There are so many PRs & issues coming in (during Chinese New Year holidays), we are finalizing the Project Roadmap and setting up the Developer Group to accelerate mclaw's development.  
 🚀 Call to Action: Please submit your feature requests in GitHub Discussions. We will review and prioritize them during our upcoming weekly meeting.
 
-2026-02-09 🎉 PicoClaw Launched! Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 PicoClaw，Let's Go！
+2026-02-09 🎉 mclaw Launched! Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 mclaw，Let's Go！
 
 ## ✨ Features
 
@@ -73,14 +73,14 @@
 
 🤖 **AI-Bootstrapped**: Autonomous Go-native implementation — 95% Agent-generated core with human-in-the-loop refinement.
 
-|                               | OpenClaw      | NanoBot                  | **PicoClaw**                              |
+|                               | OpenClaw      | NanoBot                  | **mclaw**                              |
 | ----------------------------- | ------------- | ------------------------ | ----------------------------------------- |
 | **Language**                  | TypeScript    | Python                   | **Go**                                    |
 | **RAM**                       | >1GB          | >100MB                   | **< 10MB**                                |
 | **Startup**</br>(0.8GHz core) | >500s         | >30s                     | **<1s**                                   |
 | **Cost**                      | Mac Mini 599$ | Most Linux SBC </br>~50$ | **Any Linux Board**</br>**As low as 10$** |
 
-<img src="assets/compare.jpg" alt="PicoClaw" width="512">
+<img src="assets/compare.jpg" alt="mclaw" width="512">
 
 ## 🦾 Demonstration
 
@@ -93,9 +93,9 @@
     <th><p align="center">🔎 Web Search & Learning</p></th>
   </tr>
   <tr>
-    <td align="center"><p align="center"><img src="assets/picoclaw_code.gif" width="240" height="180"></p></td>
-    <td align="center"><p align="center"><img src="assets/picoclaw_memory.gif" width="240" height="180"></p></td>
-    <td align="center"><p align="center"><img src="assets/picoclaw_search.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/mclaw_code.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/mclaw_memory.gif" width="240" height="180"></p></td>
+    <td align="center"><p align="center"><img src="assets/mclaw_search.gif" width="240" height="180"></p></td>
   </tr>
   <tr>
     <td align="center">Develop • Deploy • Scale</td>
@@ -106,25 +106,25 @@
 
 ### 📱 Run on old Android Phones
 
-Give your decade-old phone a second life! Turn it into a smart AI Assistant with PicoClaw. Quick Start:
+Give your decade-old phone a second life! Turn it into a smart AI Assistant with mclaw. Quick Start:
 
 1. **Install Termux** (Available on F-Droid or Google Play).
 2. **Execute cmds**
 
 ```bash
 # Note: Replace v0.1.1 with the latest version from the Releases page
-wget https://github.com/sipeed/picoclaw/releases/download/v0.1.1/picoclaw-linux-arm64
-chmod +x picoclaw-linux-arm64
+wget https://github.com/sipeed/mclaw/releases/download/v0.1.1/mclaw-linux-arm64
+chmod +x mclaw-linux-arm64
 pkg install proot
-termux-chroot ./picoclaw-linux-arm64 onboard
+termux-chroot ./mclaw-linux-arm64 onboard
 ```
 
 And then follow the instructions in the "Quick Start" section to complete the configuration!
-<img src="assets/termux.jpg" alt="PicoClaw" width="512">
+<img src="assets/termux.jpg" alt="mclaw" width="512">
 
 ### 🐜 Innovative Low-Footprint Deploy
 
-PicoClaw can be deployed on almost any Linux device!
+mclaw can be deployed on almost any Linux device!
 
 - $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html) E(Ethernet) or W(WiFi6) version, for Minimal Home Assistant
 - $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), or $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) for Automated Server Maintenance
@@ -138,14 +138,14 @@ PicoClaw can be deployed on almost any Linux device!
 
 ### Install with precompiled binary
 
-Download the firmware for your platform from the [release](https://github.com/sipeed/picoclaw/releases) page.
+Download the firmware for your platform from the [release](https://github.com/sipeed/mclaw/releases) page.
 
 ### Install from source (latest features, recommended for development)
 
 ```bash
-git clone https://github.com/sipeed/picoclaw.git
+git clone https://github.com/sipeed/mclaw.git
 
-cd picoclaw
+cd mclaw
 make deps
 
 # Build, no need to install
@@ -161,16 +161,16 @@ make build-pi-zero
 make install
 ```
 
-**Raspberry Pi Zero 2 W:** Use the binary that matches your OS: 32-bit Raspberry Pi OS → `make build-linux-arm` (output: `build/picoclaw-linux-arm`); 64-bit → `make build-linux-arm64` (output: `build/picoclaw-linux-arm64`). Or run `make build-pi-zero` to build both.
+**Raspberry Pi Zero 2 W:** Use the binary that matches your OS: 32-bit Raspberry Pi OS → `make build-linux-arm` (output: `build/mclaw-linux-arm`); 64-bit → `make build-linux-arm64` (output: `build/mclaw-linux-arm64`). Or run `make build-pi-zero` to build both.
 
 ## 🐳 Docker Compose
 
-You can also run PicoClaw using Docker Compose without installing anything locally.
+You can also run mclaw using Docker Compose without installing anything locally.
 
 ```bash
 # 1. Clone this repo
-git clone https://github.com/sipeed/picoclaw.git
-cd picoclaw
+git clone https://github.com/sipeed/mclaw.git
+cd mclaw
 
 # 2. First run — auto-generates docker/data/config.json then exits
 docker compose -f docker/docker-compose.yml --profile gateway up
@@ -184,11 +184,11 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ```
 
 > [!TIP]
-> **Docker Users**: By default, the Gateway listens on `127.0.0.1` which is not accessible from the host. If you need to access the health endpoints or expose ports, set `PICOCLAW_GATEWAY_HOST=0.0.0.0` in your environment or update `config.json`.
+> **Docker Users**: By default, the Gateway listens on `127.0.0.1` which is not accessible from the host. If you need to access the health endpoints or expose ports, set `mclaw_GATEWAY_HOST=0.0.0.0` in your environment or update `config.json`.
 
 ```bash
 # 5. Check logs
-docker compose -f docker/docker-compose.yml logs -f picoclaw-gateway
+docker compose -f docker/docker-compose.yml logs -f mclaw-gateway
 
 # 6. Stop
 docker compose -f docker/docker-compose.yml --profile gateway down
@@ -196,7 +196,7 @@ docker compose -f docker/docker-compose.yml --profile gateway down
 
 ### Launcher Mode (Web Console)
 
-The `launcher` image includes all three binaries (`picoclaw`, `picoclaw-launcher`, `picoclaw-launcher-tui`) and starts the web console by default, which provides a browser-based UI for configuration and chat.
+The `launcher` image includes all three binaries (`mclaw`, `mclaw-launcher`, `mclaw-launcher-tui`) and starts the web console by default, which provides a browser-based UI for configuration and chat.
 
 ```bash
 docker compose -f docker/docker-compose.yml --profile launcher up -d
@@ -211,10 +211,10 @@ Open http://localhost:18800 in your browser. The launcher manages the gateway pr
 
 ```bash
 # Ask a question
-docker compose -f docker/docker-compose.yml run --rm picoclaw-agent -m "What is 2+2?"
+docker compose -f docker/docker-compose.yml run --rm mclaw-agent -m "What is 2+2?"
 
 # Interactive mode
-docker compose -f docker/docker-compose.yml run --rm picoclaw-agent
+docker compose -f docker/docker-compose.yml run --rm mclaw-agent
 ```
 
 ### Update
@@ -227,23 +227,23 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ### 🚀 Quick Start
 
 > [!TIP]
-> Set your API key in `~/.picoclaw/config.json`.
+> Set your API key in `~/.mclaw/config.json`.
 > Get API keys: [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)
 > Web Search is **optional** - get free [Tavily API](https://tavily.com) (1000 free queries/month), [SearXNG](https://github.com/searxng/searxng) (free, self-hosted) or [Brave Search API](https://brave.com/search/api) (2000 free queries/month) or use built-in auto fallback.
 
 **1. Initialize**
 
 ```bash
-picoclaw onboard
+mclaw onboard
 ```
 
-**2. Configure** (`~/.picoclaw/config.json`)
+**2. Configure** (`~/.mclaw/config.json`)
 
 ```json
 {
   "agents": {
     "defaults": {
-      "workspace": "~/.picoclaw/workspace",
+      "workspace": "~/.mclaw/workspace",
       "model_name": "gpt4",
       "max_tokens": 8192,
       "temperature": 0.7,
@@ -295,7 +295,7 @@ picoclaw onboard
 ```
 
 > **New**: The `model_list` configuration format allows zero-code provider addition. See [Model Configuration](#model-configuration-model_list) for details.
-> `request_timeout` is optional and uses seconds. If omitted or set to `<= 0`, PicoClaw uses the default timeout (120s).
+> `request_timeout` is optional and uses seconds. If omitted or set to `<= 0`, mclaw uses the default timeout (120s).
 
 **3. Get API Keys**
 
@@ -312,7 +312,7 @@ picoclaw onboard
 **4. Chat**
 
 ```bash
-picoclaw agent -m "What is 2+2?"
+mclaw agent -m "What is 2+2?"
 ```
 
 That's it! You have a working AI assistant in 2 minutes.
@@ -321,7 +321,7 @@ That's it! You have a working AI assistant in 2 minutes.
 
 ## 💬 Chat Apps
 
-Talk to your picoclaw through Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, or WeCom
+Talk to your mclaw through Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, or WeCom
 
 > **Note**: All webhook-based channels (LINE, WeCom, etc.) are served on a single shared Gateway HTTP server (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). There are no per-channel ports to configure. Note: Feishu uses WebSocket/SDK mode and does not use the shared HTTP webhook server.
 
@@ -364,15 +364,15 @@ Talk to your picoclaw through Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk,
 **3. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 **4. Telegram command menu (auto-registered at startup)**
 
-PicoClaw now keeps command definitions in one shared registry. On startup, Telegram will automatically register supported bot commands (for example `/start`, `/help`, `/show`, `/list`) so command menu and runtime behavior stay in sync.
+mclaw now keeps command definitions in one shared registry. On startup, Telegram will automatically register supported bot commands (for example `/start`, `/help`, `/show`, `/list`) so command menu and runtime behavior stay in sync.
 Telegram command menu registration remains channel-local discovery UX; generic command execution is handled centrally in the agent loop via the commands executor.
 
-If command registration fails (network/API transient errors), the channel still starts and PicoClaw retries registration in the background.
+If command registration fails (network/API transient errors), the channel still starts and mclaw retries registration in the background.
 
 </details>
 
@@ -444,7 +444,7 @@ You can also trigger by keyword prefixes (e.g. `!bot`):
 **6. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 </details>
@@ -452,7 +452,7 @@ picoclaw gateway
 <details>
 <summary><b>WhatsApp</b> (native via whatsmeow)</summary>
 
-PicoClaw can connect to WhatsApp in two ways:
+mclaw can connect to WhatsApp in two ways:
 
 - **Native (recommended):** In-process using [whatsmeow](https://github.com/tulir/whatsmeow). No separate bridge. Set `"use_native": true` and leave `bridge_url` empty. On first run, scan the QR code with WhatsApp (Linked Devices). Session is stored under your workspace (e.g. `workspace/whatsapp/`). The native channel is **optional** to keep the default binary small; build with `-tags whatsapp_native` (e.g. `make build-whatsapp-native` or `go build -tags whatsapp_native ./cmd/...`).
 - **Bridge:** Connect to an external WebSocket bridge. Set `bridge_url` (e.g. `ws://localhost:3001`) and keep `use_native` false.
@@ -472,7 +472,7 @@ PicoClaw can connect to WhatsApp in two ways:
 }
 ```
 
-If `session_store_path` is empty, the session is stored in `&lt;workspace&gt;/whatsapp/`. Run `picoclaw gateway`; on first run, scan the QR code printed in the terminal with WhatsApp → Linked Devices.
+If `session_store_path` is empty, the session is stored in `&lt;workspace&gt;/whatsapp/`. Run `mclaw gateway`; on first run, scan the QR code printed in the terminal with WhatsApp → Linked Devices.
 
 </details>
 
@@ -504,7 +504,7 @@ If `session_store_path` is empty, the session is stored in `&lt;workspace&gt;/wh
 **3. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 </details>
@@ -538,7 +538,7 @@ picoclaw gateway
 **3. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 </details>
 
@@ -569,7 +569,7 @@ picoclaw gateway
 **3. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 For full options (`device_id`, `join_on_invite`, `group_trigger`, `placeholder`, `reasoning_channel_id`), see [Matrix Channel Configuration Guide](docs/channels/matrix/README.md).
@@ -617,7 +617,7 @@ Then set the Webhook URL in LINE Developers Console to `https://your-domain/webh
 **4. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 > In group chats, the bot responds only when @mentioned. Replies quote the original message.
@@ -627,7 +627,7 @@ picoclaw gateway
 <details>
 <summary><b>WeCom (企业微信)</b></summary>
 
-PicoClaw supports three types of WeCom integration:
+mclaw supports three types of WeCom integration:
 
 **Option 1: WeCom Bot (Bot)** - Easier setup, supports group chats
 **Option 2: WeCom App (Custom App)** - More features, proactive messaging, private chat only
@@ -697,7 +697,7 @@ See [WeCom AI Bot Configuration Guide](docs/channels/wecom/wecom_aibot/README.zh
 **4. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 > **Note**: WeCom webhook callbacks are served on the Gateway port (default 18790). Use a reverse proxy for HTTPS.
@@ -730,7 +730,7 @@ picoclaw gateway
 **3. Run**
 
 ```bash
-picoclaw gateway
+mclaw gateway
 ```
 
 > **Note**: WeCom AI Bot uses streaming pull protocol — no reply timeout concerns. Long tasks (>30 seconds) automatically switch to `response_url` push delivery.
@@ -739,45 +739,45 @@ picoclaw gateway
 
 ## <img src="assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> Join the Agent Social Network
 
-Connect Picoclaw to the Agent Social Network simply by sending a single message via the CLI or any integrated Chat App.
+Connect mclaw to the Agent Social Network simply by sending a single message via the CLI or any integrated Chat App.
 
 **Read `https://clawdchat.ai/skill.md` and follow the instructions to join [ClawdChat.ai](https://clawdchat.ai)**
 
 ## ⚙️ Configuration
 
-Config file: `~/.picoclaw/config.json`
+Config file: `~/.mclaw/config.json`
 
 ### Environment Variables
 
-You can override default paths using environment variables. This is useful for portable installations, containerized deployments, or running picoclaw as a system service. These variables are independent and control different paths.
+You can override default paths using environment variables. This is useful for portable installations, containerized deployments, or running mclaw as a system service. These variables are independent and control different paths.
 
 | Variable          | Description                                                                                                                             | Default Path              |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
-| `PICOCLAW_CONFIG` | Overrides the path to the configuration file. This directly tells picoclaw which `config.json` to load, ignoring all other locations. | `~/.picoclaw/config.json` |
-| `PICOCLAW_HOME`   | Overrides the root directory for picoclaw data. This changes the default location of the `workspace` and other data directories.          | `~/.picoclaw`             |
+| `mclaw_CONFIG` | Overrides the path to the configuration file. This directly tells mclaw which `config.json` to load, ignoring all other locations. | `~/.mclaw/config.json` |
+| `mclaw_HOME`   | Overrides the root directory for mclaw data. This changes the default location of the `workspace` and other data directories.          | `~/.mclaw`             |
 
 **Examples:**
 
 ```bash
-# Run picoclaw using a specific config file
+# Run mclaw using a specific config file
 # The workspace path will be read from within that config file
-PICOCLAW_CONFIG=/etc/picoclaw/production.json picoclaw gateway
+mclaw_CONFIG=/etc/mclaw/production.json mclaw gateway
 
-# Run picoclaw with all its data stored in /opt/picoclaw
-# Config will be loaded from the default ~/.picoclaw/config.json
-# Workspace will be created at /opt/picoclaw/workspace
-PICOCLAW_HOME=/opt/picoclaw picoclaw agent
+# Run mclaw with all its data stored in /opt/mclaw
+# Config will be loaded from the default ~/.mclaw/config.json
+# Workspace will be created at /opt/mclaw/workspace
+mclaw_HOME=/opt/mclaw mclaw agent
 
 # Use both for a fully customized setup
-PICOCLAW_HOME=/srv/picoclaw PICOCLAW_CONFIG=/srv/picoclaw/main.json picoclaw gateway
+mclaw_HOME=/srv/mclaw mclaw_CONFIG=/srv/mclaw/main.json mclaw gateway
 ```
 
 ### Workspace Layout
 
-PicoClaw stores data in your configured workspace (default: `~/.picoclaw/workspace`):
+mclaw stores data in your configured workspace (default: `~/.mclaw/workspace`):
 
 ```
-~/.picoclaw/workspace/
+~/.mclaw/workspace/
 ├── sessions/          # Conversation sessions and history
 ├── memory/           # Long-term memory (MEMORY.md)
 ├── state/            # Persistent state (last channel, etc.)
@@ -794,14 +794,14 @@ PicoClaw stores data in your configured workspace (default: `~/.picoclaw/workspa
 
 By default, skills are loaded from:
 
-1. `~/.picoclaw/workspace/skills` (workspace)
-2. `~/.picoclaw/skills` (global)
+1. `~/.mclaw/workspace/skills` (workspace)
+2. `~/.mclaw/skills` (global)
 3. `<current-working-directory>/skills` (builtin)
 
 For advanced/test setups, you can override the builtin skills root with:
 
 ```bash
-export PICOCLAW_BUILTIN_SKILLS=/path/to/skills
+export mclaw_BUILTIN_SKILLS=/path/to/skills
 ```
 
 ### Unified Command Execution Policy
@@ -812,7 +812,7 @@ export PICOCLAW_BUILTIN_SKILLS=/path/to/skills
 - Registered but unsupported command on the current channel (for example `/show` on WhatsApp) returns an explicit user-facing error and stops further processing.
 ### 🔒 Security Sandbox
 
-PicoClaw runs in a sandboxed environment by default. The agent can only access files and execute commands within the configured workspace.
+mclaw runs in a sandboxed environment by default. The agent can only access files and execute commands within the configured workspace.
 
 #### Default Configuration
 
@@ -820,7 +820,7 @@ PicoClaw runs in a sandboxed environment by default. The agent can only access f
 {
   "agents": {
     "defaults": {
-      "workspace": "~/.picoclaw/workspace",
+      "workspace": "~/.mclaw/workspace",
       "restrict_to_workspace": true
     }
   }
@@ -829,7 +829,7 @@ PicoClaw runs in a sandboxed environment by default. The agent can only access f
 
 | Option                  | Default                 | Description                               |
 | ----------------------- | ----------------------- | ----------------------------------------- |
-| `workspace`             | `~/.picoclaw/workspace` | Working directory for the agent           |
+| `workspace`             | `~/.mclaw/workspace` | Working directory for the agent           |
 | `restrict_to_workspace` | `true`                  | Restrict file/command access to workspace |
 
 #### Protected Tools
@@ -887,7 +887,7 @@ If you need the agent to access paths outside the workspace:
 **Method 2: Environment variable**
 
 ```bash
-export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
+export mclaw_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 ```
 
 > ⚠️ **Warning**: Disabling this restriction allows the agent to access any path on your system. Use with caution in controlled environments only.
@@ -906,7 +906,7 @@ All paths share the same workspace restriction — there's no way to bypass the 
 
 ### Heartbeat (Periodic Tasks)
 
-PicoClaw can perform periodic tasks automatically. Create a `HEARTBEAT.md` file in your workspace:
+mclaw can perform periodic tasks automatically. Create a `HEARTBEAT.md` file in your workspace:
 
 ```markdown
 # Periodic Tasks
@@ -980,8 +980,8 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 
 **Environment variables:**
 
-* `PICOCLAW_HEARTBEAT_ENABLED=false` to disable
-* `PICOCLAW_HEARTBEAT_INTERVAL=60` to change interval
+* `mclaw_HEARTBEAT_ENABLED=false` to disable
+* `mclaw_HEARTBEAT_INTERVAL=60` to change interval
 
 ### Providers
 
@@ -1003,7 +1003,7 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 
 ### Model Configuration (model_list)
 
-> **What's New?** PicoClaw now uses a **model-centric** configuration approach. Simply specify `vendor/model` format (e.g., `zhipu/glm-4.7`) to add new providers—**zero code changes required!**
+> **What's New?** mclaw now uses a **model-centric** configuration approach. Simply specify `vendor/model` format (e.g., `zhipu/glm-4.7`) to add new providers—**zero code changes required!**
 
 This design also enables **multi-agent support** with flexible provider selection:
 
@@ -1108,7 +1108,7 @@ This design also enables **multi-agent support** with flexible provider selectio
 }
 ```
 
-> Run `picoclaw auth login --provider anthropic` to paste your API token.
+> Run `mclaw auth login --provider anthropic` to paste your API token.
 
 **Ollama (local)**
 
@@ -1142,11 +1142,11 @@ This design also enables **multi-agent support** with flexible provider selectio
 }
 ```
 
-PicoClaw strips only the outer `litellm/` prefix before sending the request, so proxy aliases like `litellm/lite-gpt4` send `lite-gpt4`, while `litellm/openai/gpt-4o` sends `openai/gpt-4o`.
+mclaw strips only the outer `litellm/` prefix before sending the request, so proxy aliases like `litellm/lite-gpt4` send `lite-gpt4`, while `litellm/openai/gpt-4o` sends `openai/gpt-4o`.
 
 #### Load Balancing
 
-Configure multiple endpoints for the same model name—PicoClaw will automatically round-robin between them:
+Configure multiple endpoints for the same model name—mclaw will automatically round-robin between them:
 
 ```json
 {
@@ -1213,7 +1213,7 @@ For detailed migration guide, see [docs/migration/model-list-migration.md](docs/
 
 ### Provider Architecture
 
-PicoClaw routes providers by protocol family:
+mclaw routes providers by protocol family:
 
 - OpenAI-compatible protocol: OpenRouter, OpenAI-compatible gateways, Groq, Zhipu, and vLLM-style endpoints.
 - Anthropic protocol: Claude-native API behavior.
@@ -1234,7 +1234,7 @@ This keeps the runtime lightweight while making new OpenAI-compatible backends m
 {
   "agents": {
     "defaults": {
-      "workspace": "~/.picoclaw/workspace",
+      "workspace": "~/.mclaw/workspace",
       "model": "glm-4.7",
       "max_tokens": 8192,
       "temperature": 0.7,
@@ -1253,7 +1253,7 @@ This keeps the runtime lightweight while making new OpenAI-compatible backends m
 **3. Run**
 
 ```bash
-picoclaw agent -m "Hello"
+mclaw agent -m "Hello"
 ```
 
 </details>
@@ -1352,29 +1352,29 @@ picoclaw agent -m "Hello"
 
 | Command                   | Description                   |
 | ------------------------- | ----------------------------- |
-| `picoclaw onboard`        | Initialize config & workspace |
-| `picoclaw agent -m "..."` | Chat with the agent           |
-| `picoclaw agent`          | Interactive chat mode         |
-| `picoclaw gateway`        | Start the gateway             |
-| `picoclaw status`         | Show status                   |
-| `picoclaw cron list`      | List all scheduled jobs       |
-| `picoclaw cron add ...`   | Add a scheduled job           |
+| `mclaw onboard`        | Initialize config & workspace |
+| `mclaw agent -m "..."` | Chat with the agent           |
+| `mclaw agent`          | Interactive chat mode         |
+| `mclaw gateway`        | Start the gateway             |
+| `mclaw status`         | Show status                   |
+| `mclaw cron list`      | List all scheduled jobs       |
+| `mclaw cron add ...`   | Add a scheduled job           |
 
 ### Scheduled Tasks / Reminders
 
-PicoClaw supports scheduled reminders and recurring tasks through the `cron` tool:
+mclaw supports scheduled reminders and recurring tasks through the `cron` tool:
 
 * **One-time reminders**: "Remind me in 10 minutes" → triggers once after 10min
 * **Recurring tasks**: "Remind me every 2 hours" → triggers every 2 hours
 * **Cron expressions**: "Remind me at 9am daily" → uses cron expression
 
-Jobs are stored in `~/.picoclaw/workspace/cron/` and processed automatically.
+Jobs are stored in `~/.mclaw/workspace/cron/` and processed automatically.
 
 ## 🤝 Contribute & Roadmap
 
 PRs welcome! The codebase is intentionally small and readable. 🤗
 
-See our full [Community Roadmap](https://github.com/sipeed/picoclaw/blob/main/ROADMAP.md).
+See our full [Community Roadmap](https://github.com/sipeed/mclaw/blob/main/ROADMAP.md).
 
 Developer group building, join after your first merged PR!
 
@@ -1382,17 +1382,17 @@ User Groups:
 
 discord: <https://discord.gg/V4sAZ9XWpN>
 
-<img src="assets/wechat.png" alt="PicoClaw" width="512">
+<img src="assets/wechat.png" alt="mclaw" width="512">
 
 ## 🐛 Troubleshooting
 
 ### Web search says "API key configuration issue"
 
-This is normal if you haven't configured a search API key yet. PicoClaw will provide helpful links for manual searching.
+This is normal if you haven't configured a search API key yet. mclaw will provide helpful links for manual searching.
 
 #### Search Provider Priority
 
-PicoClaw automatically selects the best available search provider in this order:
+mclaw automatically selects the best available search provider in this order:
 1. **Perplexity** (if enabled and API key configured) - AI-powered search with citations
 2. **Brave Search** (if enabled and API key configured) - Privacy-focused paid API ($5/1000 queries)
 3. **SearXNG** (if enabled and base_url configured) - Self-hosted metasearch aggregating 70+ engines (free)
@@ -1454,7 +1454,7 @@ Benefits of SearXNG:
 
 **Option 4 (No Setup Required)**: DuckDuckGo is enabled by default as fallback (no API key needed)
 
-Add the key to `~/.picoclaw/config.json` if using Brave:
+Add the key to `~/.mclaw/config.json` if using Brave:
 
 ```json
 {
@@ -1490,7 +1490,7 @@ Some providers (like Zhipu) have content filtering. Try rephrasing your query or
 
 ### Telegram bot says "Conflict: terminated by other getUpdates"
 
-This happens when another instance of the bot is running. Make sure only one `picoclaw gateway` is running at a time.
+This happens when another instance of the bot is running. Make sure only one `mclaw gateway` is running at a time.
 
 ---
 
