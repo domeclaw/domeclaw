@@ -9,7 +9,7 @@ import (
 	"runtime"
 )
 
-// GetDefaultConfigPath returns the default path to the picoclaw config file.
+// GetDefaultConfigPath returns the default path to the domeclaw config file.
 func GetDefaultConfigPath() string {
 	if configPath := os.Getenv("PICOCLAW_CONFIG"); configPath != "" {
 		return configPath
@@ -24,15 +24,15 @@ func GetDefaultConfigPath() string {
 	return filepath.Join(home, ".picoclaw", "config.json")
 }
 
-// FindPicoclawBinary locates the picoclaw executable.
+// FindPicoclawBinary locates the domeclaw executable.
 // Search order:
 //  1. PICOCLAW_BINARY environment variable (explicit override)
 //  2. Same directory as the current executable
-//  3. Falls back to "picoclaw" and relies on $PATH
+//  3. Falls back to "domeclaw" and relies on $PATH
 func FindPicoclawBinary() string {
-	binaryName := "picoclaw"
+	binaryName := "domeclaw"
 	if runtime.GOOS == "windows" {
-		binaryName = "picoclaw.exe"
+		binaryName = "domeclaw.exe"
 	}
 
 	if p := os.Getenv("PICOCLAW_BINARY"); p != "" {
@@ -48,7 +48,7 @@ func FindPicoclawBinary() string {
 		}
 	}
 
-	return "picoclaw"
+	return "domeclaw"
 }
 
 // GetLocalIP returns the local IP address of the machine.

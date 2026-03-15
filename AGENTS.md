@@ -168,6 +168,29 @@ go build -o domeclaw ./cmd/picoclaw
 Dockerfile builds as /usr/local/bin/domeclaw
 ```
 
+### Web Launcher Binary Detection
+
+The web launcher (`domeclaw-launcher`) looks for the main binary in this order:
+
+1. `PICOCLAW_BINARY` environment variable (explicit override)
+2. Same directory as the launcher (e.g., `./domeclaw`)
+3. Falls back to `domeclaw` in `$PATH`
+
+**Important:** The file `web/backend/utils/runtime.go` must be modified to search for `domeclaw` instead of `picoclaw`:
+
+```go
+// Lines 33-36
+binaryName := "domeclaw"
+if runtime.GOOS == "windows" {
+    binaryName = "domeclaw.exe"
+}
+
+// Line 51
+return "domeclaw"
+```
+
+**When merging from upstream:** Check if `web/backend/utils/runtime.go` was modified and preserve the `domeclaw` binary name changes.
+
 ### Docker Commands
 
 ```bash
