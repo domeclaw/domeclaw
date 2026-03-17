@@ -13,15 +13,19 @@ jobs:
           - os: linux
             arch: amd64
             ext: ""
+            build_launcher: true
           - os: linux
             arch: arm64
             ext: ""
+            build_launcher: false  # Skip launcher for arm64 due to CGO cross-compilation issues
           - os: darwin
             arch: arm64
             ext: ""
+            build_launcher: true
           - os: windows
             arch: amd64
             ext: ".exe"
+            build_launcher: true
 
     steps:
       - name: Checkout
@@ -44,17 +48,21 @@ jobs:
           go build -ldflags="-s -w" -o "build/${output}" ./cmd/picoclaw
 
       - name: Setup Node.js and pnpm
+        if: matrix.build_launcher
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       - name: Install pnpm
+        if: matrix.build_launcher
         run: npm install -g pnpm
       - name: Build frontend for launcher
+        if: matrix.build_launcher
         run: |
           cd web/frontend
           pnpm install --no-frozen-lockfile
           pnpm build:backend
       - name: Build domeclaw-launcher
+        if: matrix.build_launcher
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
@@ -69,11 +77,19 @@ jobs:
           if [ "${{ matrix.os }}" = "windows" ]; then
             # For Windows, create ZIP archive
             cd build
-            zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-* domeclaw-launcher-*
+            if [ "${{ matrix.build_launcher }}" = "true" ]; then
+              zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-* domeclaw-launcher-*
+            else
+              zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-*
+            fi
             cd ..
           else
             # For Linux/macOS, create TGZ archive
-            tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build .
+            if [ "${{ matrix.build_launcher }}" = "true" ]; then
+              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build .
+            else
+              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build/domeclaw-${{ matrix.os }}-${{ matrix.arch }} --transform "s/domeclaw-${{ matrix.os }}-${{ matrix.arch }}/domeclaw/"
+            fi
           fi
 
       - name: Upload artifact
