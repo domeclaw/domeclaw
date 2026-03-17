@@ -21,7 +21,7 @@ jobs:
           - os: darwin
             arch: arm64
             ext: ""
-            build_launcher: true
+            build_launcher: false  # Skip launcher for darwin due to CGO cross-compilation issues
           - os: windows
             arch: amd64
             ext: ".exe"
