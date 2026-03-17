@@ -26,14 +26,15 @@ RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
 # ============================================================
 # Stage 2: Runtime (root user)
 # ============================================================
-FROM alpine:3.19
+FROM alpine:3.23.3
 
-# Install packages and configure DNS
-RUN apk add --no-cache ca-certificates tzdata curl openssl && \
+# Install packages including Node.js, npm, Python
+RUN apk add --no-cache ca-certificates tzdata curl openssl nodejs npm python3 py3-pip && \
     update-ca-certificates && \
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
-    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+    # Install TypeScript globally
+    npm install -g typescript && \
+    # Create a symbolic link for python to python3 (common convention)
+    ln -sf python3 /usr/bin/python
 
 # Copy binary
 COPY --from=builder /build/domeclaw /usr/local/bin/domeclaw
