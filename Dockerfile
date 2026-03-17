@@ -20,9 +20,17 @@ COPY . .
 # Generate embedded files (workspace for onboard command)
 RUN go generate ./...
 
-# Build domeclaw and domeclaw-launcher binaries
-RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw && \
-    go build -ldflags="-s -w" -o domeclaw-launcher ./cmd/picoclaw-launcher-tui
+# Build domeclaw binary
+RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
+
+# Build domeclaw-launcher binary (web console)
+RUN apk add --no-cache nodejs npm && \
+    npm install -g pnpm && \
+    if [ -f web/frontend/package.json ]; then \
+        cd web/frontend && pnpm install && pnpm build:backend; \
+    fi && \
+    cd /build && \
+    go build -ldflags="-s -w" -o domeclaw-launcher ./web/backend
 
 # ============================================================
 # Stage 2: Runtime (root user)
