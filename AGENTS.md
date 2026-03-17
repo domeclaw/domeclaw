@@ -2,6 +2,10 @@
 
 This document contains important rules and guidelines for the DomeClaw project (PicoClaw fork with wallet & webhook support).
 
+## Output Language
+
+All communication with developers should be in Thai language.
+
 ## Project Structure
 
 DomeClaw is a fork of PicoClaw with additional features:
