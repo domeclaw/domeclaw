@@ -88,7 +88,9 @@ jobs:
             if [ "${{ matrix.build_launcher }}" = "true" ]; then
               tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build .
             else
-              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build/domeclaw-${{ matrix.os }}-${{ matrix.arch }} --transform "s/domeclaw-${{ matrix.os }}-${{ matrix.arch }}/domeclaw/"
+              # Find the actual domeclaw binary for this platform
+              cp build/domeclaw-${{ matrix.os }}-${{ matrix.arch }} build/domeclaw
+              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build domeclaw
             fi
           fi
 
