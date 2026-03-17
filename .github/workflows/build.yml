@@ -36,7 +36,7 @@ jobs:
       - name: Generate
         run: go generate ./...
 
-      - name: Build
+      - name: Build domeclaw
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
@@ -44,11 +44,32 @@ jobs:
           output="domeclaw-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
           go build -ldflags="-s -w" -o "build/${output}" ./cmd/picoclaw
 
+      - name: Build domeclaw-launcher
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          output="domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          go build -ldflags="-s -w" -o "build/${output}" ./cmd/picoclaw-launcher-tui
+
+      - name: Prepare archive
+        run: |
+          mkdir -p archive
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            # For Windows, create ZIP archive
+            cd build
+            zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-* domeclaw-launcher-*
+            cd ..
+          else
+            # For Linux/macOS, create TGZ archive
+            tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build .
+          fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: domeclaw-${{ matrix.os }}-${{ matrix.arch }}
-          path: build/domeclaw-*
+          path: archive/*
 
   release:
     needs: build
@@ -71,14 +92,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ github.ref_name }}"
-          
-          # Collect all binaries
+
+          # Collect all archives
           mkdir -p release
           for dir in artifacts/domeclaw-*; do
-            cp "$dir"/domeclaw-* release/
+            cp "$dir"/* release/
           done
-          
-          # Create release with binaries
+
+          # Create release with archives
           gh release create "$tag" \
             --title "Release $tag" \
             release/*

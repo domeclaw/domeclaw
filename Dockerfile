@@ -20,8 +20,9 @@ COPY . .
 # Generate embedded files (workspace for onboard command)
 RUN go generate ./...
 
-# Build as domeclaw (DomeClaw-specific binary name)
-RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
+# Build domeclaw and domeclaw-launcher binaries
+RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw && \
+    go build -ldflags="-s -w" -o domeclaw-launcher ./cmd/picoclaw-launcher-tui
 
 # ============================================================
 # Stage 2: Runtime (root user)
@@ -36,8 +37,9 @@ RUN apk add --no-cache ca-certificates tzdata curl openssl nodejs npm python3 py
     # Create a symbolic link for python to python3 (common convention)
     ln -sf python3 /usr/bin/python
 
-# Copy binary
+# Copy binaries
 COPY --from=builder /build/domeclaw /usr/local/bin/domeclaw
+COPY --from=builder /build/domeclaw-launcher /usr/local/bin/domeclaw-launcher
 
 # Expose ports
 # 18790 - Gateway HTTP API
