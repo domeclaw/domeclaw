@@ -52,7 +52,7 @@ jobs:
       - name: Build frontend for launcher
         run: |
           cd web/frontend
-          pnpm install
+          pnpm install --no-frozen-lockfile
           pnpm build:backend
       - name: Build domeclaw-launcher
         env:
