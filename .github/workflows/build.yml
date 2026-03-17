@@ -72,6 +72,10 @@ jobs:
             arch: amd64
             ext: ""
             runner: ubuntu-latest
+          - os: linux
+            arch: arm64
+            ext: ""
+            runner: ubuntu-latest
           - os: darwin
             arch: arm64
             ext: ""
