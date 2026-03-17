@@ -5,7 +5,7 @@ on:
     tags: [ "v*" ]
 
 jobs:
-  build:
+  build-main:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,19 +13,15 @@ jobs:
           - os: linux
             arch: amd64
             ext: ""
-            build_launcher: true
           - os: linux
             arch: arm64
             ext: ""
-            build_launcher: false  # Skip launcher for arm64 due to CGO cross-compilation issues
           - os: darwin
             arch: arm64
             ext: ""
-            build_launcher: false  # Skip launcher for darwin due to CGO cross-compilation issues
           - os: windows
             arch: amd64
             ext: ".exe"
-            build_launcher: true
 
     steps:
       - name: Checkout
@@ -47,22 +43,66 @@ jobs:
           output="domeclaw-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
           go build -ldflags="-s -w" -o "build/${output}" ./cmd/picoclaw
 
+      - name: Prepare archive
+        run: |
+          mkdir -p archive
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            # For Windows, create ZIP archive
+            cd build
+            zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-*
+            cd ..
+          else
+            # For Linux/macOS, create TGZ archive
+            cp "build/domeclaw-${{ matrix.os }}-${{ matrix.arch }}" build/domeclaw
+            tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build domeclaw
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: domeclaw-${{ matrix.os }}-${{ matrix.arch }}
+          path: archive/*
+
+  build-launcher:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            ext: ""
+            runner: ubuntu-latest
+          - os: windows
+            arch: amd64
+            ext: ".exe"
+            runner: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
       - name: Setup Node.js and pnpm
-        if: matrix.build_launcher
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       - name: Install pnpm
-        if: matrix.build_launcher
         run: npm install -g pnpm
+
+      - name: Generate
+        run: go generate ./...
+
       - name: Build frontend for launcher
-        if: matrix.build_launcher
         run: |
           cd web/frontend
           pnpm install --no-frozen-lockfile
           pnpm build:backend
+
       - name: Build domeclaw-launcher
-        if: matrix.build_launcher
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
@@ -77,31 +117,22 @@ jobs:
           if [ "${{ matrix.os }}" = "windows" ]; then
             # For Windows, create ZIP archive
             cd build
-            if [ "${{ matrix.build_launcher }}" = "true" ]; then
-              zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-* domeclaw-launcher-*
-            else
-              zip "../archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-*
-            fi
+            zip "../archive/domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}.zip" domeclaw-launcher-*
             cd ..
           else
             # For Linux/macOS, create TGZ archive
-            if [ "${{ matrix.build_launcher }}" = "true" ]; then
-              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build .
-            else
-              # Find the actual domeclaw binary for this platform
-              cp build/domeclaw-${{ matrix.os }}-${{ matrix.arch }} build/domeclaw
-              tar -czvf "archive/domeclaw-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build domeclaw
-            fi
+            cp "build/domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}" build/domeclaw-launcher
+            tar -czvf "archive/domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}.tgz" -C build domeclaw-launcher
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: domeclaw-${{ matrix.os }}-${{ matrix.arch }}
+          name: domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}
           path: archive/*
 
   release:
-    needs: build
+    needs: [build-main, build-launcher]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -110,11 +141,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download all artifacts
+      - name: Download main app artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: artifacts-main
           pattern: domeclaw-*
+
+      - name: Download launcher artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts-launcher
+          pattern: domeclaw-launcher-*
 
       - name: Create Release
         env:
@@ -124,8 +161,19 @@ jobs:
 
           # Collect all archives
           mkdir -p release
-          for dir in artifacts/domeclaw-*; do
-            cp "$dir"/* release/
+          
+          # Copy main app archives
+          for dir in artifacts-main/domeclaw-*; do
+            if [ -d "$dir" ]; then
+              cp "$dir"/* release/
+            fi
+          done
+          
+          # Copy launcher archives
+          for dir in artifacts-launcher/domeclaw-launcher-*; do
+            if [ -d "$dir" ]; then
+              cp "$dir"/* release/
+            fi
           done
 
           # Create release with archives
