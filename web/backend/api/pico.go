@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/config"
@@ -16,6 +18,39 @@ func (h *Handler) registerPicoRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/pico/token", h.handleGetPicoToken)
 	mux.HandleFunc("POST /api/pico/token", h.handleRegenPicoToken)
 	mux.HandleFunc("POST /api/pico/setup", h.handlePicoSetup)
+
+	// WebSocket proxy: forward /pico/ws to gateway
+	// This allows the frontend to connect via the same port as the web UI,
+	// avoiding the need to expose extra ports for WebSocket communication.
+	wsProxy := h.createWsProxy()
+	mux.HandleFunc("GET /pico/ws", h.handleWebSocketProxy(wsProxy))
+}
+
+// createWsProxy creates a reverse proxy to the gateway WebSocket endpoint.
+// The gateway port is read from the configuration.
+func (h *Handler) createWsProxy() *httputil.ReverseProxy {
+	cfg, err := config.LoadConfig(h.configPath)
+	gatewayPort := 18790 // default
+	if err == nil && cfg.Gateway.Port != 0 {
+		gatewayPort = cfg.Gateway.Port
+	}
+	gatewayURL, _ := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", gatewayPort))
+	wsProxy := httputil.NewSingleHostReverseProxy(gatewayURL)
+	wsProxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		http.Error(w, "Gateway unavailable: "+err.Error(), http.StatusBadGateway)
+	}
+	return wsProxy
+}
+
+// handleWebSocketProxy wraps a reverse proxy to handle WebSocket connections.
+// It ensures the Connection and Upgrade headers are properly forwarded.
+func (h *Handler) handleWebSocketProxy(proxy *httputil.ReverseProxy) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Set headers for WebSocket upgrade
+		r.Header.Set("Connection", "upgrade")
+		r.Header.Set("Upgrade", "websocket")
+		proxy.ServeHTTP(w, r)
+	}
 }
 
 // handleGetPicoToken returns the current WS token and URL for the frontend.
@@ -65,9 +100,14 @@ func (h *Handler) handleRegenPicoToken(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ensurePicoChannel checks if the Pico Channel is properly configured and
-// enables it with sensible defaults if not. Returns true if config was changed.
-func (h *Handler) ensurePicoChannel() (bool, error) {
+// ensurePicoChannel enables the Pico channel with sane defaults if it isn't
+// already configured. Returns true when the config was modified.
+//
+// callerOrigin is the Origin header from the setup request. If non-empty and
+// no origins are configured yet, it's written as the allowed origin so the
+// WebSocket handshake works for whatever host the caller is on (LAN, custom
+// port, etc.). Pass "" when there's no request context.
+func (h *Handler) ensurePicoChannel(callerOrigin string) (bool, error) {
 	cfg, err := config.LoadConfig(h.configPath)
 	if err != nil {
 		return false, fmt.Errorf("failed to load config: %w", err)
@@ -85,14 +125,9 @@ func (h *Handler) ensurePicoChannel() (bool, error) {
 		changed = true
 	}
 
-	if !cfg.Channels.Pico.AllowTokenQuery {
-		cfg.Channels.Pico.AllowTokenQuery = true
-		changed = true
-	}
-
-	// Make sure origins are allowed (frontend might be running on a different port like 5173 during dev)
-	if len(cfg.Channels.Pico.AllowOrigins) == 0 {
-		cfg.Channels.Pico.AllowOrigins = []string{"*"}
+	// Seed origins from the request instead of hardcoding ports.
+	if len(cfg.Channels.Pico.AllowOrigins) == 0 && callerOrigin != "" {
+		cfg.Channels.Pico.AllowOrigins = []string{callerOrigin}
 		changed = true
 	}
 
@@ -109,7 +144,7 @@ func (h *Handler) ensurePicoChannel() (bool, error) {
 //
 //	POST /api/pico/setup
 func (h *Handler) handlePicoSetup(w http.ResponseWriter, r *http.Request) {
-	changed, err := h.ensurePicoChannel()
+	changed, err := h.ensurePicoChannel(r.Header.Get("Origin"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
