@@ -24,13 +24,13 @@ RUN go generate ./...
 RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
 
 # Build domeclaw-launcher binary (web console)
-RUN apk add --no-cache nodejs npm && \
+RUN apk add --no-cache nodejs npm gcc musl-dev && \
     npm install -g pnpm && \
     if [ -f web/frontend/package.json ]; then \
-        cd web/frontend && pnpm install && pnpm build:backend; \
+        cd web/frontend && CI=true pnpm install --no-frozen-lockfile && CI=true pnpm build:backend; \
     fi && \
     cd /build && \
-    go build -ldflags="-s -w" -o domeclaw-launcher ./web/backend
+    CGO_ENABLED=1 go build -ldflags="-s -w" -o domeclaw-launcher ./web/backend
 
 # ============================================================
 # Stage 2: Runtime (root user)

@@ -58,6 +58,7 @@ jobs:
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "1"
         run: |
           output="domeclaw-launcher-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
           go build -ldflags="-s -w" -o "build/${output}" ./web/backend
