@@ -861,6 +861,21 @@ Even with `restrict_to_workspace: false`, the `exec` tool blocks these dangerous
 * `shutdown`, `reboot`, `poweroff` — System shutdown
 * Fork bomb `:(){ :|:& };:`
 
+#### Known Limitation: Child Processes From Build Tools
+
+The exec safety guard only inspects the command line PicoClaw launches directly. It does not recursively inspect child
+processes spawned by allowed developer tools such as `make`, `go run`, `cargo`, `npm run`, or custom build scripts.
+
+That means a top-level command can still compile or launch other binaries after it passes the initial guard check. In
+practice, treat build scripts, Makefiles, package scripts, and generated binaries as executable code that needs the same
+level of review as a direct shell command.
+
+For higher-risk environments:
+
+* Review build scripts before execution.
+* Prefer approval/manual review for compile-and-run workflows.
+* Run PicoClaw inside a container or VM if you need stronger isolation than the built-in guard provides.
+
 #### Error Examples
 
 ```
