@@ -77,6 +77,22 @@ func TestAgentModelConfig_MarshalObject(t *testing.T) {
 	}
 }
 
+func TestProvidersConfig_IsEmpty(t *testing.T) {
+	var empty ProvidersConfig
+	if !empty.IsEmpty() {
+		t.Fatal("empty ProvidersConfig should report empty")
+	}
+
+	novita := ProvidersConfig{
+		Novita: ProviderConfig{
+			APIKey: "test-key",
+		},
+	}
+	if novita.IsEmpty() {
+		t.Fatal("ProvidersConfig with novita settings should not report empty")
+	}
+}
+
 func TestAgentConfig_FullParse(t *testing.T) {
 	jsonData := `{
 		"agents": {
@@ -398,6 +414,45 @@ func TestDefaultConfig_OpenAIWebSearchEnabled(t *testing.T) {
 	cfg := DefaultConfig()
 	if !cfg.Providers.OpenAI.WebSearch {
 		t.Fatal("DefaultConfig().Providers.OpenAI.WebSearch should be true")
+	}
+}
+
+func TestDefaultConfig_WebPreferNativeEnabled(t *testing.T) {
+	cfg := DefaultConfig()
+	if !cfg.Tools.Web.PreferNative {
+		t.Fatal("DefaultConfig().Tools.Web.PreferNative should be true")
+	}
+}
+
+func TestLoadConfig_WebPreferNativeDefaultsTrueWhenUnset(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+	if err := os.WriteFile(configPath, []byte(`{"tools":{"web":{"enabled":true}}}`), 0o600); err != nil {
+		t.Fatalf("WriteFile() error: %v", err)
+	}
+
+	cfg, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error: %v", err)
+	}
+	if !cfg.Tools.Web.PreferNative {
+		t.Fatal("PreferNative should remain true when unset in config file")
+	}
+}
+
+func TestLoadConfig_WebPreferNativeCanBeDisabled(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+	if err := os.WriteFile(configPath, []byte(`{"tools":{"web":{"prefer_native":false}}}`), 0o600); err != nil {
+		t.Fatalf("WriteFile() error: %v", err)
+	}
+
+	cfg, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error: %v", err)
+	}
+	if cfg.Tools.Web.PreferNative {
+		t.Fatal("PreferNative should be false when disabled in config file")
 	}
 }
 
