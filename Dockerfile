@@ -1,12 +1,30 @@
 # DomeClaw - PicoClaw with Wallet & Webhook Support
 # Multi-stage build for production deployment
+# Using Ubuntu 24.04 (glibc 2.39) for tempo wallet compatibility
 
 # ============================================================
 # Stage 1: Build
 # ============================================================
-FROM golang:1.25.7-alpine AS builder
+FROM ubuntu:24.04 AS builder
 
-RUN apk add --no-cache git make build-base
+# Install Go, Node.js 20, and build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl git make build-essential gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go 1.23
+RUN curl -fsSL https://go.dev/dl/go1.23.4.linux-$(dpkg --print-architecture).tar.gz | tar -C /usr/local -xz \
+    && ln -s /usr/local/go/bin/go /usr/local/bin/go \
+    && ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOPATH=/go
+ENV GOBIN=/go/bin
+
+# Install Node.js 20 from NodeSource (Vite requires Node 20+)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
@@ -24,26 +42,36 @@ RUN go generate ./...
 RUN go build -ldflags="-s -w" -o domeclaw ./cmd/picoclaw
 
 # Build domeclaw-launcher binary (web console)
-RUN apk add --no-cache nodejs npm gcc musl-dev && \
-    npm install -g pnpm && \
-    if [ -f web/frontend/package.json ]; then \
+RUN npm install -g pnpm \
+    && if [ -f web/frontend/package.json ]; then \
         cd web/frontend && CI=true pnpm install --no-frozen-lockfile && CI=true pnpm build:backend; \
-    fi && \
-    cd /build && \
-    CGO_ENABLED=1 go build -ldflags="-s -w" -o domeclaw-launcher ./web/backend
+    fi \
+    && cd /build \
+    && CGO_ENABLED=1 go build -ldflags="-s -w" -o domeclaw-launcher ./web/backend
 
 # ============================================================
 # Stage 2: Runtime (root user)
 # ============================================================
-FROM alpine:3.23.3
+FROM ubuntu:24.04
 
-# Install packages including Node.js, npm, Python
-RUN apk add --no-cache ca-certificates tzdata curl openssl nodejs npm python3 py3-pip && \
-    update-ca-certificates && \
-    # Install TypeScript globally
-    npm install -g typescript && \
-    # Create a symbolic link for python to python3 (common convention)
-    ln -sf python3 /usr/bin/python
+# Install packages including Node.js, npm, Python, and glibc runtime for tempo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    tzdata \
+    curl \
+    wget \
+    openssl \
+    python3 \
+    python3-pip \
+    && update-ca-certificates \
+    && ln -sf python3 /usr/bin/python \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20 from NodeSource for runtime
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g typescript \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy binaries
 COPY --from=builder /build/domeclaw /usr/local/bin/domeclaw
