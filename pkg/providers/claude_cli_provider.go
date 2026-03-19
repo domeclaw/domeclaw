@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -30,7 +31,7 @@ func (p *ClaudeCliProvider) Chat(
 	systemPrompt := p.buildSystemPrompt(messages, tools)
 	prompt := p.messagesToPrompt(messages)
 
-	args := []string{"-p", "--output-format", "json", "--dangerously-skip-permissions", "--no-chrome"}
+	args := []string{"--print", "--output-format", "json", "--dangerously-skip-permissions", "--no-chrome"}
 	if systemPrompt != "" {
 		args = append(args, "--system-prompt", systemPrompt)
 	}
@@ -41,7 +42,12 @@ func (p *ClaudeCliProvider) Chat(
 
 	cmd := exec.CommandContext(ctx, p.command, args...)
 	if p.workspace != "" {
-		cmd.Dir = p.workspace
+		// Ensure the directory exists before setting it
+		if err := os.MkdirAll(p.workspace, 0755); err != nil {
+			// If we can't create the directory, continue without setting Dir
+		} else {
+			cmd.Dir = p.workspace
+		}
 	}
 	cmd.Stdin = bytes.NewReader([]byte(prompt))
 

@@ -14,5 +14,6 @@ func BuiltinDefinitions() []Definition {
 		checkCommand(),
 		clearCommand(),
 		reloadCommand(),
+		walletCommand(),
 	}
 }
