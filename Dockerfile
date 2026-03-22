@@ -86,5 +86,6 @@ EXPOSE 18790 18795
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -q --spider http://localhost:18790/health || exit 1
 
+RUN /usr/local/bin/domeclaw onboard
 ENTRYPOINT ["domeclaw"]
 CMD ["gateway"]
